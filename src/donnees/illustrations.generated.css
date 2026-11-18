@@ -1,0 +1,74 @@
+/* Généré par scripts/extraire-banque.mjs à partir de docs/banque-illustree.html. Ne pas modifier à la main. */
+.illu {
+  --il-accent: #d9482b;
+  --il-bg: #f1f3ee;
+  --il-body: "Barlow","Helvetica Neue",Arial,sans-serif;
+  --il-display: "Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --il-eq: #4f7aa8;
+  --il-eq-fill: #e3ecf6;
+  --il-fig: #14213a;
+  --il-fig-far: #97a3b6;
+  --il-ink: #14213a;
+  --il-line: #d9dfd5;
+  --il-muted: #56637b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .illu {
+    --il-accent: #ff7d57;
+    --il-bg: #0f141d;
+    --il-eq: #7fabdc;
+    --il-eq-fill: #22324a;
+    --il-fig: #e9eef6;
+    --il-fig-far: #5f6d85;
+    --il-ink: #e9eef6;
+    --il-line: #2c384b;
+    --il-muted: #9daabd;
+  }
+}
+:root[data-theme="dark"] .illu {
+  --il-accent: #ff7d57;
+  --il-bg: #0f141d;
+  --il-eq: #7fabdc;
+  --il-eq-fill: #22324a;
+  --il-fig: #e9eef6;
+  --il-fig-far: #5f6d85;
+  --il-ink: #e9eef6;
+  --il-line: #2c384b;
+  --il-muted: #9daabd;
+}
+.illu .illu-svg { display: block; width: 100%; height: auto; }
+.illu .fa, .illu .fb { fill:none;stroke-linecap:round;stroke-linejoin:round }
+.illu .fa { stroke:var(--il-fig) }
+.illu .fb { stroke:var(--il-fig-far) }
+.illu .fh { fill:var(--il-fig) }
+.illu .gd { stroke:var(--il-line);stroke-width:2;stroke-linecap:round }
+.illu .eq { stroke:var(--il-eq);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round }
+.illu .eqp { stroke:var(--il-eq);stroke-width:3.5;fill:var(--il-eq-fill) }
+.illu .eqd, .illu .eqf { fill:var(--il-eq) }
+.illu .eqb { fill:var(--il-eq-fill);stroke:var(--il-eq);stroke-width:3 }
+.illu .eqbox { fill:var(--il-eq-fill);stroke:var(--il-eq);stroke-width:2.5 }
+.illu .wl { stroke:var(--il-fig-far);stroke-width:5;stroke-linecap:round }
+.illu .cb { stroke:var(--il-eq);stroke-width:1.6 }
+.illu .bd { stroke:var(--il-accent);stroke-width:3;stroke-dasharray:1 5;stroke-linecap:round }
+.illu .cn { fill:var(--il-accent) }
+.illu .ar, .illu .arx { stroke:var(--il-accent);stroke-width:2.5;fill:none;stroke-linecap:round }
+.illu .arx { stroke-dasharray:3 4 }
+.illu .arh, .illu .arxh { fill:var(--il-accent) }
+.illu .mu { stroke:var(--il-fig-far);stroke-width:2;fill:none;stroke-linecap:round;stroke-dasharray:5 5 }
+.illu .muh { fill:var(--il-fig-far) }
+.illu .nx { stroke:var(--il-fig-far);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round }
+.illu .gl { stroke:var(--il-accent);stroke-width:1.5;stroke-dasharray:4 4 }
+.illu .gl2 { stroke:var(--il-accent);stroke-width:3;stroke-linecap:round }
+.illu .zn { fill:var(--il-accent);opacity:.14 }
+.illu .zn2 { fill:var(--il-accent);opacity:.55 }
+.illu .zm { fill:var(--il-fig-far);opacity:.35 }
+.illu .bh { fill:var(--il-accent) }
+.illu .bl { fill:var(--il-fig-far);opacity:.6 }
+.illu .pth { stroke:var(--il-fig);stroke-width:2.5;fill:none;stroke-linecap:round;stroke-linejoin:round }
+.illu .pthh, .illu .dot { fill:var(--il-fig) }
+.illu .nb { fill:var(--il-fig) }
+.illu .nt { font:700 10px var(--il-body);fill:var(--il-bg) }
+.illu .tx { font:600 11px var(--il-body);fill:var(--il-muted) }
+.illu .txa { font:700 11px var(--il-body);fill:var(--il-accent) }
+.illu .tt { font:700 14px var(--il-display);fill:var(--il-ink);letter-spacing:.04em;text-transform:uppercase }
+.illu .dot { display:inline-block }
