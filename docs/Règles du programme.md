@@ -628,10 +628,32 @@ Pour 2026-2027, cela ne met pas de bloc en S10 (semaine légère avec un match).
   - dans les deux cas, un message conseille de voir la physio.
 - **Retour après 10 jours :** compté depuis la dernière séance terminée.
 
-**Viendront à l'étape 6 :**
-- la progression des intermittents et les allures tirées de la VMA ;
-- le test de Cooper « dès que la condition est remplie » ;
-- la semaine légère anticipée.
+### Retests, allures et semaine légère : précisions (étape 6)
+
+*Ajouté le 18 novembre 2026. Choix faits pour appliquer les sections 5 et 6, à faire valider.*
+
+- **Test de Cooper sous condition (S4 à S6).**
+  - Il est proposé la semaine qui suit 2 courses de 20 min ou plus en continu (étape 5 ou plus), avec une douleur de 2 ou moins aux tibias et au genou, et de moins de 3 le lendemain matin.
+  - Il prend la place de la séance C.
+  - **À savoir :** avec 1 étape par semaine, la course facile atteint l'étape 4 au mieux à la fin de la Fondation (S5 est légère). Or la phase Force et vitesse n'a que 10 min de course facile. Le premier test de Cooper aura donc sans doute lieu en S11, et d'ici là les intermittents se font à un effort de 8 sur 10.
+- **Ajustement des allures (±0,5 km/h).** Après chaque séance d'intermittents, Lily indique si elle était « plus vite », « comme prévu » ou « plus lente » sur la plupart des efforts. L'app ne demande pas l'allure de chaque effort.
+- **Progression des intermittents.** Quand un format revient après une séance réussie, il gagne 1 répétition par série, jusqu'à la version « plus difficile » de la banque :
+
+  | Format | Répétitions par série, au plus |
+  |---|---|
+  | E5 | 10 |
+  | E6 | 8 |
+  | E8 | 10 efforts |
+  | E12 | 10 points |
+
+  E7, E10 et E11 ne changent pas. Les semaines légères ne comptent pas.
+- **Mini-retest de S5.** Il se fait dans la séance B, ou dans la première séance qui n'est pas D. Il remplace les sauts et M1, puisque le test du mollet est le même mouvement, poussé au maximum.
+- **Test manqué.** Un test qui n'a pas été fait dans sa semaine est reporté à la semaine suivante, jamais pendant l'affûtage. Une journée 1 reportée après le 1er décembre comprend le sprint.
+- **Écarts entre les côtés.** La flexion de cheville et le mollet donnent 1 série de plus sur M1, le squat bulgare sur F7, le saut sur une jambe sur P10. L'écart le plus récent compte, jusqu'au retest suivant.
+- **Semaine légère anticipée.**
+  - 2 séances à 9 ou plus d'effort, ou une douleur de 3 ou 4 à deux endroits sur la même note : c'est la semaine suivante qui devient légère.
+  - Le bouton « J'ai besoin d'une semaine légère » rend légère la semaine affichée, celle en cours ou une semaine à venir.
+  - Dans tous les cas, le compte des semaines normales de suite repart à zéro.
 
 ### Séries et badges
 

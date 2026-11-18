@@ -40,6 +40,7 @@ export async function chargerDonnees(): Promise<Donnees> {
     if (texte.startsWith('choix:')) donnees.choix[Number(texte.slice(6))] = valeur as ChoixSemaine;
     else if (texte.startsWith('resultat:')) donnees.resultats[texte.slice(9)] = valeur as ResultatSeance;
     else if (texte === 'preferences') donnees.preferences = { ...donnees.preferences, ...(valeur as Preferences) };
+    else if (texte === 'legeres') donnees.legeresDemandees = valeur as number[];
   });
   return donnees;
 }
@@ -58,6 +59,10 @@ export async function supprimerResultat(date: string): Promise<void> {
   await attendre((await table('readwrite')).delete(`resultat:${date}`));
 }
 
+export async function enregistrerLegeres(semaines: number[]): Promise<void> {
+  await attendre((await table('readwrite')).put(semaines, 'legeres'));
+}
+
 export async function enregistrerPreferences(preferences: Preferences): Promise<void> {
   await attendre((await table('readwrite')).put(preferences, 'preferences'));
 }
@@ -71,6 +76,7 @@ export async function remplacerDonnees(donnees: Donnees): Promise<void> {
   for (const [numero, choix] of Object.entries(donnees.choix)) t.put(choix, `choix:${numero}`);
   for (const resultat of Object.values(donnees.resultats)) t.put(resultat, `resultat:${resultat.date}`);
   t.put(donnees.preferences, 'preferences');
+  t.put(donnees.legeresDemandees, 'legeres');
   await new Promise<void>((resolve, reject) => {
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);

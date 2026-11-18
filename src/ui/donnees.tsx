@@ -19,6 +19,7 @@ interface ContexteDonnees {
   enregistrerResultat: (resultat: ResultatSeance) => void;
   supprimerResultat: (date: DateISO) => void;
   modifierPreferences: (p: Partial<Preferences>) => void;
+  demanderSemaineLegere: (numero: number, oui: boolean) => void;
   importer: (d: Donnees) => Promise<void>;
 }
 
@@ -97,6 +98,19 @@ export function FournisseurDonnees({ children }: { children: ReactNode }) {
     [ecrire],
   );
 
+  const demanderSemaineLegere = useCallback(
+    (numero: number, oui: boolean) => {
+      setDonnees((d) => {
+        if (!d) return d;
+        const sans = (d.legeresDemandees ?? []).filter((n) => n !== numero);
+        const legeresDemandees = oui ? [...sans, numero].sort((a, b) => a - b) : sans;
+        ecrire(idb.enregistrerLegeres(legeresDemandees));
+        return { ...d, legeresDemandees };
+      });
+    },
+    [ecrire],
+  );
+
   const importer = useCallback(async (d: Donnees) => {
     await idb.remplacerDonnees(d);
     setDonnees(d);
@@ -107,7 +121,7 @@ export function FournisseurDonnees({ children }: { children: ReactNode }) {
   if (!donnees) return <p className="chargement">Chargement…</p>;
   return (
     <Contexte.Provider
-      value={{ cal, donnees, saison, aujourdhui, erreur, choisirSemaine, enregistrerResultat, supprimerResultat, modifierPreferences, importer }}
+      value={{ cal, donnees, saison, aujourdhui, erreur, choisirSemaine, enregistrerResultat, supprimerResultat, modifierPreferences, demanderSemaineLegere, importer }}
     >
       {children}
     </Contexte.Provider>

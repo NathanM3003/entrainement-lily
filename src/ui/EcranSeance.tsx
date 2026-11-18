@@ -11,11 +11,13 @@ import {
   douleursDemandees,
   genreSaisie,
   LIBELLES_DOULEURS,
+  distanceEffort,
   nomExercice,
   preremplir,
   TESTS_CHARGE,
   texteAllure,
   texteCharge,
+  texteVitesse,
 } from '../stockage/saisie';
 import type { Decision, Donnees, RaisonPasFait, ResultatExercice, ResultatSeance, Unite } from '../stockage/types';
 import { ChampNombre, Echelle, Illustration, jourEtDate, majuscule, useIllustrations } from './communs';
@@ -258,7 +260,20 @@ function Fiche({
     );
   }
   if (p.intensite) consignes.push(`Intensité : ${p.intensite} % au maximum.`);
-  if (p.allure) consignes.push(`${p.allure}${p.pctVMA ? ` (${p.pctVMA.min === p.pctVMA.max ? p.pctVMA.min : `${p.pctVMA.min} à ${p.pctVMA.max}`} % de la VMA)` : ''}. Avant le test de Cooper : effort de 8 sur 10.`);
+  const unite = donnees.preferences.allure;
+  if (p.vitesseKmh) {
+    const effort = { E5: 15, E6: 30, E8: 30 }[p.id as 'E5'];
+    const tapis = unite === 'km/h' ? '' : ` (tapis : ${texteVitesse(p.vitesseKmh, 'km/h')})`;
+    consignes.push(
+      `Allure : ${texteVitesse(p.vitesseKmh, unite)}${tapis}${effort ? `, soit environ ${distanceEffort(p.vitesseKmh.min, effort)} m en ${effort} s sur la piste` : ''}.${p.id === 'E7' ? ' 100 % sur les efforts de 15 et 30 s, 95 % sur ceux de 45 et 60 s.' : ''}${p.id === 'E8' ? ' Au moins cette allure.' : ''}`,
+    );
+    if (p.recuperationKmh) consignes.push(`Récupération trottinée : ${texteVitesse(p.recuperationKmh, unite)} (la marche est permise).`);
+  } else if (p.allure) {
+    consignes.push(p.role === 'intermittent' && p.pctVMA ? 'Avant le test de Cooper : effort de 8 sur 10.' : `${p.allure}.`);
+  }
+  if (p.serieEnPlus) {
+    consignes.push(`1 série de plus du côté ${p.serieEnPlus.cote} (écart de ${p.serieEnPlus.ecart} % au dernier test).`);
+  }
   if (p.note) consignes.push(p.note);
 
   return (
@@ -484,6 +499,24 @@ function Saisie({
         <div className="champs">
           <ChampNombre label={p.id === 'E7' ? 'Pyramides faites' : 'Efforts faits'} valeur={valeur.nombre} onChange={(v) => set({ nombre: v })} />
           {p.id === 'E8' && <ChampNombre label="Distance totale" unite="m" valeur={valeur.distance} onChange={(v) => set({ distance: v })} />}
+          {p.pctVMA && (
+            <fieldset className="choix">
+              <legend>Sur la plupart des efforts, j'étais :</legend>
+              <div className="segments">
+                {(
+                  [
+                    ['plus-vite', 'Plus vite'],
+                    ['prevu', 'Comme prévu'],
+                    ['plus-lent', 'Plus lente'],
+                  ] as const
+                ).map(([v, t]) => (
+                  <button key={v} type="button" aria-pressed={(valeur.rythme ?? 'prevu') === v} onClick={() => set({ rythme: v })}>
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          )}
         </div>
       );
     case 'duree': {

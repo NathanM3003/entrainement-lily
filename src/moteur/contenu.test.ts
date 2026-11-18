@@ -90,7 +90,8 @@ describe('règles valables pour toute la saison (1 à 4 séances par semaine)', 
       for (const s of seances) {
         const prev = s.contenu.blocs.find((b) => b.type === 'prevention')?.exercices.map((p) => p.id) ?? [];
         // Le test du mollet de la journée 1 est le mouvement de M1 poussé au maximum.
-        if (s.test !== 'journee1') expect(prev, `${s.date} ${s.type}`).toContain('M1');
+        // Les tests du mollet (journée 1, mini-retest) sont le mouvement de M1 poussé au maximum.
+        if (!ids(s).includes('T-mollet')) expect(prev, `${s.date} ${s.type}`).toContain('M1');
         if (s.contenu.course) expect(prev, `${s.date} ${s.type}`).toEqual(expect.arrayContaining(['M7', 'M8']));
         else expect(prev.some((id) => id === 'M7' || id === 'M8'), `${s.date} ${s.type} sans course`).toBe(false);
         if (s.type === 'B' && !s.test) expect(prev, `${s.date} B`).toContain('M10');
@@ -229,14 +230,14 @@ describe('rotation', () => {
   });
 
   it('aucune rotation en semaine légère : mêmes exercices que la semaine normale d’avant, 1 série de moins', () => {
-    // S4 (normale) puis S5 (légère, Noël) : la séance B garde sa pliométrie.
-    const b4 = detailler(4, { nbSeances: 2 }).seances.find((s) => s.type === 'B')!;
-    const b5 = detailler(5, { nbSeances: 2 }).seances.find((s) => s.type === 'B')!;
+    // S6 (normale) puis S7 (légère, vacances) : la séance B garde sa pliométrie.
+    const b6 = detailler(6, { nbSeances: 2 }).seances.find((s) => s.type === 'B')!;
+    const b7 = detailler(7, { nbSeances: 2 }).seances.find((s) => s.type === 'B')!;
     const plio = (s: SeanceDetaillee) => s.contenu.blocs.find((b) => b.type === 'pliometrie')!.exercices.map((p) => p.id);
-    expect(plio(b5)).toEqual(plio(b4));
-    expect(prescription(b5, 'F1')?.series).toBe(prescription(b4, 'F1')!.series! - 1);
-    expect(prescription(b5, 'F1')?.pourcentage1RM).toBe(70); // mêmes charges
-    expect(b5.contenu.messages[0]).toBe('Semaine légère : 1 série de moins, moins de sprints et de sauts, mêmes charges.');
+    expect(plio(b7)).toEqual(plio(b6));
+    expect(prescription(b7, 'F7')?.series).toBe(prescription(b6, 'F7')!.series! - 1);
+    expect(prescription(b7, 'F7')?.pourcentage1RM).toBe(80); // mêmes charges
+    expect(b7.contenu.messages).toContain('Semaine légère : 1 série de moins, moins de sprints et de sauts, mêmes charges.');
   });
 });
 

@@ -42,6 +42,8 @@ export interface ResultatExercice {
   prevu?: { reps?: number; charge?: number };
   /** Sprints : tension derrière la cuisse ou le genou (section 5). */
   tension?: boolean;
+  /** Intermittents : allure sur au moins la moitié des efforts (section 5). */
+  rythme?: 'plus-vite' | 'prevu' | 'plus-lent';
 }
 
 /** Notes de douleur de 0 à 10 (section 5). */
@@ -78,12 +80,15 @@ export interface Preferences {
 
 export interface Donnees {
   choix: Record<number, ChoixSemaine>;
+  /** Semaines que Lily a demandées légères (« J'ai besoin d'une semaine légère »). */
+  legeresDemandees: number[];
   resultats: Record<DateISO, ResultatSeance>;
   preferences: Preferences;
 }
 
 export const DONNEES_VIDES: Donnees = {
   choix: {},
+  legeresDemandees: [],
   resultats: {},
   preferences: { unites: {}, allure: 'min/km' },
 };

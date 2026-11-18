@@ -220,3 +220,4 @@ legend { padding: 0; margin-bottom: 8px; font-weight: 600; }
 
 .ligne-crans { display: grid; grid-template-columns: 1fr 96px 96px; gap: 8px; align-items: end; margin-top: 8px; }
 .ligne-crans > span { padding-bottom: 12px; font-weight: 600; font-size: 15px; }
+.champs .choix, .champs .case, .champs .aide { grid-column: 1 / -1; }

@@ -412,3 +412,147 @@ export function suiviDouleurs(donnees: Donnees): SuiviDouleurs {
   }
   return suivi;
 }
+
+// ---------- Test de Cooper, VMA et allures (sections 5 et 7) ----------
+
+export const LONGUEUR_PISTE = 460;
+export const distanceCooper = (tours = 0, reste = 0) => tours * LONGUEUR_PISTE + reste;
+
+export interface Allures {
+  /** VMA en km/h, ajustements compris. Absente avant le premier test de Cooper. */
+  vma?: number;
+  /** VMA tirée du dernier test : distance en mètres ÷ 200. */
+  vmaTest?: number;
+  /** Ajustement depuis le dernier test : ±0,5 km/h selon les intermittents. */
+  ajustement: number;
+  dateTest?: DateISO;
+}
+
+const estIntermittentDeCourse = (p: Prescription) => p.role === 'intermittent' && p.id !== 'E10';
+const effortsPrevus = (p: Prescription) => (p.id === 'E7' ? 1 : (p.series ?? 1) * (p.reps?.min ?? 1));
+
+/**
+ * VMA = distance du test de Cooper ÷ 200. Ensuite (section 5, « Selon les chiffres entrés ») :
+ * plus vite que prévu sur au moins la moitié des efforts deux séances de suite : +0,5 km/h ;
+ * efforts manqués, ou plus lente sur au moins la moitié des efforts : −0,5 km/h.
+ */
+export function allures(donnees: Donnees): Allures {
+  const faites = terminees(donnees, '9999-12-31');
+  let resultat: Allures = { ajustement: 0 };
+  let viteDeSuite = 0;
+  for (const r of faites) {
+    const c = r.exercices['tests:T-cooper'];
+    if (c?.cooper?.tours !== undefined && !c.pasFait) {
+      const vmaTest = distanceCooper(c.cooper.tours, c.cooper.reste) / 200;
+      resultat = { vmaTest, vma: vmaTest, ajustement: 0, dateTest: r.date };
+      viteDeSuite = 0;
+      continue;
+    }
+    if (resultat.vmaTest === undefined) continue;
+    for (const b of r.seance.contenu.blocs) {
+      for (const p of b.exercices.filter(estIntermittentDeCourse)) {
+        const x = r.exercices[`${b.type}:${p.id}`];
+        const manque = !!x?.pasFait || (x?.nombre ?? effortsPrevus(p)) < effortsPrevus(p) || x?.rythme === 'plus-lent';
+        if (manque) {
+          resultat.ajustement -= 0.5;
+          viteDeSuite = 0;
+        } else if (x?.rythme === 'plus-vite') {
+          viteDeSuite += 1;
+          if (viteDeSuite === 2) {
+            resultat.ajustement += 0.5;
+            viteDeSuite = 0;
+          }
+        } else viteDeSuite = 0;
+      }
+    }
+    resultat.vma = resultat.vmaTest + resultat.ajustement;
+  }
+  return resultat;
+}
+
+/** Plus haut nombre de répétitions par série de chaque format (version « plus difficile » de la banque). */
+export const INTERMITTENTS_MAX: Record<string, number> = { E5: 10, E6: 8, E8: 10, E12: 10 };
+
+/**
+ * Intermittents : 1 répétition de plus par série chaque fois que le format revient après une séance réussie,
+ * jusqu'au haut de la fourchette. Les semaines légères ne comptent pas.
+ */
+export function intermittentsEnPlus(cal: Calendrier, donnees: Donnees, avant: DateISO): Record<string, number> {
+  const plus: Record<string, number> = {};
+  for (const r of terminees(donnees, avant)) {
+    if (cal.semaines[r.semaine - 1]?.legere?.etendue === 'complete') continue;
+    for (const b of r.seance.contenu.blocs) {
+      for (const p of b.exercices.filter((x) => x.role === 'intermittent' && INTERMITTENTS_MAX[x.id])) {
+        const x = r.exercices[`${b.type}:${p.id}`];
+        const reussi = !x?.pasFait && (x?.nombre ?? effortsPrevus(p)) >= effortsPrevus(p) && x?.rythme !== 'plus-lent';
+        if (reussi) plus[p.id] = (plus[p.id] ?? 0) + 1;
+      }
+    }
+  }
+  return plus;
+}
+
+// ---------- Écarts entre les côtés (section 6, « Ce que les retests changent ») ----------
+
+export interface SerieEnPlus {
+  cote: 'gauche' | 'droite';
+  /** Écart en %, arrondi. */
+  ecart: number;
+}
+
+/** Test → exercice qui reçoit 1 série de plus du côté le plus faible. */
+const TESTS_COTES: Record<string, string> = { 'T-F7': 'F7', 'T-mollet': 'M1', 'T-cheville': 'M1', 'T-saut-une-jambe': 'P10' };
+
+/** Écart de plus de 10 % au dernier test : 1 série de plus du côté le plus faible, jusqu'au retest suivant. */
+export function seriesEnPlus(donnees: Donnees): Record<string, SerieEnPlus> {
+  const derniers: Record<string, { gauche: number; droite: number }> = {};
+  for (const r of terminees(donnees, '9999-12-31')) {
+    for (const test of Object.keys(TESTS_COTES)) {
+      const m = r.exercices[`tests:${test}`]?.mesure;
+      if (m?.gauche && m.droite) derniers[test] = { gauche: m.gauche, droite: m.droite };
+    }
+  }
+  const resultat: Record<string, SerieEnPlus> = {};
+  for (const [test, m] of Object.entries(derniers)) {
+    const ecart = Math.abs(m.gauche - m.droite) / Math.max(m.gauche, m.droite);
+    if (ecart <= 0.1) continue;
+    const id = TESTS_COTES[test]!;
+    const s: SerieEnPlus = { cote: m.gauche < m.droite ? 'gauche' : 'droite', ecart: Math.round(ecart * 100) };
+    if (!resultat[id] || resultat[id].ecart < s.ecart) resultat[id] = s;
+  }
+  return resultat;
+}
+
+// ---------- Test de Cooper sous condition, semaine légère anticipée (section 6) ----------
+
+/** Le test de Cooper est proposé dès que Lily a couru 20 min en continu deux fois sans douleur (section 5). */
+export function conditionCooper(donnees: Donnees, avant: DateISO): boolean {
+  let fois = 0;
+  for (const r of terminees(donnees, avant)) {
+    const vingtMinutes = r.seance.contenu.blocs.some((b) =>
+      b.exercices.some((p) => estCourseFacile(p) && /^Étape [5-7]/.test(p.format ?? '') && !r.exercices[`${b.type}:${p.id}`]?.pasFait),
+    );
+    if (vingtMinutes && douleurCourse(r) === 'ok' && Math.max(r.douleurs?.tibias ?? 0, r.douleurs?.genou ?? 0) <= 2) fois++;
+  }
+  return fois >= 2;
+}
+
+/**
+ * Semaine légère anticipée (section 6) : la semaine qui suit 2 séances avec une note d'effort de 9 ou plus,
+ * ou une douleur de 3 ou 4 à deux endroits en même temps. Plus les semaines que Lily a demandées.
+ */
+export function semainesLegeresAnticipees(donnees: Donnees, demandees: number[] = []): { semaine: number; raison: string }[] {
+  const liste = demandees.map((semaine) => ({ semaine, raison: 'Semaine légère demandée' }));
+  const parSemaine = new Map<number, ResultatSeance[]>();
+  for (const r of terminees(donnees, '9999-12-31')) parSemaine.set(r.semaine, [...(parSemaine.get(r.semaine) ?? []), r]);
+  for (const [semaine, resultats] of parSemaine) {
+    if (resultats.filter((r) => (r.effort ?? 0) >= 9).length >= 2) {
+      liste.push({ semaine: semaine + 1, raison: "Semaine légère anticipée : 2 séances avec un effort de 9 ou plus la semaine d'avant" });
+    }
+    const deuxZones = resultats.some((r) =>
+      [r.douleurs, r.douleursLendemain].some((d) => Object.values(d ?? {}).filter((v) => v !== undefined && v >= 3 && v <= 4).length >= 2),
+    );
+    if (deuxZones) liste.push({ semaine: semaine + 1, raison: "Semaine légère anticipée : douleur de 3 ou 4 à deux endroits la semaine d'avant" });
+  }
+  return liste;
+}

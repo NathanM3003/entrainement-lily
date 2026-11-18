@@ -171,6 +171,8 @@ function ChoixDeLaSemaine({
 }
 
 function PlanDeLaSemaine({ calc, aujourdhui, onModifier }: { calc: SemaineCalculee; aujourdhui: DateISO; onModifier: () => void }) {
+  const { demanderSemaineLegere } = useDonnees();
+  const dejaLegere = calc.semaine.legere?.etendue === 'complete' && !calc.legereDemandee;
   const jours = joursEntre(calc.semaine.debut, calc.semaine.fin);
   const matchs = calc.plan?.matchs ?? [];
   return (
@@ -222,6 +224,19 @@ function PlanDeLaSemaine({ calc, aujourdhui, onModifier }: { calc: SemaineCalcul
         <button type="button" onClick={onModifier} disabled={calc.commencee}>
           Changer mes jours
         </button>
+        {calc.semaine.fin >= aujourdhui && !dejaLegere && (
+          <button
+            type="button"
+            onClick={() =>
+              calc.legereDemandee
+                ? demanderSemaineLegere(calc.semaine.numero, false)
+                : confirm('Rendre cette semaine légère ? Environ 35 % de volume en moins, mêmes charges, pas de nouvel exercice.') &&
+                  demanderSemaineLegere(calc.semaine.numero, true)
+            }
+          >
+            {calc.legereDemandee ? 'Annuler la semaine légère' : "J'ai besoin d'une semaine légère"}
+          </button>
+        )}
       </div>
       {calc.commencee && <p className="aide">La semaine est commencée : les jours ne changent plus. Ajouter ou retirer une séance viendra dans une prochaine version.</p>}
     </>

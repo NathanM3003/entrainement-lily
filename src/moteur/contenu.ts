@@ -11,7 +11,7 @@
 import { exercice } from '../donnees/banque';
 import type { Exercice, Statut } from '../donnees/types';
 import { ajouterJours, dateCourte, lundiDe, type DateISO } from './dates';
-import { niveauDe } from './progression';
+import { INTERMITTENTS_MAX, niveauDe, type SerieEnPlus } from './progression';
 import { dateDeblocage, restrictionsAu } from './restrictions';
 import type { PlanSemaine, SeancePlanifiee } from './semaine';
 import type { Calendrier, Phase, Semaine } from './types';
@@ -70,6 +70,12 @@ export interface Prescription {
   /** Allure en % de la VMA (section 7). */
   pctVMA?: Fourchette;
   allure?: string;
+  /** Vitesse visée en km/h, tirée de la VMA (section 7). */
+  vitesseKmh?: Fourchette;
+  /** Récupération trottinée (40 à 50 % de la VMA), pour 15/15 et 30/30. */
+  recuperationKmh?: Fourchette;
+  /** Écart de plus de 10 % entre les côtés au dernier test : 1 série de plus du côté le plus faible. */
+  serieEnPlus?: SerieEnPlus;
   /** Cardio sans impact qui remplace la course facile (douleur aux tibias ou au genou). */
   remplaceCourse?: boolean;
   /** Exercice « à essayer » : son remplacement est affiché à côté (section 6). */
@@ -146,6 +152,12 @@ export interface EtatContenu {
   pausePlio?: boolean;
   /** La première course facile après cette date passe sur vélo ou rameur (douleur après la dernière course). */
   courseEnCardioApres?: DateISO;
+  /** VMA en km/h (test de Cooper), pour traduire les allures. */
+  vma?: number;
+  /** Répétitions en plus par série, par format d'intermittent. */
+  intermittentsEnPlus?: Record<string, number>;
+  /** Séries en plus du côté le plus faible (F7, M1, P10). */
+  seriesEnPlus?: Record<string, SerieEnPlus>;
 }
 
 export interface ContenuSemaine {
@@ -306,6 +318,7 @@ function intermittent(id: string, o: Options = {}): Prescription {
     return px('E7', 'intermittent', {
       format: 'Pyramide de 15, 30, 45, 60, 45, 30 et 15 s, récupération égale à l’effort',
       allure: '100 % de la VMA sur les efforts de 15 et 30 s, 95 % sur ceux de 45 et 60 s',
+      pctVMA: f(95, 100),
       minutes: 8,
       ...o,
     });
@@ -387,6 +400,8 @@ interface Ctx {
   essaisFaits: Map<string, number>;
   /** Partagé par les séances de la semaine : la course à remplacer par du cardio n'est pas encore placée. */
   reste: { cardio: boolean };
+  /** Mini-retest de la semaine (S5) placé dans cette séance. */
+  miniRetest?: boolean;
   messages: string[];
 }
 
@@ -1114,6 +1129,17 @@ function ajusterProgression(items: Item[], ctx: Ctx): Item[] {
       sprint(it) && it.p.reps ? { ...it, p: { ...it.p, reps: { min: Math.min(it.p.reps.max, it.p.reps.min + plus), max: it.p.reps.max } } } : it,
     );
   }
+  // Intermittents : 1 répétition de plus par série chaque fois que le format revient, jusqu'au haut de la fourchette.
+  const inter = etat.intermittentsEnPlus ?? {};
+  if (ctx.phase !== 'affutage') {
+    resultat = resultat.map((it) => {
+      const max = INTERMITTENTS_MAX[it.p.id];
+      const enPlus = inter[it.p.id] ?? 0;
+      if (it.p.role !== 'intermittent' || !max || !enPlus || !it.p.reps) return it;
+      const min = Math.min(max, it.p.reps.min + enPlus);
+      return { ...it, p: { ...it.p, reps: { min, max: Math.max(min, it.p.reps.max) } } };
+    });
+  }
   if (etat.vitesseMaxEnPauseJusquau && ctx.seance.date <= etat.vitesseMaxEnPauseJusquau) {
     const avant = resultat.length;
     resultat = resultat.filter((it) => it.p.role !== 'vitesse-max' && it.p.id !== 'V3');
@@ -1159,6 +1185,14 @@ function composerSeance(ctx: Ctx): ContenuSeance {
     corps = forceVitesse(ctx); // force et vitesse, développement, maintien
   }
 
+  if (ctx.miniRetest) {
+    // Mini-retest (S5, 20 min) : il remplace les sauts et M1 (le test du mollet est le même mouvement, poussé au maximum).
+    corps = [
+      ...['T-cheville', 'T-saut', 'T-mollet'].map((id) => ({ bloc: 'tests' as const, p: test(id) })),
+      ...corps.filter((it) => !(it.bloc === 'pliometrie' && it.p.role === 'plio') && !(it.bloc === 'prevention' && it.p.id === 'M1')),
+    ];
+    messages.push('Mini-retest : flexion de cheville, saut en longueur et mollet sur une jambe, à la place des sauts et de M1.');
+  }
   corps = ajusterProgression(corps, ctx);
 
   if (ctx.legere && ctx.phase !== 'affutage' && !seance.test) {
@@ -1183,6 +1217,19 @@ function composerSeance(ctx: Ctx): ContenuSeance {
       return e && (e.type === 'vitesse' || it.p.id === 'A1') ? { ...it, p: { ...it.p, intensite } } : it;
     });
   }
+
+  // Allures tirées de la VMA, et série en plus du côté le plus faible.
+  const { vma, seriesEnPlus } = ctx.etat;
+  items = items.map((it) => {
+    let p = it.p;
+    if (vma && p.pctVMA && it.bloc !== 'echauffement') {
+      p = { ...p, vitesseKmh: { min: (vma * p.pctVMA.min) / 100, max: (vma * p.pctVMA.max) / 100 } };
+      if (p.id === 'E5' || p.id === 'E6') p.recuperationKmh = { min: vma * 0.4, max: vma * 0.5 };
+    }
+    const cote = seriesEnPlus?.[p.id];
+    if (cote && it.bloc !== 'echauffement' && it.bloc !== 'agilite') p = { ...p, serieEnPlus: cote };
+    return p === it.p ? it : { ...it, p };
+  });
 
   // Durée estimée et respect de la durée maximale (1 h 30, ou environ 1 h en période allégée).
   items = items.map((it) => ({ ...it, p: { ...it.p, minutesEstimees: Math.round(estimer(it.p) * 10) / 10, sauts: sauts(it.p) || undefined } }));
@@ -1244,6 +1291,11 @@ export function detaillerSemaine(cal: Calendrier, plan: PlanSemaine, etat: EtatC
   const essaisPrevus: string[] = [];
   const messages: string[] = [];
   const reste = { cardio: !!etat.courseEnCardioApres };
+  // Mini-retest : dans la séance B (ou la première séance qui n'est pas D).
+  const triees = [...plan.seances].sort((a, b) => (a.date < b.date ? -1 : 1));
+  const cibleMini = semaine.retests.some((r) => r.type === 'mini')
+    ? (triees.find((s) => s.type === 'B' && !s.test) ?? triees.find((s) => s.type !== 'D' && !s.test) ?? triees[0])?.date
+    : undefined;
 
   const seances = [...plan.seances]
     .sort((a, b) => (a.date < b.date ? -1 : 1))
@@ -1262,6 +1314,7 @@ export function detaillerSemaine(cal: Calendrier, plan: PlanSemaine, etat: EtatC
         essaisFaits,
         reste,
         messages: [],
+        miniRetest: seance.date === cibleMini,
       };
       ctx.essai = candidatsEssai(ctx).find((id) => peutEssayer(id, ctx));
       const contenu = composerSeance(ctx);

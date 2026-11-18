@@ -135,8 +135,25 @@ export function texteAllure(minutes: number, km: number, unite: UniteAllure): st
   return s === 60 ? `${m + 1}:00 min/km` : `${m}:${String(s).padStart(2, '0')} min/km`;
 }
 
+/** Vitesse visée, dans l'unité choisie : « 12 à 12,5 km/h », « 4:48 à 5:00 min/km »… */
+export function texteVitesse(kmh: { min: number; max: number }, unite: UniteAllure): string {
+  const f = (n: number) => n.toLocaleString('fr-CA', { maximumFractionDigits: 1 });
+  const allure = (v: number) => {
+    const minParKm = 60 / v;
+    const m = Math.floor(minParKm);
+    const s = Math.round((minParKm - m) * 60);
+    return s === 60 ? `${m + 1}:00` : `${m}:${String(s).padStart(2, '0')}`;
+  };
+  const deux = (a: string, b: string) => (a === b ? a : `${a} à ${b}`);
+  if (unite === 'km/h') return `${deux(f(kmh.min), f(kmh.max))} km/h`;
+  if (unite === 'mi/h') return `${deux(f(kmh.min / 1.609344), f(kmh.max / 1.609344))} mi/h`;
+  return `${deux(allure(kmh.max), allure(kmh.min))} min/km`;
+}
+
+/** Distance à couvrir sur la piste pendant un effort, arrondie à 5 m. */
+export const distanceEffort = (kmh: number, secondes: number) => Math.round((kmh / 3.6) * secondes / 5) * 5;
+
 /** Distance du test de Cooper, en mètres, sur la piste de 460 m. */
-export const LONGUEUR_PISTE = 460;
-export const distanceCooper = (tours = 0, reste = 0) => tours * LONGUEUR_PISTE + reste;
+export { distanceCooper, LONGUEUR_PISTE } from '../moteur/progression';
 
 export const nomExercice = (p: Prescription) => p.nom || exercice(p.id).nom;

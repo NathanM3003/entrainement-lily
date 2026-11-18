@@ -30,6 +30,7 @@ export function lireSauvegarde(texte: string): Donnees {
   if (typeof d.choix !== 'object' || typeof d.resultats !== 'object') throw new Error('Cette sauvegarde est incomplète.');
   return {
     choix: d.choix ?? {},
+    legeresDemandees: Array.isArray(d.legeresDemandees) ? d.legeresDemandees : [],
     resultats: d.resultats ?? {},
     preferences: { ...DONNEES_VIDES.preferences, ...d.preferences },
   };

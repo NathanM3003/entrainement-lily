@@ -127,7 +127,7 @@ describe('charge prévue', () => {
 
   it('puissance (F25) : +1 cran quand toutes les répétitions sont faites deux séances de suite', () => {
     const d = donnees([11]);
-    const a = seanceDe(d, 11, 'A', '2027-02-01');
+    const a = seanceDe(d, 11, 'A');
     const fois = (date: string, reps: number) =>
       (d.resultats[date] = {
         date,

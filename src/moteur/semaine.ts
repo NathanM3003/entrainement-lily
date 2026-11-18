@@ -81,12 +81,14 @@ function ajouterTests(modeles: Modele[], semaine: Semaine): Modele[] {
     modeles = modeles.map((m, i) => (i === derniere ? { type: 'C', deuxSeances: false } : m));
   }
   return modeles.map((mod) => {
-    const test = semaine.retests.find(
-      (r) =>
-        (r.type === 'journee1' && (mod.type === 'A' || mod.type === 'U')) ||
-        (r.type === 'sprint' && (mod.type === 'A' || mod.type === 'U')) ||
-        (r.type === 'cooper' && r.moment !== 'condition' && mod.type === 'C'),
-    );
+    // La journée 1 passe avant le test de sprint : reportée après le 1er décembre, elle le contient.
+    const test =
+      semaine.retests.find((r) => r.type === 'journee1' && (mod.type === 'A' || mod.type === 'U')) ??
+      semaine.retests.find(
+        (r) =>
+          (r.type === 'sprint' && (mod.type === 'A' || mod.type === 'U')) ||
+          (r.type === 'cooper' && r.moment !== 'condition' && mod.type === 'C'),
+      );
     return test ? { ...mod, test } : mod;
   });
 }
