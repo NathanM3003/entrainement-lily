@@ -31,7 +31,7 @@ export function App() {
   else if (ecran === 'exercices') {
     contenu = <EcranExercices />;
     onglet = 'exercices';
-  } else if (ecran === 'sauvegarde') {
+  } else if (ecran === 'sauvegarde' || ecran === 'reglages') {
     contenu = <EcranSauvegarde />;
     onglet = 'sauvegarde';
   } else {
@@ -51,8 +51,8 @@ export function App() {
         <a href="#/exercices" aria-current={onglet === 'exercices' ? 'page' : undefined}>
           Exercices
         </a>
-        <a href="#/sauvegarde" aria-current={onglet === 'sauvegarde' ? 'page' : undefined}>
-          Sauvegarde
+        <a href="#/reglages" aria-current={onglet === 'sauvegarde' ? 'page' : undefined}>
+          Réglages
         </a>
       </nav>
     </>

@@ -655,6 +655,21 @@ Pour 2026-2027, cela ne met pas de bloc en S10 (semaine légère avec un match).
   - Le bouton « J'ai besoin d'une semaine légère » rend légère la semaine affichée, celle en cours ou une semaine à venir.
   - Dans tous les cas, le compte des semaines normales de suite repart à zéro.
 
+### Matchs, tournois et semaine changée : précisions (étape 7)
+
+*Ajouté le 18 novembre 2026. Choix faits pour appliquer la section 4, à faire valider.*
+
+- **Changer sa semaine en cours de route.** Le bouton « Changer ma semaine » de l'écran de la semaine sert à tout cela :
+  - ajouter ou retirer une séance ;
+  - changer ses jours ;
+  - déclarer un match imprévu, même déjà joué, ou annuler un match régulier.
+
+  Les séances faites ou commencées restent à leur place et comptent dans les règles de placement. Les autres sont replacées à partir du jour du changement, sur les jours encore libres. Un test déjà fait n'est pas reprogrammé.
+- **Pas de rattrapage automatique.** Une séance passée sans saisie reste « pas faite ». Elle n'est replacée que si Lily change sa semaine, et seulement dans le nombre de séances qu'elle choisit alors.
+- **Note d'effort après un match ou un jour de tournoi :** elle se donne sur la ligne du match, dans l'écran de la semaine. Pour l'instant, elle est seulement gardée : elle ne compte pas dans la règle « 2 séances à 9 ou plus ».
+- **Routine d'avant-match :** à partir du retour des changements de direction, chaque match à venir l'affiche, avec le rappel de mettre les chevillères. Elle comprend A12, A4, P14 et M1, environ 10 min en tout, sans dosage précis.
+- **Ligue du jeudi et autres matchs réguliers, tournois ajoutés :** ils se déclarent dans l'écran Réglages et entrent dans le calendrier comme ceux de la saison : semaine de tournoi, récupération, coupes selon le nombre de matchs.
+
 ### Séries et badges
 
 *Proposition à faire valider par Lily.*

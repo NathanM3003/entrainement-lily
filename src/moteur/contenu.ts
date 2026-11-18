@@ -1331,7 +1331,10 @@ export function detaillerSemaine(cal: Calendrier, plan: PlanSemaine, etat: EtatC
         essaisFaits.set(id, (essaisFaits.get(id) ?? 0) + 1);
         essaisPrevus.push(id);
       }
-      return { ...seance, contenu };
+      // 2 matchs ou plus : C devient force du haut du corps + tronc, sans course (section 4).
+      const sansIntermittents = seance.type === 'C' && !seance.test && nbMatchs >= 2 && semaine.phase !== 'fondation' && semaine.phase !== 'affutage';
+      const libelle = sansIntermittents ? 'Force du haut du corps et tronc (sans course : 2 matchs cette semaine)' : seance.libelle;
+      return { ...seance, libelle, contenu };
     });
 
   if (nbMatchs >= 2 && semaine.phase !== 'affutage') {

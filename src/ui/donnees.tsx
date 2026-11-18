@@ -20,6 +20,8 @@ interface ContexteDonnees {
   supprimerResultat: (date: DateISO) => void;
   modifierPreferences: (p: Partial<Preferences>) => void;
   demanderSemaineLegere: (numero: number, oui: boolean) => void;
+  modifierSaison: (saison: Donnees['saison']) => void;
+  noterMatch: (date: DateISO, effort: number) => void;
   importer: (d: Donnees) => Promise<void>;
 }
 
@@ -111,6 +113,26 @@ export function FournisseurDonnees({ children }: { children: ReactNode }) {
     [ecrire],
   );
 
+  const modifierSaison = useCallback(
+    (saison: Donnees['saison']) => {
+      setDonnees((d) => (d ? { ...d, saison } : d));
+      ecrire(idb.enregistrerSaison(saison));
+    },
+    [ecrire],
+  );
+
+  const noterMatch = useCallback(
+    (date: DateISO, effort: number) => {
+      setDonnees((d) => {
+        if (!d) return d;
+        const notesMatchs = { ...d.notesMatchs, [date]: effort };
+        ecrire(idb.enregistrerNotesMatchs(notesMatchs));
+        return { ...d, notesMatchs };
+      });
+    },
+    [ecrire],
+  );
+
   const importer = useCallback(async (d: Donnees) => {
     await idb.remplacerDonnees(d);
     setDonnees(d);
@@ -121,7 +143,7 @@ export function FournisseurDonnees({ children }: { children: ReactNode }) {
   if (!donnees) return <p className="chargement">Chargement…</p>;
   return (
     <Contexte.Provider
-      value={{ cal, donnees, saison, aujourdhui, erreur, choisirSemaine, enregistrerResultat, supprimerResultat, modifierPreferences, demanderSemaineLegere, importer }}
+      value={{ cal, donnees, saison, aujourdhui, erreur, choisirSemaine, enregistrerResultat, supprimerResultat, modifierPreferences, demanderSemaineLegere, modifierSaison, noterMatch, importer }}
     >
       {children}
     </Contexte.Provider>

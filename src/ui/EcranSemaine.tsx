@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { exercice } from '../donnees/banque';
+import { ROUTINE_AVANT_MATCH } from '../moteur/contenu';
 import { ajouterJours, dateCourte, joursEntre, jourSemaine, type DateISO } from '../moteur/dates';
 import type { ChoixSemaine } from '../moteur/semaine';
 import { LIBELLES_PHASES, type Semaine } from '../moteur/types';
@@ -91,6 +93,7 @@ export function EcranSemaine({ numero }: { numero: number }) {
         <ChoixDeLaSemaine
           calc={calc}
           precedent={donnees.choix[numero - 1]}
+          aujourdhui={aujourdhui}
           onValider={(choix) => {
             choisirSemaine(numero, choix);
             setModification(false);
@@ -107,15 +110,19 @@ export function EcranSemaine({ numero }: { numero: number }) {
 function ChoixDeLaSemaine({
   calc,
   precedent,
+  aujourdhui,
   onValider,
   onAnnuler,
 }: {
   calc: SemaineCalculee;
   precedent?: ChoixSemaine;
+  aujourdhui: DateISO;
   onValider: (c: ChoixSemaine) => void;
   onAnnuler?: () => void;
 }) {
   const jours = joursEntre(calc.semaine.debut, calc.semaine.fin);
+  const enCours = calc.semaine.debut <= aujourdhui && aujourdhui <= calc.semaine.fin;
+  const faites = calc.seances.filter((s) => s.resultat).map((s) => s.seance.date);
   // Par défaut : le choix déjà fait, sinon les mêmes jours de la semaine que la semaine d'avant, sinon tous les jours.
   const joursParDefaut = (): DateISO[] => {
     if (calc.choix) return calc.choix.joursDisponibles;
@@ -126,19 +133,39 @@ function ChoixDeLaSemaine({
     }
     return jours;
   };
-  const [nb, setNb] = useState(calc.choix?.nbSeances ?? precedent?.nbSeances ?? 3);
+  const [nb, setNb] = useState(Math.max(calc.choix?.nbSeances ?? precedent?.nbSeances ?? 3, faites.length));
   const [dispo, setDispo] = useState<DateISO[]>(joursParDefaut);
   const basculer = (j: DateISO) => setDispo((d) => (d.includes(j) ? d.filter((x) => x !== j) : [...d, j].sort()));
-  const matchs = new Set(calc.semaine.evenements.filter((e) => e.type === 'match' || e.type === 'tournoi').map((e) => e.date));
+  const passe = (j: DateISO) => enCours && j < aujourdhui;
+
+  // Matchs : les matchs réguliers sont cochés d'office ; Lily en ajoute (match imprévu) ou en annule.
+  const reguliers = calc.semaine.evenements.filter((e) => e.type === 'match').map((e) => e.date);
+  const tournoi = new Set(calc.semaine.evenements.filter((e) => e.type === 'tournoi').map((e) => e.date));
+  const [matchs, setMatchs] = useState<DateISO[]>(() => [
+    ...reguliers.filter((d) => !(calc.choix?.matchsAnnules ?? []).includes(d)),
+    ...(calc.choix?.matchsSupplementaires ?? []),
+  ]);
+  const basculerMatch = (j: DateISO) => setMatchs((m) => (m.includes(j) ? m.filter((x) => x !== j) : [...m, j]));
+
+  const valider = () =>
+    onValider({
+      nbSeances: nb,
+      joursDisponibles: dispo,
+      matchsSupplementaires: matchs.filter((d) => !reguliers.includes(d)).sort(),
+      matchsAnnules: reguliers.filter((d) => !matchs.includes(d)),
+      // Semaine en cours : rien n'est placé avant aujourd'hui, et les séances faites restent.
+      ...(enCours ? { depuis: aujourdhui } : {}),
+    });
 
   return (
     <section className="carte">
       <h2>Ta semaine</h2>
+      {faites.length > 0 && <p className="aide">Les séances déjà faites restent à leur place. L'app replace les autres à partir d'aujourd'hui.</p>}
       <fieldset className="choix">
         <legend>Combien de séances cette semaine ?</legend>
         <div className="segments">
           {[1, 2, 3, 4].map((n) => (
-            <button key={n} type="button" aria-pressed={nb === n} onClick={() => setNb(n)}>
+            <button key={n} type="button" aria-pressed={nb === n} disabled={n < faites.length} onClick={() => setNb(n)}>
               {n}
             </button>
           ))}
@@ -148,16 +175,27 @@ function ChoixDeLaSemaine({
         <legend>Quels jours es-tu disponible ?</legend>
         <div className="jours">
           {jours.map((j) => (
-            <button key={j} type="button" aria-pressed={dispo.includes(j)} onClick={() => basculer(j)}>
+            <button key={j} type="button" aria-pressed={dispo.includes(j) && !passe(j)} disabled={passe(j) || faites.includes(j)} onClick={() => basculer(j)}>
               {jourCourt(j)}
-              {matchs.has(j) && <span className="petit">match</span>}
+              {(matchs.includes(j) || tournoi.has(j)) && <span className="petit">{tournoi.has(j) ? 'tournoi' : 'match'}</span>}
+            </button>
+          ))}
+        </div>
+      </fieldset>
+      <fieldset className="choix">
+        <legend>Matchs cette semaine</legend>
+        <p className="aide">Coche un match imprévu, même déjà joué, ou décoche un match annulé. L'app ajuste la semaine.</p>
+        <div className="jours">
+          {jours.map((j) => (
+            <button key={j} type="button" aria-pressed={matchs.includes(j) || tournoi.has(j)} disabled={tournoi.has(j)} onClick={() => basculerMatch(j)}>
+              {jourCourt(j)}
             </button>
           ))}
         </div>
       </fieldset>
       <p className="aide">L'app choisit les jours, le type de chaque séance et son contenu.</p>
       <div className="actions">
-        <button type="button" className="principal" disabled={dispo.length === 0} onClick={() => onValider({ ...calc.choix, nbSeances: nb, joursDisponibles: dispo })}>
+        <button type="button" className="principal" disabled={dispo.filter((j) => !passe(j)).length === 0 && faites.length === 0} onClick={valider}>
           Prévoir ma semaine
         </button>
         {onAnnuler && (
@@ -171,10 +209,12 @@ function ChoixDeLaSemaine({
 }
 
 function PlanDeLaSemaine({ calc, aujourdhui, onModifier }: { calc: SemaineCalculee; aujourdhui: DateISO; onModifier: () => void }) {
-  const { demanderSemaineLegere } = useDonnees();
+  const { demanderSemaineLegere, donnees, noterMatch, cal } = useDonnees();
   const dejaLegere = calc.semaine.legere?.etendue === 'complete' && !calc.legereDemandee;
   const jours = joursEntre(calc.semaine.debut, calc.semaine.fin);
   const matchs = calc.plan?.matchs ?? [];
+  const cod = cal.config.restrictions.changementsDeDirection;
+  const routineDes = cod ? ajouterJours(cod.jusquau, 1) : cal.config.debut;
   return (
     <>
       {calc.messages.length > 0 && (
@@ -196,9 +236,32 @@ function PlanDeLaSemaine({ calc, aujourdhui, onModifier }: { calc: SemaineCalcul
                 {j === aujourdhui && <span className="pastille">Aujourd'hui</span>}
               </p>
               {match.map((m) => (
-                <p key={m.nom + m.date} className="match">
-                  {m.type === 'tournoi' ? '🏆' : '🥏'} {m.nom}
-                </p>
+                <div key={m.nom + m.date} className="match-bloc">
+                  <p className="match">
+                    {m.type === 'tournoi' ? '🏆' : '🥏'} {m.nom}
+                  </p>
+                  {j >= aujourdhui && j >= routineDes && (
+                    <details className="routine">
+                      <summary>Routine d'avant-match (10 min)</summary>
+                      <ul>
+                        {ROUTINE_AVANT_MATCH.map((id) => (
+                          <li key={id}>
+                            {exercice(id).nom} <span className="petit">({id})</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="aide">Mets tes chevillères aux deux chevilles.</p>
+                    </details>
+                  )}
+                  {j <= aujourdhui && (
+                    <Echelle
+                      label={m.type === 'tournoi' ? 'Effort de la journée' : 'Effort du match'}
+                      aide="(0 à 10)"
+                      valeur={donnees.notesMatchs?.[j]}
+                      onChange={(v) => noterMatch(j, v)}
+                    />
+                  )}
+                </div>
               ))}
               {seance ? (
                 <a className={`seance etat-${seance.etat}`} href={`#/seance/${j}`}>
@@ -220,25 +283,27 @@ function PlanDeLaSemaine({ calc, aujourdhui, onModifier }: { calc: SemaineCalcul
         })}
       </ol>
       <p className="aide">Les jours de repos, une routine facultative de 10 min à la maison : M1, M7 et M3 (sans course).</p>
-      <div className="actions">
-        <button type="button" onClick={onModifier} disabled={calc.commencee}>
-          Changer mes jours
-        </button>
-        {calc.semaine.fin >= aujourdhui && !dejaLegere && (
-          <button
-            type="button"
-            onClick={() =>
-              calc.legereDemandee
-                ? demanderSemaineLegere(calc.semaine.numero, false)
-                : confirm('Rendre cette semaine légère ? Environ 35 % de volume en moins, mêmes charges, pas de nouvel exercice.') &&
-                  demanderSemaineLegere(calc.semaine.numero, true)
-            }
-          >
-            {calc.legereDemandee ? 'Annuler la semaine légère' : "J'ai besoin d'une semaine légère"}
+      {calc.semaine.fin >= aujourdhui && (
+        <div className="actions">
+          <button type="button" onClick={onModifier}>
+            Changer ma semaine
           </button>
-        )}
-      </div>
-      {calc.commencee && <p className="aide">La semaine est commencée : les jours ne changent plus. Ajouter ou retirer une séance viendra dans une prochaine version.</p>}
+          {!dejaLegere && (
+            <button
+              type="button"
+              onClick={() =>
+                calc.legereDemandee
+                  ? demanderSemaineLegere(calc.semaine.numero, false)
+                  : confirm('Rendre cette semaine légère ? Environ 35 % de volume en moins, mêmes charges, pas de nouvel exercice.') &&
+                    demanderSemaineLegere(calc.semaine.numero, true)
+              }
+            >
+              {calc.legereDemandee ? 'Annuler la semaine légère' : "J'ai besoin d'une semaine légère"}
+            </button>
+          )}
+        </div>
+      )}
+      <p className="aide">Changer ma semaine : ajouter ou retirer une séance, changer de jours, déclarer un match imprévu ou annulé.</p>
     </>
   );
 }

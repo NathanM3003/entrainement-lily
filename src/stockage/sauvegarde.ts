@@ -31,6 +31,8 @@ export function lireSauvegarde(texte: string): Donnees {
   return {
     choix: d.choix ?? {},
     legeresDemandees: Array.isArray(d.legeresDemandees) ? d.legeresDemandees : [],
+    saison: { matchsReguliers: d.saison?.matchsReguliers ?? [], tournois: d.saison?.tournois ?? [] },
+    notesMatchs: d.notesMatchs ?? {},
     resultats: d.resultats ?? {},
     preferences: { ...DONNEES_VIDES.preferences, ...d.preferences },
   };

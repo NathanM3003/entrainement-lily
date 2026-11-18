@@ -88,10 +88,15 @@ const testFait = (donnees: Donnees, type: TypeRetest) => Object.values(donnees.r
 export function calculerSaison(calBase: Calendrier, donnees: Donnees, aujourdhui: DateISO): SemaineCalculee[] {
   // Semaines légères anticipées ou demandées (section 6) : le calendrier est refait avec elles,
   // ce qui remet à zéro le compte des semaines normales de suite.
+  // Matchs réguliers et tournois ajoutés par Lily (section 4) : ils entrent dans le calendrier comme les autres.
   const anticipees = semainesLegeresAnticipees(donnees, donnees.legeresDemandees ?? []).filter((l) => l.semaine <= calBase.semaines.length);
-  const cal = anticipees.length
-    ? genererCalendrier({ ...calBase.config, semainesLegeres: [...calBase.config.semainesLegeres, ...anticipees] })
-    : genererCalendrier(calBase.config);
+  const ajouts = donnees.saison ?? { matchsReguliers: [], tournois: [] };
+  const cal = genererCalendrier({
+    ...calBase.config,
+    semainesLegeres: [...calBase.config.semainesLegeres, ...anticipees],
+    matchsReguliers: [...calBase.config.matchsReguliers, ...ajouts.matchsReguliers],
+    tournois: [...calBase.config.tournois, ...ajouts.tournois].sort((a, b) => (a.debut < b.debut ? -1 : 1)),
+  });
   const { statuts, reessais } = decisionsEssais(donnees);
   const vitesses = allures(donnees);
   const cotes = seriesEnPlus(donnees);
@@ -149,7 +154,9 @@ export function calculerSaison(calBase: Calendrier, donnees: Donnees, aujourdhui
     // Retour après 10 jours ou plus sans entraînement : la course reprend une étape plus bas (section 5).
     const reference = semaine.debut > aujourdhui ? semaine.debut : aujourdhui;
     const retour = aVenir && progression.dernierJour !== undefined && ecartJours(progression.dernierJour, reference) >= 10;
-    const plan = planifierSemaine(cal, semaine.numero, choix, precedentes);
+    // Semaine changée en cours de route : les séances déjà faites ou commencées restent à leur place.
+    const faites = choix.depuis ? resultats.map((r) => r.seance) : [];
+    const plan = planifierSemaine(cal, semaine.numero, choix, precedentes, faites);
     const contenu = detaillerSemaine(cal, plan, {
       statuts,
       reessais,

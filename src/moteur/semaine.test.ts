@@ -244,3 +244,48 @@ describe('semaines particulières de 2026-2027', () => {
     expect(p.seances.every((s) => s.date <= '2027-03-12')).toBe(true);
   });
 });
+
+describe('changer une semaine en cours de route (section 4)', () => {
+  const plan3 = () => planifierSemaine(cal, 3, { nbSeances: 3, joursDisponibles: tousLesJours(3) });
+
+  it('retrait : les séances faites restent, le reste est recalculé avec une séance de moins', () => {
+    const avant = plan3();
+    const a = avant.seances.find((s) => s.type === 'A')!;
+    const p = planifierSemaine(cal, 3, { nbSeances: 2, joursDisponibles: tousLesJours(3), depuis: ajouterJours(a.date, 1) }, [], [a]);
+    expect(p.seances.map((s) => s.type).sort()).toEqual(['A', 'B']);
+    expect(p.seances.find((s) => s.type === 'A')?.date).toBe(a.date);
+    expect(p.seances.every((s) => s === a || s.date > a.date)).toBe(true);
+    expect(p.messages[0]).toBe('Semaine recalculée : les séances déjà faites restent, les autres sont replacées sur les jours qui restent.');
+  });
+
+  it('ajout : la séance qui manque selon l’ordre de priorité, ou D si la semaine en compte déjà 3', () => {
+    const avant = plan3();
+    const a = avant.seances.find((s) => s.type === 'A')!;
+    const p = planifierSemaine(cal, 3, { nbSeances: 4, joursDisponibles: tousLesJours(3), depuis: ajouterJours(a.date, 1) }, [], [a]);
+    expect(p.seances.map((s) => s.type).sort()).toEqual(['A', 'B', 'C', 'D']);
+  });
+
+  it('match déclaré après coup : le lendemain passe en charge faible et les jours qui restent sont réorganisés', () => {
+    // S3 : A faite le lundi, match imprévu le mardi, déclaré le mercredi.
+    const a = { ...plan3().seances.find((s) => s.type === 'A')!, date: '2026-12-07' };
+    const p = planifierSemaine(
+      cal,
+      3,
+      { nbSeances: 3, joursDisponibles: tousLesJours(3), matchsSupplementaires: ['2026-12-08'], depuis: '2026-12-09' },
+      [],
+      [a],
+    );
+    const mercredi = p.seances.find((s) => s.date === '2026-12-09');
+    expect(mercredi === undefined || mercredi.charge === 'faible').toBe(true);
+    expect(p.seances.filter((s) => s.date >= '2026-12-09').length).toBe(2);
+    verifierRegles({ ...p, seances: p.seances.filter((s) => s.date >= '2026-12-09') }, ['2026-12-08']);
+  });
+
+  it('un test déjà fait n’est pas reprogrammé', () => {
+    const s1 = planifierSemaine(cal, 1, { nbSeances: 3, joursDisponibles: tousLesJours(1) });
+    const tests = s1.seances.find((s) => s.test === 'journee1')!;
+    const p = planifierSemaine(cal, 1, { nbSeances: 3, joursDisponibles: tousLesJours(1), depuis: '2026-11-25' }, [], [tests]);
+    expect(p.seances.filter((s) => s.test === 'journee1')).toHaveLength(1);
+    expect(p.seances.length).toBe(3);
+  });
+});

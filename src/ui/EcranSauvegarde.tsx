@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
-import { dateCourte } from '../moteur/dates';
+import { dateCourte, JOURS, type JourSemaine } from '../moteur/dates';
+import type { MatchRegulier, Periode } from '../moteur/types';
 import { CRANS_PAR_DEFAUT, LIBELLES_MATERIEL, type Materiel } from '../moteur/progression';
 import { ChampNombre } from './communs';
 import { creerSauvegarde, lireSauvegarde } from '../stockage/sauvegarde';
@@ -8,7 +9,7 @@ import { useDonnees } from './donnees';
 
 /** Export et import du fichier de sauvegarde, réglage des unités. */
 export function EcranSauvegarde() {
-  const { donnees, aujourdhui, modifierPreferences, importer } = useDonnees();
+  const { donnees, aujourdhui, modifierPreferences, importer, cal, modifierSaison } = useDonnees();
   const [message, setMessage] = useState<string>();
   const fichier = useRef<HTMLInputElement>(null);
   const nbSeances = Object.values(donnees.resultats).filter((r) => r.terminee).length;
@@ -50,8 +51,17 @@ export function EcranSauvegarde() {
 
   return (
     <main className="page">
-      <p className="surtitre">Tes données</p>
-      <h1>Sauvegarde</h1>
+      <p className="surtitre">Réglages</p>
+      <h1>Saison et sauvegarde</h1>
+      <MatchsEtTournois
+        reguliersSaison={cal.config.matchsReguliers}
+        tournoisSaison={cal.config.tournois}
+        ajouts={donnees.saison ?? { matchsReguliers: [], tournois: [] }}
+        debut={cal.config.debut}
+        fin={cal.config.echeance}
+        onChange={modifierSaison}
+      />
+      <h2 className="titre-section">Sauvegarde</h2>
       <section className="carte">
         <p>
           Tes données restent sur ce téléphone, sans compte ni serveur. Une fois par semaine, crée une sauvegarde et garde-la
@@ -125,5 +135,132 @@ export function EcranSauvegarde() {
         ))}
       </section>
     </main>
+  );
+}
+
+/** Matchs réguliers (ligue du jeudi…) et tournois ajoutés en cours de saison (section 4). */
+function MatchsEtTournois({
+  reguliersSaison,
+  tournoisSaison,
+  ajouts,
+  debut,
+  fin,
+  onChange,
+}: {
+  reguliersSaison: MatchRegulier[];
+  tournoisSaison: Periode[];
+  ajouts: { matchsReguliers: MatchRegulier[]; tournois: Periode[] };
+  debut: string;
+  fin: string;
+  onChange: (a: { matchsReguliers: MatchRegulier[]; tournois: Periode[] }) => void;
+}) {
+  const [nomMatch, setNomMatch] = useState('Ligue du jeudi');
+  const [jour, setJour] = useState<JourSemaine>(4);
+  const [desLe, setDesLe] = useState('');
+  const [nomTournoi, setNomTournoi] = useState('');
+  const [debutTournoi, setDebutTournoi] = useState('');
+  const [finTournoi, setFinTournoi] = useState('');
+  const texteMatch = (m: MatchRegulier) => `${m.nom} : le ${JOURS[m.jour - 1]}, à partir du ${dateCourte(m.debut)}`;
+  const texteTournoi = (t: Periode) => `${t.nom} : ${dateCourte(t.debut)}${t.fin !== t.debut ? ` au ${dateCourte(t.fin)}` : ''}`;
+  const tournoiValide = nomTournoi.trim() && debutTournoi && finTournoi >= debutTournoi && debutTournoi >= debut && finTournoi < fin;
+
+  return (
+    <>
+      <section className="carte">
+        <h2>Matchs réguliers</h2>
+        <p className="aide">Ils reviennent chaque semaine. Un match imprévu ou annulé se déclare dans l'écran de la semaine.</p>
+        <ul className="liste-reglages">
+          {reguliersSaison.map((m) => (
+            <li key={m.nom}>{texteMatch(m)}</li>
+          ))}
+          {ajouts.matchsReguliers.map((m, i) => (
+            <li key={m.nom + i}>
+              {texteMatch(m)}{' '}
+              <button type="button" className="lien" onClick={() => onChange({ ...ajouts, matchsReguliers: ajouts.matchsReguliers.filter((_, j) => j !== i) })}>
+                Retirer
+              </button>
+            </li>
+          ))}
+        </ul>
+        <div className="formulaire">
+          <label className="champ">
+            <span className="champ-label">Nom</span>
+            <input type="text" value={nomMatch} onChange={(e) => setNomMatch(e.target.value)} />
+          </label>
+          <label className="champ">
+            <span className="champ-label">Jour</span>
+            <select value={jour} onChange={(e) => setJour(Number(e.target.value) as JourSemaine)}>
+              {JOURS.map((j, i) => (
+                <option key={j} value={i + 1}>
+                  {j}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="champ">
+            <span className="champ-label">À partir du</span>
+            <input type="date" value={desLe} min={debut} max={fin} onChange={(e) => setDesLe(e.target.value)} />
+          </label>
+        </div>
+        <div className="actions">
+          <button
+            type="button"
+            disabled={!nomMatch.trim() || !desLe}
+            onClick={() => {
+              onChange({ ...ajouts, matchsReguliers: [...ajouts.matchsReguliers, { nom: nomMatch.trim(), jour, debut: desLe }] });
+              setDesLe('');
+            }}
+          >
+            Ajouter ce match régulier
+          </button>
+        </div>
+      </section>
+
+      <section className="carte">
+        <h2>Tournois</h2>
+        <p className="aide">La semaine d'un tournoi : 2 séances courtes au plus, rien de chargé dans les 48 h avant, récupération le lundi et le mardi suivants.</p>
+        <ul className="liste-reglages">
+          {tournoisSaison.map((t) => (
+            <li key={t.nom}>{texteTournoi(t)}</li>
+          ))}
+          {ajouts.tournois.map((t, i) => (
+            <li key={t.nom + i}>
+              {texteTournoi(t)}{' '}
+              <button type="button" className="lien" onClick={() => onChange({ ...ajouts, tournois: ajouts.tournois.filter((_, j) => j !== i) })}>
+                Retirer
+              </button>
+            </li>
+          ))}
+        </ul>
+        <div className="formulaire">
+          <label className="champ">
+            <span className="champ-label">Nom</span>
+            <input type="text" value={nomTournoi} placeholder="Tournoi d'avril" onChange={(e) => setNomTournoi(e.target.value)} />
+          </label>
+          <label className="champ">
+            <span className="champ-label">Premier jour</span>
+            <input type="date" value={debutTournoi} min={debut} max={fin} onChange={(e) => setDebutTournoi(e.target.value)} />
+          </label>
+          <label className="champ">
+            <span className="champ-label">Dernier jour</span>
+            <input type="date" value={finTournoi} min={debutTournoi || debut} max={fin} onChange={(e) => setFinTournoi(e.target.value)} />
+          </label>
+        </div>
+        <div className="actions">
+          <button
+            type="button"
+            disabled={!tournoiValide}
+            onClick={() => {
+              onChange({ ...ajouts, tournois: [...ajouts.tournois, { nom: nomTournoi.trim(), debut: debutTournoi, fin: finTournoi }] });
+              setNomTournoi('');
+              setDebutTournoi('');
+              setFinTournoi('');
+            }}
+          >
+            Ajouter ce tournoi
+          </button>
+        </div>
+      </section>
+    </>
   );
 }

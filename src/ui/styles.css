@@ -221,3 +221,17 @@ legend { padding: 0; margin-bottom: 8px; font-weight: 600; }
 .ligne-crans { display: grid; grid-template-columns: 1fr 96px 96px; gap: 8px; align-items: end; margin-top: 8px; }
 .ligne-crans > span { padding-bottom: 12px; font-weight: 600; font-size: 15px; }
 .champs .choix, .champs .case, .champs .aide { grid-column: 1 / -1; }
+
+.match-bloc { margin-bottom: 8px; }
+.match-bloc .echelle { margin: 4px 0 8px; }
+.routine { margin: 0 0 8px; font-size: 15px; }
+.routine summary { cursor: pointer; min-height: 32px; color: var(--accent); font-weight: 600; }
+.routine ul { margin: 4px 0; padding-left: 20px; }
+
+.titre-section { margin: 24px 0 0; }
+.liste-reglages { margin: 8px 0; padding-left: 20px; font-size: 15px; }
+.formulaire { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.champ select, .formulaire input[type='text'], .formulaire input[type='date'] {
+  width: 100%; min-height: 44px; font: inherit; padding: 6px 10px;
+  border: 1px solid var(--ligne); border-radius: 10px; background: var(--fond); color: var(--encre);
+}

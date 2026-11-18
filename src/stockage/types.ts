@@ -3,6 +3,7 @@
 import type { SeanceDetaillee } from '../moteur/contenu';
 import type { DateISO } from '../moteur/dates';
 import type { ChoixSemaine } from '../moteur/semaine';
+import type { MatchRegulier, Periode } from '../moteur/types';
 
 export type Unite = 'kg' | 'lb';
 export type UniteAllure = 'min/km' | 'km/h' | 'mi/h';
@@ -82,6 +83,10 @@ export interface Donnees {
   choix: Record<number, ChoixSemaine>;
   /** Semaines que Lily a demandées légères (« J'ai besoin d'une semaine légère »). */
   legeresDemandees: number[];
+  /** Matchs réguliers et tournois ajoutés par Lily (ligue du jeudi…), en plus de ceux de la saison. */
+  saison: { matchsReguliers: MatchRegulier[]; tournois: Periode[] };
+  /** Note d'effort de 0 à 10 après un match ou un jour de tournoi (section 5). */
+  notesMatchs: Record<DateISO, number>;
   resultats: Record<DateISO, ResultatSeance>;
   preferences: Preferences;
 }
@@ -89,6 +94,8 @@ export interface Donnees {
 export const DONNEES_VIDES: Donnees = {
   choix: {},
   legeresDemandees: [],
+  saison: { matchsReguliers: [], tournois: [] },
+  notesMatchs: {},
   resultats: {},
   preferences: { unites: {}, allure: 'min/km' },
 };

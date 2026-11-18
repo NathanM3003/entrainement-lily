@@ -21,6 +21,11 @@ export interface ChoixSemaine {
   matchsSupplementaires?: DateISO[];
   /** Matchs réguliers qui n'auront pas lieu. */
   matchsAnnules?: DateISO[];
+  /**
+   * Semaine changée en cours de route (section 4, « Retirer ou ajouter une séance ») : jour du changement.
+   * Les séances déjà faites restent, les autres sont placées à partir de ce jour.
+   */
+  depuis?: DateISO;
 }
 
 /** Ce qu'il faut savoir de la semaine précédente : ses séances, pour ne pas enchaîner dimanche et lundi. */
@@ -184,7 +189,7 @@ interface Contexte {
 const POIDS_CHARGE: Record<Charge, number> = { elevee: 3, moyenne: 2, faible: 1 };
 
 /** Règles de placement qui ne se négocient pas. Renvoie true si le placement est permis. */
-function respecteLesRegles(placements: Placement[], ctx: Contexte): boolean {
+function respecteLesRegles(placements: Placement[], ctx: Contexte, fixes: ReadonlySet<Placement> = new Set()): boolean {
   const parDate = new Map<DateISO, { charge: Charge; course: boolean }>(placements.map((p) => [p.date, p]));
 
   // Le dimanche précédent compte pour le lundi : pas 2 jours chargés ni 2 jours de course de suite.
@@ -196,6 +201,16 @@ function respecteLesRegles(placements: Placement[], ctx: Contexte): boolean {
   for (const p of placements) {
     const veille = ajouterJours(p.date, -1);
     const lendemain = ajouterJours(p.date, 1);
+    const suivanteFixe = fixes.has(p) && fixes.has(parDate.get(lendemain) as Placement);
+    if (fixes.has(p)) {
+      // Séance déjà faite : seules ses relations avec les nouvelles séances comptent.
+      const suivante = parDate.get(lendemain);
+      if (suivante && !suivanteFixe) {
+        if (p.charge === 'elevee' && suivante.charge === 'elevee') return false;
+        if (p.course && suivante.course) return false;
+      }
+      continue;
+    }
     const doitEtreFaible =
       ctx.joursMatch.has(p.date) || // séance le jour d'un match : charge faible seulement
       ctx.joursMatch.has(lendemain) || // veille de match
@@ -290,12 +305,13 @@ function comparer(a: number[], b: number[]): number {
   return 0;
 }
 
-function meilleurPlacement(modeles: Modele[], jours: DateISO[], ctx: Contexte): Placement[] | null {
+function meilleurPlacement(modeles: Modele[], jours: DateISO[], ctx: Contexte, fixes: Placement[] = []): Placement[] | null {
   let meilleur: { placements: Placement[]; note: number[] } | null = null;
+  const ensembleFixes = new Set(fixes);
 
   const essayer = (i: number, libres: DateISO[], courant: Placement[]) => {
     if (i === modeles.length) {
-      if (!respecteLesRegles(courant, ctx)) return;
+      if (!respecteLesRegles([...fixes, ...courant], ctx, ensembleFixes)) return;
       const note = noter(courant, ctx);
       if (!meilleur || comparer(note, meilleur.note) < 0) meilleur = { placements: [...courant], note };
       return;
@@ -345,11 +361,25 @@ function compositions(semaine: Semaine, base: Modele[], k: number): Modele[][] {
 
 const NOMS_SEANCES: Record<TypeSeance, string> = { A: 'A', B: 'B', C: 'C', D: 'D', U: 'unique' };
 
+/** Une séance de la composition par séance déjà faite (le même type, sinon la moins prioritaire). */
+function retirerFaites(modeles: Modele[], faites: SeancePlanifiee[]): Modele[] {
+  const reste = [...modeles];
+  for (const f of faites) {
+    let i = reste.findIndex((m) => m.type === f.type && m.test?.type === f.test);
+    if (i < 0) i = reste.findIndex((m) => m.type === f.type);
+    if (i < 0) i = reste.length - 1;
+    if (i >= 0) reste.splice(i, 1);
+  }
+  return reste;
+}
+
 export function planifierSemaine(
   calendrier: Calendrier,
   numero: number,
   choix: ChoixSemaine,
   seancesPrecedentes: SeancesPrecedentes = [],
+  /** Séances déjà faites ou commencées de cette semaine, quand elle est changée en cours de route. */
+  seancesFaites: SeancePlanifiee[] = [],
 ): PlanSemaine {
   const semaine = calendrier.semaines[numero - 1];
   if (!semaine) throw new Error(`Semaine ${numero} absente du programme.`);
@@ -386,7 +416,12 @@ export function planifierSemaine(
     anterieures: seancesPrecedentes.filter((s) => s.date < semaine.debut && ecartJours(s.date, semaine.debut) <= 3),
   };
 
-  const jours = [...new Set(choix.joursDisponibles)].filter((j) => joursSemaine.includes(j)).sort();
+  const faites = seancesFaites.filter((f) => joursSemaine.includes(f.date));
+  const datesFaites = new Set(faites.map((f) => f.date));
+  const jours = [...new Set(choix.joursDisponibles)]
+    .filter((j) => joursSemaine.includes(j) && j >= (choix.depuis ?? '') && !datesFaites.has(j))
+    .sort();
+  if (choix.depuis && faites.length) messages.push('Semaine recalculée : les séances déjà faites restent, les autres sont replacées sur les jours qui restent.');
 
   // Plafonds de la semaine.
   let n = choix.nbSeances;
@@ -399,32 +434,53 @@ export function planifierSemaine(
     n = 2;
     messages.push("Période allégée : 2 séances d'environ 1 h, avec les charges gardées.");
   }
-  if (jours.length < n) {
+  n = Math.max(n, faites.length);
+  if (jours.length < n - faites.length) {
     messages.push(
-      jours.length === 0
+      jours.length === 0 && faites.length === 0
         ? "Aucun jour disponible cette semaine : pas de séance. Les routines de prévention à la maison restent possibles."
-        : `Tu as donné ${jours.length} jour${jours.length > 1 ? 's' : ''} pour ${n} séances : l'app prévoit ${jours.length} séance${jours.length > 1 ? 's' : ''}.`,
+        : faites.length
+          ? `Il reste ${jours.length} jour${jours.length > 1 ? 's' : ''} disponible${jours.length > 1 ? 's' : ''} : l'app prévoit ${faites.length + jours.length} séance${faites.length + jours.length > 1 ? 's' : ''} en tout.`
+          : `Tu as donné ${jours.length} jour${jours.length > 1 ? 's' : ''} pour ${n} séances : l'app prévoit ${jours.length} séance${jours.length > 1 ? 's' : ''}.`,
     );
-    n = jours.length;
+    n = faites.length + jours.length;
   }
 
   // On essaie avec n séances, puis une de moins tant qu'aucun placement ne respecte les règles.
   // Pour chaque nombre de séances, on essaie d'abord la composition habituelle (section 2), puis les autres
   // combinaisons des séances choisies par Lily, dans l'ordre de priorité de la section 4. Ainsi, quand A et B
   // ne peuvent pas être placées (semaine de tournoi, fin d'affûtage), C sans course ou D peuvent l'être.
+  // Séances déjà faites : elles restent à leur place et comptent dans les règles. Leurs tests sont faits.
+  const fixes: Placement[] = faites.map((f) => ({
+    mod: { type: f.type, deuxSeances: f.deuxSeances, test: f.test ? { type: f.test, moment: 'semaine', semaine: numero } : undefined },
+    date: f.date,
+    variante: f.variante,
+    charge: f.charge,
+    course: f.course,
+  }));
+  const semaineRestante: Semaine = { ...semaine, retests: semaine.retests.filter((r) => !faites.some((f) => f.test === r.type)) };
+
   let placements: Placement[] = [];
   const nDemande = n;
-  let base = ajouterTests(composer(semaine.phase, Math.min(choix.nbSeances, jours.length)), semaine);
+  let base = ajouterTests(composer(semaine.phase, Math.min(choix.nbSeances, jours.length + faites.length)), semaineRestante);
   if (semaine.phase === 'affutage' && semaine.tournoi) base = base.filter((m) => m.type !== 'C'); // C retirée la semaine d'un tournoi
-  for (let k = n; k >= 1 && placements.length === 0; k--) {
-    for (const modeles of compositions(semaine, base, k)) {
-      const trouve = meilleurPlacement(modeles, jours, ctx);
-      if (trouve) {
-        placements = trouve;
+  let trouve = false;
+  for (let k = n; k >= Math.max(1, faites.length) && !trouve; k--) {
+    for (const modeles of compositions(semaineRestante, base, k)) {
+      const reste = retirerFaites(modeles, faites);
+      if (reste.length === 0) {
+        trouve = true;
+        break;
+      }
+      const nouvelles = meilleurPlacement(reste, jours, ctx, fixes);
+      if (nouvelles) {
+        placements = nouvelles;
+        trouve = true;
         break;
       }
     }
   }
+  placements = [...fixes, ...placements];
   const attendues = ajouterTests(composer(semaine.phase, nDemande), semaine).map((m) => m.type);
   const gardees = new Set(placements.map((p) => p.mod.type));
   const remplacantes = [...gardees].filter((t) => !attendues.includes(t) && t !== 'U').map((t) => NOMS_SEANCES[t]);
@@ -455,7 +511,7 @@ export function planifierSemaine(
   }
 
   const seances: SeancePlanifiee[] = placements
-    .map((p) => ({
+    .map((p) => faites.find((f) => f.date === p.date && fixes.includes(p)) ?? ({
       date: p.date,
       type: p.mod.type,
       libelle: libelle(semaine.phase, p.mod, p.variante),
@@ -469,7 +525,7 @@ export function planifierSemaine(
     }))
     .sort((a, b) => (a.date < b.date ? -1 : 1));
 
-  for (const s of seances) {
+  for (const s of seances.filter((x) => !datesFaites.has(x.date))) {
     if (ctx.joursMatch.has(s.date)) {
       messages.push(`Séance ${NOMS_SEANCES[s.type]} le jour du match : seulement du haut du corps et du tronc, sans course ni sauts.`);
     } else if (s.variante === 'sans-course') {

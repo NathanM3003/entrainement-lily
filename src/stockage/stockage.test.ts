@@ -142,3 +142,38 @@ describe('sauvegarde', () => {
     expect(rappelSauvegarde(d, '2026-12-04')).toBe(true);
   });
 });
+
+describe('matchs, tournois et semaine changée en cours de route (section 4)', () => {
+  it('un match régulier ajouté (ligue du jeudi) entre dans le plan et les coupes à 2 matchs', () => {
+    const d = { ...donnees(), choix: { 8: { nbSeances: 3, joursDisponibles: jours(8) } } };
+    d.saison = { matchsReguliers: [{ nom: 'Ligue du jeudi', jour: 4, debut: '2027-01-14' }], tournois: [] };
+    const s8 = calculerSaison(cal, d, '2027-01-10')[7]!;
+    expect(s8.plan!.matchs.map((m) => m.date)).toEqual(['2027-01-13', '2027-01-14']);
+    expect(s8.messages).toContain('2 matchs ou plus cette semaine : ajoute 1 routine de prévention de 10 min à la maison (M1, M7, M3).');
+  });
+
+  it('un tournoi ajouté rend la semaine « semaine de tournoi », avec la récupération après', () => {
+    const d = { ...donnees(), choix: {} };
+    d.saison = { matchsReguliers: [], tournois: [{ nom: 'Tournoi de décembre', debut: '2026-12-12', fin: '2026-12-13' }] };
+    const s = calculerSaison(cal, d, '2026-11-20');
+    expect(s[2]!.semaine.tournoi).toBe(true);
+    expect(s[3]!.semaine.joursRecuperation).toEqual(['2026-12-14', '2026-12-15']);
+  });
+
+  it('semaine changée en cours de route : la séance faite reste, les autres sont replacées après', () => {
+    const d = donnees();
+    const a = terminer(d, 1, 'A');
+    d.choix[1] = { nbSeances: 2, joursDisponibles: jours(1), depuis: '2026-11-25' };
+    const s1 = calculerSaison(cal, d, '2026-11-25')[0]!;
+    expect(s1.seances.map((s) => `${s.seance.date} ${s.seance.type}`)).toEqual([`${a.date} A`, ...s1.seances.slice(1).map((s) => `${s.seance.date} ${s.seance.type}`)]);
+    expect(s1.seances).toHaveLength(2);
+    expect(s1.seances[1]!.seance.date >= '2026-11-25').toBe(true);
+  });
+
+  it('la sauvegarde garde les matchs ajoutés et les notes de match', () => {
+    const d = donnees();
+    d.saison.matchsReguliers.push({ nom: 'Ligue du jeudi', jour: 4, debut: '2027-01-14' });
+    d.notesMatchs['2027-01-13'] = 7;
+    expect(lireSauvegarde(creerSauvegarde(d, '2027-01-14').contenu)).toEqual(d);
+  });
+});
