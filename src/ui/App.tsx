@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { semaineDuJour } from '../stockage/saison';
 import { useDonnees } from './donnees';
+import { EcranBilan } from './EcranBilan';
 import { EcranExercices } from './EcranExercices';
+import { EcranProgres } from './EcranProgres';
 import { EcranSauvegarde } from './EcranSauvegarde';
 import { EcranSeance } from './EcranSeance';
 import { EcranSemaine } from './EcranSemaine';
@@ -26,8 +28,12 @@ export function App() {
   const [, ecran, param] = adresse.split('/');
 
   let contenu;
-  let onglet: 'semaine' | 'exercices' | 'sauvegarde' = 'semaine';
+  let onglet: 'semaine' | 'progres' | 'exercices' | 'sauvegarde' = 'semaine';
   if (ecran === 'seance' && param) contenu = <EcranSeance key={param} date={param} />;
+  else if (ecran === 'progres' || ecran === 'bilan') {
+    contenu = ecran === 'bilan' ? <EcranBilan /> : <EcranProgres />;
+    onglet = 'progres';
+  }
   else if (ecran === 'exercices') {
     contenu = <EcranExercices />;
     onglet = 'exercices';
@@ -47,6 +53,9 @@ export function App() {
       <nav className="barre" aria-label="Navigation">
         <a href="#/" aria-current={onglet === 'semaine' ? 'page' : undefined}>
           Semaine
+        </a>
+        <a href="#/progres" aria-current={onglet === 'progres' ? 'page' : undefined}>
+          Progrès
         </a>
         <a href="#/exercices" aria-current={onglet === 'exercices' ? 'page' : undefined}>
           Exercices

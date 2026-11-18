@@ -22,6 +22,7 @@ interface ContexteDonnees {
   demanderSemaineLegere: (numero: number, oui: boolean) => void;
   modifierSaison: (saison: Donnees['saison']) => void;
   noterMatch: (date: DateISO, effort: number) => void;
+  basculerRoutine: (date: DateISO) => void;
   importer: (d: Donnees) => Promise<void>;
 }
 
@@ -133,6 +134,19 @@ export function FournisseurDonnees({ children }: { children: ReactNode }) {
     [ecrire],
   );
 
+  const basculerRoutine = useCallback(
+    (date: DateISO) => {
+      setDonnees((d) => {
+        if (!d) return d;
+        const avant = d.routinesMaison ?? [];
+        const routinesMaison = avant.includes(date) ? avant.filter((x) => x !== date) : [...avant, date].sort();
+        ecrire(idb.enregistrerRoutines(routinesMaison));
+        return { ...d, routinesMaison };
+      });
+    },
+    [ecrire],
+  );
+
   const importer = useCallback(async (d: Donnees) => {
     await idb.remplacerDonnees(d);
     setDonnees(d);
@@ -143,7 +157,7 @@ export function FournisseurDonnees({ children }: { children: ReactNode }) {
   if (!donnees) return <p className="chargement">Chargement…</p>;
   return (
     <Contexte.Provider
-      value={{ cal, donnees, saison, aujourdhui, erreur, choisirSemaine, enregistrerResultat, supprimerResultat, modifierPreferences, demanderSemaineLegere, modifierSaison, noterMatch, importer }}
+      value={{ cal, donnees, saison, aujourdhui, erreur, choisirSemaine, enregistrerResultat, supprimerResultat, modifierPreferences, demanderSemaineLegere, modifierSaison, noterMatch, basculerRoutine, importer }}
     >
       {children}
     </Contexte.Provider>

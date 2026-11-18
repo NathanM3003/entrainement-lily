@@ -6,6 +6,7 @@ import type { ChoixSemaine } from '../moteur/semaine';
 import { LIBELLES_PHASES, type Semaine } from '../moteur/types';
 import { douleursDemandees, LIBELLES_DOULEURS } from '../stockage/saisie';
 import { rappelSauvegarde } from '../stockage/sauvegarde';
+import { calculerSuivi } from '../stockage/suivi';
 import type { SeanceAffichee, SemaineCalculee } from '../stockage/saison';
 import type { Douleurs } from '../stockage/types';
 import { Echelle, jourCourt, jourEtDate, majuscule } from './communs';
@@ -79,6 +80,7 @@ export function EcranSemaine({ numero }: { numero: number }) {
         </p>
       )}
 
+      <NouveauxBadges />
       <DouleursDuLendemain />
 
       {evenements(semaine).length > 0 && (
@@ -209,7 +211,7 @@ function ChoixDeLaSemaine({
 }
 
 function PlanDeLaSemaine({ calc, aujourdhui, onModifier }: { calc: SemaineCalculee; aujourdhui: DateISO; onModifier: () => void }) {
-  const { demanderSemaineLegere, donnees, noterMatch, cal } = useDonnees();
+  const { demanderSemaineLegere, donnees, noterMatch, basculerRoutine, cal } = useDonnees();
   const dejaLegere = calc.semaine.legere?.etendue === 'complete' && !calc.legereDemandee;
   const jours = joursEntre(calc.semaine.debut, calc.semaine.fin);
   const matchs = calc.plan?.matchs ?? [];
@@ -278,6 +280,12 @@ function PlanDeLaSemaine({ calc, aujourdhui, onModifier }: { calc: SemaineCalcul
               ) : (
                 match.length === 0 && <p className="repos">{recup ? 'Récupération : repos ou mobilité' : 'Repos'}</p>
               )}
+              {!seance && j <= aujourdhui && j >= calc.semaine.debut && (
+                <label className="case">
+                  <input type="checkbox" checked={(donnees.routinesMaison ?? []).includes(j)} onChange={() => basculerRoutine(j)} />
+                  Routine maison faite (M1, M7, M3)
+                </label>
+              )}
             </li>
           );
         })}
@@ -305,6 +313,19 @@ function PlanDeLaSemaine({ calc, aujourdhui, onModifier }: { calc: SemaineCalcul
       )}
       <p className="aide">Changer ma semaine : ajouter ou retirer une séance, changer de jours, déclarer un match imprévu ou annulé.</p>
     </>
+  );
+}
+
+/** Badges gagnés depuis la dernière visite de l'écran Progrès. */
+function NouveauxBadges() {
+  const { saison, donnees, aujourdhui } = useDonnees();
+  const vus = new Set(donnees.preferences.badgesVus ?? []);
+  const nouveaux = calculerSuivi(saison, donnees, aujourdhui).badges.filter((b) => b.date && !vus.has(b.id));
+  if (nouveaux.length === 0) return null;
+  return (
+    <p className="bandeau">
+      ★ {nouveaux.length === 1 ? `Nouveau badge : ${nouveaux[0]!.nom}` : `${nouveaux.length} nouveaux badges`}. <a href="#/progres">Voir</a>
+    </p>
   );
 }
 

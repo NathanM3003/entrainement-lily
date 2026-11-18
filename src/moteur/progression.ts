@@ -71,7 +71,7 @@ interface Performance {
 
 const phaseDe = (cal: Calendrier, r: ResultatSeance): Phase => cal.semaines[r.semaine - 1]?.phase ?? 'fondation';
 
-function terminees(donnees: Donnees, avant: DateISO): ResultatSeance[] {
+export function terminees(donnees: Donnees, avant: DateISO): ResultatSeance[] {
   return Object.values(donnees.resultats)
     .filter((r) => r.terminee && r.date < avant)
     .sort((a, b) => (a.date < b.date ? -1 : 1));
@@ -278,7 +278,7 @@ export const niveauDe = (id: string): number => {
   return m ? Number(m[1]) : 0;
 };
 
-const estCourseFacile = (p: Prescription) => p.role === 'course' && (p.format ?? '').startsWith('Étape');
+export const estCourseFacile = (p: Prescription) => p.role === 'course' && (p.format ?? '').startsWith('Étape');
 const estSprint = (p: Prescription) => p.role === 'acceleration' || p.role === 'vitesse-max';
 
 /** Douleurs de course (tibias et arrière du genou, traité comme les tibias). */

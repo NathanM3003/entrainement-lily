@@ -9,6 +9,11 @@
   --essai: #a86f00;
   --ok: #2f7d4f;
   --doux: #e8ebe4;
+  /* Séries des graphiques : palette de référence validée (bleu, orange, aqua, jaune). */
+  --serie-1: #2a78d6;
+  --serie-2: #eb6834;
+  --serie-3: #1baf7a;
+  --serie-4: #eda100;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -23,6 +28,10 @@
     --essai: #e3ad3c;
     --ok: #6fcf97;
     --doux: #222b39;
+    --serie-1: #3987e5;
+    --serie-2: #d95926;
+    --serie-3: #199e70;
+    --serie-4: #c98500;
     color-scheme: dark;
   }
 }
@@ -37,6 +46,10 @@
   --essai: #e3ad3c;
   --ok: #6fcf97;
   --doux: #222b39;
+  --serie-1: #3987e5;
+  --serie-2: #d95926;
+  --serie-3: #199e70;
+  --serie-4: #c98500;
   color-scheme: dark;
 }
 
@@ -211,7 +224,7 @@ legend { padding: 0; margin-bottom: 8px; font-weight: 600; }
 /* Barre de navigation */
 .barre {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
-  display: grid; grid-template-columns: repeat(3, 1fr);
+  display: grid; grid-template-columns: repeat(4, 1fr);
   background: var(--surface); border-top: 1px solid var(--ligne);
   padding-bottom: env(safe-area-inset-bottom);
 }
@@ -235,3 +248,30 @@ legend { padding: 0; margin-bottom: 8px; font-weight: 600; }
   width: 100%; min-height: 44px; font: inherit; padding: 6px 10px;
   border: 1px solid var(--ligne); border-radius: 10px; background: var(--fond); color: var(--encre);
 }
+
+/* ---------- Étape 8 : progrès, badges, graphiques, bilan ---------- */
+.tuiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0 4px; }
+.tuile { background: var(--surface); border: 1px solid var(--ligne); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; }
+.tuile-valeur { font-size: 36px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tuile-texte { font-weight: 600; }
+.lien-bilan { margin: 16px 0; }
+.records { list-style: none; margin: 8px 0; padding: 0; background: var(--surface); border: 1px solid var(--ligne); border-radius: 14px; }
+.records li { display: grid; grid-template-columns: 1fr auto; gap: 0 12px; padding: 10px 14px; }
+.records li + li { border-top: 1px solid var(--ligne); }
+.records .petit { grid-column: 1 / -1; }
+.records strong { font-variant-numeric: tabular-nums; }
+.badges-categorie h3 { margin: 16px 0 8px; font-size: 15px; color: var(--discret); }
+.badges { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.badge { display: flex; gap: 8px; align-items: flex-start; background: var(--surface); border: 1px dashed var(--ligne); border-radius: 12px; padding: 10px; opacity: 0.7; }
+.badge > span:last-child { display: flex; flex-direction: column; }
+.badge.gagne { border-style: solid; opacity: 1; }
+.badge.nouveau { border-color: var(--accent); }
+.badge-icone { font-size: 20px; line-height: 1.2; color: var(--discret); }
+.badge.gagne .badge-icone { color: var(--essai); }
+.graphique { margin: 16px 0; background: var(--surface); border: 1px solid var(--ligne); border-radius: 14px; padding: 14px; }
+.graphique figcaption { font-weight: 600; margin-bottom: 8px; }
+.graphique-zone { position: relative; height: 220px; }
+.graphique details { margin-top: 8px; font-size: 14px; }
+.tableau { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; margin-top: 6px; }
+.tableau th, .tableau td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--ligne); }
+.bilan { list-style: none; margin: 0; padding: 0; }

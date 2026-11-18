@@ -694,6 +694,29 @@ Pour 2026-2027, cela ne met pas de bloc en S10 (semaine légère avec un match).
 - Aucun badge lié au poids.
 - Aucun badge pour avoir dépassé le volume de course ou de sauts prévu.
 
+**Précisions (étape 8, 18 novembre 2026, à faire valider) :**
+- **Records suivis :**
+  - le maximum estimé de F1, F7, F14 et F16 ;
+  - les sprints de 10 m et 20 m (tests et temps filmés) ;
+  - le saut en longueur (test et P5) ;
+  - la hauteur de boîte (P4) ;
+  - le test de Cooper ;
+  - la distance de E8 ;
+  - la plus longue course en continu.
+
+  Un badge est donné chaque fois qu'un record est battu (la première mesure ne compte pas). Sur l'écran Progrès, ces badges sont regroupés avec leur nombre.
+- **Série :**
+  - une semaine passée sans plan, ou avec une séance pas faite, remet la série à zéro ;
+  - la semaine en cours compte dès que toutes ses séances sont faites, et ne casse jamais la série avant d'être finie.
+- **Badges de dates clés et de tournois :** ils sont donnés une fois la date passée, si Lily a commencé le programme.
+- **Routine maison :** Lily coche « Routine maison faite » sur un jour sans séance, dans l'écran de la semaine.
+- **« Courage » :** il compte toutes les séances d'intermittents, vélo et rameur compris (E10).
+- **« Tibias tranquilles » :** il compte les semaines de suite avec de la course. Une semaine sans course ne remet pas le compte à zéro.
+- **Bilan de préparation :**
+  - chaque test, de la première à la dernière mesure, avec l'évolution en valeur et en % ;
+  - l'écart entre les côtés ;
+  - les charges en kg.
+
 ## Points à suivre
 
 - Faire confirmer par la physio la reprise des changements de direction au 1er janvier.

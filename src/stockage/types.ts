@@ -75,6 +75,8 @@ export interface Preferences {
   allure: UniteAllure;
   /** Écart entre deux poids disponibles au gym, par matériel (sinon : valeurs par défaut). */
   crans?: Partial<Record<'barre' | 'halteres' | 'kettlebell' | 'machine', Partial<Record<Unite, number>>>>;
+  /** Badges déjà vus sur l'écran Progrès (les autres sont annoncés comme nouveaux). */
+  badgesVus?: string[];
   /** Date de la dernière sauvegarde exportée (AAAA-MM-JJ). */
   derniereSauvegarde?: DateISO;
 }
@@ -87,6 +89,8 @@ export interface Donnees {
   saison: { matchsReguliers: MatchRegulier[]; tournois: Periode[] };
   /** Note d'effort de 0 à 10 après un match ou un jour de tournoi (section 5). */
   notesMatchs: Record<DateISO, number>;
+  /** Jours où Lily a fait sa routine de 10 min à la maison (M1, M7, M3). */
+  routinesMaison: DateISO[];
   resultats: Record<DateISO, ResultatSeance>;
   preferences: Preferences;
 }
@@ -96,6 +100,7 @@ export const DONNEES_VIDES: Donnees = {
   legeresDemandees: [],
   saison: { matchsReguliers: [], tournois: [] },
   notesMatchs: {},
+  routinesMaison: [],
   resultats: {},
   preferences: { unites: {}, allure: 'min/km' },
 };
