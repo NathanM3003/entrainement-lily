@@ -38,6 +38,10 @@ export interface ResultatExercice {
   /** Test de Cooper : tours de piste et mètres du dernier tour partiel. */
   cooper?: { tours?: number; reste?: number };
   decision?: Decision;
+  /** Ce qui était prévu (répétitions visées, charge), pour la progression. */
+  prevu?: { reps?: number; charge?: number };
+  /** Sprints : tension derrière la cuisse ou le genou (section 5). */
+  tension?: boolean;
 }
 
 /** Notes de douleur de 0 à 10 (section 5). */
@@ -66,6 +70,8 @@ export interface Preferences {
   /** Unité de charge choisie pour chaque exercice. */
   unites: Record<string, Unite>;
   allure: UniteAllure;
+  /** Écart entre deux poids disponibles au gym, par matériel (sinon : valeurs par défaut). */
+  crans?: Partial<Record<'barre' | 'halteres' | 'kettlebell' | 'machine', Partial<Record<Unite, number>>>>;
   /** Date de la dernière sauvegarde exportée (AAAA-MM-JJ). */
   derniereSauvegarde?: DateISO;
 }

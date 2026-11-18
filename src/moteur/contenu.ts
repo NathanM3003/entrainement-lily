@@ -10,7 +10,8 @@
 
 import { exercice } from '../donnees/banque';
 import type { Exercice, Statut } from '../donnees/types';
-import { ajouterJours, lundiDe, type DateISO } from './dates';
+import { ajouterJours, dateCourte, lundiDe, type DateISO } from './dates';
+import { niveauDe } from './progression';
 import { dateDeblocage, restrictionsAu } from './restrictions';
 import type { PlanSemaine, SeancePlanifiee } from './semaine';
 import type { Calendrier, Phase, Semaine } from './types';
@@ -69,6 +70,8 @@ export interface Prescription {
   /** Allure en % de la VMA (section 7). */
   pctVMA?: Fourchette;
   allure?: string;
+  /** Cardio sans impact qui remplace la course facile (douleur aux tibias ou au genou). */
+  remplaceCourse?: boolean;
   /** Exercice « à essayer » : son remplacement est affiché à côté (section 6). */
   essai?: { remplacement?: string };
   note?: string;
@@ -132,6 +135,17 @@ export interface EtatContenu {
   etapeCourse?: number;
   /** Tibias calmes (douleur de 2 ou moins) : les foulées bondissantes (P7) sont permises. */
   tibiasCalmes?: boolean;
+  /** Sprints en plus du bas de la fourchette (progression en volume, section 5). */
+  sprintsEnPlus?: number;
+  /** Tension derrière la cuisse ou le genou : pas de V3 ni de vitesse maximale jusqu'à cette date. */
+  vitesseMaxEnPauseJusquau?: DateISO;
+  /** Niveau de pliométrie permis (1 à 4). Par défaut : pas de limite. */
+  niveauPlio?: number;
+  /** Douleur de 5 ou plus depuis plus d'une semaine : course (tibias, genou) ou pliométrie (chevilles) en pause. */
+  pauseCourse?: boolean;
+  pausePlio?: boolean;
+  /** La première course facile après cette date passe sur vélo ou rameur (douleur après la dernière course). */
+  courseEnCardioApres?: DateISO;
 }
 
 export interface ContenuSemaine {
@@ -139,6 +153,8 @@ export interface ContenuSemaine {
   messages: string[];
   /** Exercices « à essayer » prévus cette semaine (pour compter les essais des semaines suivantes). */
   essaisPrevus: string[];
+  /** La course remplacée par du cardio après une douleur a été placée cette semaine. */
+  courseEnCardioUtilisee: boolean;
 }
 
 // ---------- Constantes ----------
@@ -369,6 +385,9 @@ interface Ctx {
   essai?: string;
   /** Essais déjà faits ou prévus (avant cette séance). */
   essaisFaits: Map<string, number>;
+  /** Partagé par les séances de la semaine : la course à remplacer par du cardio n'est pas encore placée. */
+  reste: { cardio: boolean };
+  messages: string[];
 }
 
 const r2 = (ctx: Ctx) => Math.floor(ctx.rot / 2); // rotation toutes les 2 semaines
@@ -390,6 +409,9 @@ function dispo(id: string, ctx: Ctx): boolean {
   if ('reserve' in e && e.reserve) return false;
   return debloque(id, ctx);
 }
+
+/** Pliométrie : seulement les niveaux déjà atteints (section 5, « Sauts »). */
+const plioPermis = (id: string, ctx: Ctx) => dispo(id, ctx) && niveauDe(id) <= (ctx.etat.niveauPlio ?? 4);
 
 function tourner<T>(liste: T[], k: number): T[] {
   if (liste.length === 0) return liste;
@@ -495,6 +517,15 @@ function prevention(ctx: Ctx, liste: string[], course: boolean): Item[] {
 function courseFacile(ctx: Ctx): Item[] {
   if (ctx.sansCourse) return cardioSansImpact(ctx);
   const etape = ETAPES_COURSE[Math.min(7, Math.max(1, ctx.etat.etapeCourse ?? 1)) - 1]!;
+  // Douleur après la dernière course (section 5) : la course suivante devient du cardio sans impact.
+  const apresDouleur = ctx.etat.courseEnCardioApres && ctx.seance.date > ctx.etat.courseEnCardioApres && ctx.reste.cardio;
+  if (ctx.etat.pauseCourse || apresDouleur) {
+    if (apresDouleur) {
+      ctx.reste.cardio = false;
+      ctx.messages.push('Course remplacée par du cardio sans impact : douleur après la dernière course. La course reprend la fois suivante.');
+    }
+    return cardioSansImpact(ctx, etape.minutes).map((it) => ({ ...it, p: { ...it.p, remplaceCourse: true } }));
+  }
   return item(
     'course',
     px(etape.id, 'course', {
@@ -531,7 +562,8 @@ function teste(ctx: Ctx, id: string, role: Role, series: number, reps: Fourchett
   return px(id, role, {
     series,
     reps,
-    pourcentage1RM: POURCENTAGE_1RM[ctx.phase],
+    // Phase Puissance : F14 et F16 sont en 6 à 8 répétitions, 80 % (décision du 18 novembre 2026).
+    pourcentage1RM: ctx.phase === 'puissance-repetition' && (id === 'F14' || id === 'F16') ? 80 : POURCENTAGE_1RM[ctx.phase],
     derniereSeriePlus: true,
     parCote: id === 'F7',
     ...o,
@@ -561,7 +593,7 @@ function remplirSauts(ctx: Ctx, groupes: string[][], cible: Fourchette, maxExerc
   let total = 0;
   for (const groupe of groupes) {
     for (const id of tourner(
-      groupe.filter((g) => dispo(g, ctx)),
+      groupe.filter((g) => plioPermis(g, ctx)),
       ctx.rot,
     )) {
       if (choisis.length >= maxExercices || total >= cible.min) break;
@@ -820,10 +852,15 @@ function puissanceRepetition(ctx: Ctx): Item[] {
     ];
   }
   if (type === 'B') {
-    const cote = choisir(['P14', 'P15'], ctx.rot, ctx);
-    const uneJambe = choisir(['P10', 'P11', 'P12'], ctx.rot, ctx);
+    const cote = choisir(['P14', 'P15'].filter((id) => plioPermis(id, ctx)), ctx.rot, ctx);
+    const uneJambe = choisir(['P10', 'P11', 'P12'].filter((id) => plioPermis(id, ctx)), ctx.rot, ctx);
+    // Niveau 4 (de côté) pas encore atteint : on reste aux niveaux permis, dans la même fourchette de sauts.
+    const plio =
+      cote && uneJambe
+        ? [dosage(cote), dosage(uneJambe)]
+        : remplirSauts(ctx, [['P10', 'P11', 'P12', 'P14', 'P15'], ['P4', 'P5', 'P6', 'P9', 'P13']], f(60, 80), 3);
     return [
-      ...[cote, uneJambe].filter((id): id is string => !!id).map((id) => ({ bloc: 'pliometrie' as const, p: dosage(id) })),
+      ...plio.map((p) => ({ bloc: 'pliometrie' as const, p })),
       ...item('force', teste(ctx, 'F7', 'force-bas', 3, f(4, 6))),
       ...item('force', accessoire('F9', 'force-bas', 3, f(6), { parCote: true })),
       ...item('force', teste(ctx, 'F14', 'force-haut', 3, f(6, 8))),
@@ -894,7 +931,7 @@ function affutage(ctx: Ctx): Item[] {
   if (type === 'B') {
     return [
       ...item('pliometrie', px('P4', 'plio', { series: 3, reps: f(3) })),
-      ...item('pliometrie', dispo('P14', ctx) ? px('P14', 'plio', { series: 2, reps: f(4), parCote: true }) : undefined),
+      ...item('pliometrie', plioPermis('P14', ctx) ? px('P14', 'plio', { series: 2, reps: f(4), parCote: true }) : undefined),
       ...item('force', px('F7', 'force-bas', { series: 2, reps: f(5), parCote: true, ...lourd })),
       ...item('force', accessoire('F16', 'force-haut', 2, f(8))),
       ...item('force', accessoire('F14', 'force-haut', 2, f(8))),
@@ -1065,10 +1102,42 @@ function jourDeMatch(items: Item[]): Item[] {
   return items.filter((it) => ['force', 'prevention', 'echauffement'].includes(it.bloc) && !BAS_DU_CORPS.has(it.p.id));
 }
 
+/** Progression et douleurs (section 5) : volume de sprints, tension, pauses. */
+function ajusterProgression(items: Item[], ctx: Ctx): Item[] {
+  const { etat } = ctx;
+  let resultat = items;
+  const sprint = (it: Item) => it.p.role === 'acceleration' || it.p.role === 'vitesse-max';
+  // On progresse en volume, jamais en intensité : +1 sprint par semaine réussie, jusqu'au haut de la fourchette.
+  const plus = etat.sprintsEnPlus ?? 0;
+  if (plus > 0 && ctx.phase !== 'affutage') {
+    resultat = resultat.map((it) =>
+      sprint(it) && it.p.reps ? { ...it, p: { ...it.p, reps: { min: Math.min(it.p.reps.max, it.p.reps.min + plus), max: it.p.reps.max } } } : it,
+    );
+  }
+  if (etat.vitesseMaxEnPauseJusquau && ctx.seance.date <= etat.vitesseMaxEnPauseJusquau) {
+    const avant = resultat.length;
+    resultat = resultat.filter((it) => it.p.role !== 'vitesse-max' && it.p.id !== 'V3');
+    if (resultat.length < avant || ctx.seance.type === 'A' || ctx.seance.type === 'U') {
+      ctx.messages.push(`Tension récente derrière la cuisse ou le genou : pas de V3 ni de vitesse maximale jusqu'au ${dateCourte(etat.vitesseMaxEnPauseJusquau)}. F10 et M10 restent.`);
+    }
+  }
+  if (etat.pauseCourse) {
+    resultat = resultat
+      .filter((it) => !sprint(it) && it.p.id !== 'A1')
+      .map((it) => (it.p.role === 'intermittent' && it.p.id !== 'E10' ? { ...it, p: intermittent('E10', { remplaceCourse: true }) } : it));
+    ctx.messages.push('Course en pause (douleur depuis plus d’une semaine) : sprints retirés, cardio sur vélo ou rameur.');
+  }
+  if (etat.pausePlio && resultat.some((it) => it.bloc === 'pliometrie' && it.p.role === 'plio')) {
+    resultat = resultat.filter((it) => !(it.bloc === 'pliometrie' && it.p.role === 'plio'));
+    ctx.messages.push('Pliométrie en pause (douleur aux chevilles depuis plus d’une semaine).');
+  }
+  return resultat;
+}
+
 // ---------- Séance ----------
 
 function composerSeance(ctx: Ctx): ContenuSeance {
-  const messages: string[] = [];
+  const messages = ctx.messages;
   const { seance } = ctx;
   let corps: Item[];
   let avecEchauffement = true;
@@ -1090,6 +1159,8 @@ function composerSeance(ctx: Ctx): ContenuSeance {
     corps = forceVitesse(ctx); // force et vitesse, développement, maintien
   }
 
+  corps = ajusterProgression(corps, ctx);
+
   if (ctx.legere && ctx.phase !== 'affutage' && !seance.test) {
     corps = corps.map((it) => ({ ...it, p: alleger(it.p) }));
     messages.push('Semaine légère : 1 série de moins, moins de sprints et de sauts, mêmes charges.');
@@ -1100,7 +1171,7 @@ function composerSeance(ctx: Ctx): ContenuSeance {
   const course = corps.some((it) => ['acceleration', 'vitesse-max', 'course', 'intermittent'].includes(it.p.role) && it.p.id !== 'E10') || corps.some((it) => it.p.id.startsWith('T-sprint') || it.p.id === 'T-cooper');
   let items: Item[] = [
     ...(avecEchauffement ? echauffement(ctx, course, !ctx.jourDeMatch) : []),
-    ...(seance.test === 'journee1' ? [] : blocAgilite(ctx)),
+    ...(seance.test === 'journee1' || ctx.etat.pausePlio ? [] : blocAgilite(ctx)),
     ...corps,
   ];
 
@@ -1172,6 +1243,7 @@ export function detaillerSemaine(cal: Calendrier, plan: PlanSemaine, etat: EtatC
   const premieres = new Set<string>(); // mouvements déjà vus cette semaine (−5 % à la première séance de la phase)
   const essaisPrevus: string[] = [];
   const messages: string[] = [];
+  const reste = { cardio: !!etat.courseEnCardioApres };
 
   const seances = [...plan.seances]
     .sort((a, b) => (a.date < b.date ? -1 : 1))
@@ -1188,6 +1260,8 @@ export function detaillerSemaine(cal: Calendrier, plan: PlanSemaine, etat: EtatC
         jourDeMatch: joursMatch.has(seance.date),
         sansCourse: seance.variante === 'sans-course',
         essaisFaits,
+        reste,
+        messages: [],
       };
       ctx.essai = candidatsEssai(ctx).find((id) => peutEssayer(id, ctx));
       const contenu = composerSeance(ctx);
@@ -1210,7 +1284,7 @@ export function detaillerSemaine(cal: Calendrier, plan: PlanSemaine, etat: EtatC
   if (nbMatchs >= 2 && semaine.phase !== 'affutage') {
     messages.push('2 matchs ou plus cette semaine : ajoute 1 routine de prévention de 10 min à la maison (M1, M7, M3).');
   }
-  return { seances, messages, essaisPrevus };
+  return { seances, messages, essaisPrevus, courseEnCardioUtilisee: !!etat.courseEnCardioApres && !reste.cardio };
 }
 
 // ---------- Affichage du dosage ----------

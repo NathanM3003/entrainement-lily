@@ -3,6 +3,7 @@
 import { exercice } from '../donnees/banque';
 import type { Prescription, SeanceDetaillee, TypeBloc } from '../moteur/contenu';
 import type { DateISO } from '../moteur/dates';
+import { avecCharge } from '../moteur/progression';
 import type { Donnees, Douleurs, ResultatExercice, Unite, UniteAllure } from './types';
 
 export type GenreSaisie = 'series' | 'sprints' | 'sauts' | 'efforts' | 'duree' | 'test' | 'case';
@@ -37,9 +38,7 @@ export function genreSaisie(bloc: TypeBloc, p: Prescription): GenreSaisie {
   }
 }
 
-/** Exercices sans charge (poids du corps). */
-const SANS_CHARGE = new Set(['F13', 'F19', 'F20', 'F22', 'A2']);
-export const avecCharge = (p: Prescription) => p.id === 'A3' || (p.id.startsWith('F') && !SANS_CHARGE.has(p.id) && !p.secondes);
+export { avecCharge };
 
 /** Tests mesurés en charge. */
 export const TESTS_CHARGE = new Set(['T-F1', 'T-F7', 'T-F14', 'T-F16']);
@@ -60,18 +59,23 @@ export function derniereCharge(donnees: Donnees, id: string, avant: DateISO): { 
 }
 
 /** Résultat prérempli avec ce qui était prévu. Lily ne change que ce qui a été différent. */
-export function preremplir(bloc: TypeBloc, p: Prescription, charge?: { charge: number; unite: Unite }): ResultatExercice {
+export function preremplir(bloc: TypeBloc, p: Prescription, charge?: { charge: number; unite: Unite; reps?: number }): ResultatExercice {
   switch (genreSaisie(bloc, p)) {
     case 'series': {
       const n = p.series ?? 1;
+      const reps = charge?.reps ?? p.reps?.min;
       const serie = {
-        ...(p.secondes ? { secondes: p.secondes.min } : { reps: p.reps?.min }),
+        ...(p.secondes ? { secondes: p.secondes.min } : { reps }),
         ...(avecCharge(p) && charge ? { charge: charge.charge } : {}),
       };
-      return { series: Array.from({ length: n }, () => ({ ...serie })), ...(avecCharge(p) ? { unite: charge?.unite ?? 'kg' } : {}) };
+      return {
+        series: Array.from({ length: n }, () => ({ ...serie })),
+        ...(avecCharge(p) ? { unite: charge?.unite ?? 'kg' } : {}),
+        prevu: { reps, charge: charge?.charge },
+      };
     }
     case 'sprints':
-      return { nombre: p.reps?.min ?? p.series ?? 1, distance: p.metres?.min };
+      return { nombre: p.reps?.min ?? p.series ?? 1, distance: p.metres?.min, prevu: { reps: p.reps?.min } };
     case 'sauts':
       return { nombre: p.sauts ?? (p.series ?? 1) * (p.reps?.min ?? 1) };
     case 'efforts':

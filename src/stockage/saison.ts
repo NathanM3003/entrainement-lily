@@ -2,7 +2,8 @@
 // Une séance déjà commencée garde le contenu figé à sa première saisie.
 
 import { detaillerSemaine, type EtatContenu, type SeanceDetaillee } from '../moteur/contenu';
-import type { DateISO } from '../moteur/dates';
+import { ecartJours, type DateISO } from '../moteur/dates';
+import { apresSemaine, PROGRESSION_INITIALE, suiviDouleurs, type EtatProgression } from '../moteur/progression';
 import { planifierSemaine, type ChoixSemaine, type PlanSemaine, type SeancesPrecedentes } from '../moteur/semaine';
 import type { Calendrier, Semaine } from '../moteur/types';
 import type { Donnees, ResultatSeance } from './types';
@@ -23,6 +24,8 @@ export interface SemaineCalculee {
   messages: string[];
   /** Une séance a déjà été saisie : les jours ne peuvent plus être changés. */
   commencee: boolean;
+  /** Progression au début de la semaine (étape de course, sprints, niveau de pliométrie). */
+  progression: EtatProgression;
 }
 
 /** Date du jour sur le téléphone (heure locale), au format AAAA-MM-JJ. */
@@ -69,20 +72,41 @@ export function calculerSaison(cal: Calendrier, donnees: Donnees, aujourdhui: Da
   const essais: Record<string, number> = {};
   const compter = (ids: string[]) => ids.forEach((id) => (essais[id] = (essais[id] ?? 0) + 1));
   let precedentes: SeancesPrecedentes = [];
+  let progression: EtatProgression = PROGRESSION_INITIALE;
+  const douleurs = suiviDouleurs(donnees);
+  let courseEnCardioApres = douleurs.courseEnCardioApres;
 
   return cal.semaines.map((semaine) => {
     const choix = donnees.choix[semaine.numero];
     const resultats = Object.values(donnees.resultats).filter((r) => r.semaine === semaine.numero);
+    const auDebut = progression;
+    const aVenir = semaine.fin >= aujourdhui;
     if (!choix) {
       // Pas de plan cette semaine : seules les séances déjà saisies comptent.
       resultats.forEach((r) => compter(essaisFaits(r)));
       precedentes = resultats.map((r) => r.seance);
       const seances = resultats.map((r) => ({ seance: r.seance, resultat: r, etat: r.terminee ? ('faite' as const) : ('en-cours' as const) }));
-      return { semaine, seances, messages: [], commencee: resultats.length > 0 };
+      progression = apresSemaine(progression, semaine, seances);
+      return { semaine, seances, messages: aVenir ? douleurs.alertes : [], commencee: resultats.length > 0, progression: auDebut };
     }
 
+    // Retour après 10 jours ou plus sans entraînement : la course reprend une étape plus bas (section 5).
+    const reference = semaine.debut > aujourdhui ? semaine.debut : aujourdhui;
+    const retour = aVenir && progression.dernierJour !== undefined && ecartJours(progression.dernierJour, reference) >= 10;
     const plan = planifierSemaine(cal, semaine.numero, choix, precedentes);
-    const contenu = detaillerSemaine(cal, plan, { statuts, reessais, essais: { ...essais } });
+    const contenu = detaillerSemaine(cal, plan, {
+      statuts,
+      reessais,
+      essais: { ...essais },
+      etapeCourse: Math.max(1, progression.etapeCourse - (retour ? 1 : 0)),
+      sprintsEnPlus: progression.phaseSprints === semaine.phase ? progression.sprintsEnPlus : 0,
+      niveauPlio: progression.niveauPlio,
+      vitesseMaxEnPauseJusquau: douleurs.vitesseMaxEnPauseJusquau,
+      pauseCourse: aVenir && douleurs.pauseCourse,
+      pausePlio: aVenir && douleurs.pausePlio,
+      courseEnCardioApres,
+    });
+    if (contenu.courseEnCardioUtilisee) courseEnCardioApres = undefined;
     const seances: SeanceAffichee[] = contenu.seances.map((s) => {
       const resultat = donnees.resultats[s.date];
       if (resultat) {
@@ -102,13 +126,15 @@ export function calculerSaison(cal: Calendrier, donnees: Donnees, aujourdhui: Da
     }
     seances.sort((a, b) => (a.seance.date < b.seance.date ? -1 : 1));
     precedentes = seances.map((s) => s.seance);
+    progression = apresSemaine(progression, semaine, seances);
     return {
       semaine,
       choix,
       plan,
       seances,
-      messages: [...plan.messages, ...contenu.messages],
+      messages: [...(aVenir ? douleurs.alertes : []), ...plan.messages, ...contenu.messages],
       commencee: resultats.length > 0,
+      progression: auDebut,
     };
   });
 }

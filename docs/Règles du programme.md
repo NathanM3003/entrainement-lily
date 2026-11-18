@@ -308,7 +308,7 @@ Un match charge surtout les chevilles (changements de direction), les tibias (co
 | 6 | 25 min en continu |
 | 7 | 30 min en continu |
 
-- Au maximum une étape par semaine, et le temps de course de la semaine n'augmente pas de plus de 10 à 15 %.
+- Au maximum une étape par semaine, et le temps de course de la semaine n'augmente pas de plus de 10 à 15 %. *Décision du 18 novembre 2026 : l'app avance d'une étape par semaine quand toutes les courses prévues sont faites sans douleur, même si le passage d'une étape à l'autre dépasse 15 % (par exemple +33 % de l'étape 1 à l'étape 2).*
 - **Test de Cooper :** l'app le propose dès que Lily a couru 20 min en continu deux fois sans douleur.
 - Courir plus longtemps ou plus vite que prévu est noté comme record, mais **ne fait jamais avancer la progression plus vite.**
 
@@ -483,7 +483,7 @@ Un match charge surtout les chevilles (changements de direction), les tibias (co
 |---|---|
 | Fondation (3 × 8 à 10) | 70 % |
 | Force et vitesse (4 × 4 à 6) | 80 % |
-| Puissance et répétition (3 × 3 à 5) | 85 % |
+| Puissance et répétition (3 × 3 à 5) | 85 % (F14 et F16, en 3 × 6 à 8 : 80 %, décision du 18 novembre 2026) |
 | Affûtage | La dernière charge lourde utilisée |
 
 **Arrondi et sécurité :**
@@ -588,6 +588,50 @@ Pour 2026-2027, cela ne met pas de bloc en S10 (semaine légère avec un match).
 3. **Cardio de la séance D en Fondation :** E3 s'il est adopté, sinon E10. Jamais E2, puisque D ne contient jamais de course.
 4. **Séance C de la phase Force et vitesse :** F13, puis F17 ou F16 en alternance, F18 et 2 exercices de tronc.
 5. **Charges de la phase Puissance :** F14 et F16 (3 × 6 à 8) auront un pourcentage du 1RM plus bas que 85 %, à fixer à l'étape 5.
+
+### Progression : précisions (étape 5)
+
+*Ajouté le 18 novembre 2026, au développement de la progression automatique.*
+
+**Décisions prises avec Nathan :**
+- course facile : 1 étape par semaine (voir la section 5) ;
+- sprints : +1 répétition par semaine (accélérations et vitesse maximale) quand la séance de vitesse a été faite en entier, sans tension, jusqu'au haut de la fourchette de la phase. Le compte repart du bas de la fourchette à chaque phase ;
+- douleur à l'arrière du genou : mêmes règles que les tibias ;
+- F14 et F16 en phase Puissance : 80 % du maximum estimé.
+
+**Choix faits pour appliquer les sections 5 et 7, à faire valider :**
+- **Charges des mouvements testés (F1, F7, F14, F16).**
+  - À la première séance de chaque phase : % du maximum estimé, moins 5 %.
+  - Ensuite, comme pour les autres exercices : tableau de la dernière série « + ».
+  - Le maximum estimé est mis à jour à chaque séance. Il sert aux changements de phase et, plus tard, aux records.
+  - Squat bulgare : le maximum est calculé sur le côté le plus faible.
+- **Nouvelle fourchette de répétitions** (changement de phase) pour un exercice déjà fait : la charge est recalculée à partir de son maximum estimé, avec 2 répétitions en réserve en Fondation et 1 ensuite.
+- **Écart entre deux poids (« cran ») par défaut :**
+
+  | Matériel | Écart |
+  |---|---|
+  | Barre | 2,5 kg ou 5 lb |
+  | Haltères | 2 kg ou 5 lb |
+  | Kettlebells | 4 kg ou 5 lb |
+  | Machines et poulies | 5 kg ou 10 lb |
+
+  Lily peut les changer dans l'écran Sauvegarde, selon son gym. La charge est toujours arrondie au poids disponible en dessous.
+- **Plus de 10 % de hausse :** la règle « d'abord des répétitions » s'applique à tout le matériel, pas seulement aux haltères (+1 répétition visée à chaque séance réussie). Une fois le haut de la fourchette atteint, l'app passe au poids suivant, même au-delà de 10 %. Sinon, la charge ne pourrait jamais monter.
+- **« Douleur le lendemain » :** une note de 3 ou plus le lendemain matin.
+- **Course facile :** la semaine compte seulement si toutes les courses prévues ont été faites. Une semaine sans course garde l'étape.
+- **Pliométrie :**
+  - Lily commence au niveau 2, celui des modèles de la Fondation.
+  - Une séance compte pour passer au niveau suivant seulement si elle contient le niveau atteint. Une séance B avec P1 seul ne compte donc pas.
+- **Douleur de 5 ou plus pendant plus d'une semaine :**
+  - tibias ou genou : sprints retirés, course facile et intermittents sur vélo ou rameur ;
+  - chevilles : pliométrie et blocs de changements de direction retirés ;
+  - dans les deux cas, un message conseille de voir la physio.
+- **Retour après 10 jours :** compté depuis la dernière séance terminée.
+
+**Viendront à l'étape 6 :**
+- la progression des intermittents et les allures tirées de la VMA ;
+- le test de Cooper « dès que la condition est remplie » ;
+- la semaine légère anticipée.
 
 ### Séries et badges
 

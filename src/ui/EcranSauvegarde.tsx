@@ -1,7 +1,9 @@
 import { useRef, useState } from 'react';
 import { dateCourte } from '../moteur/dates';
+import { CRANS_PAR_DEFAUT, LIBELLES_MATERIEL, type Materiel } from '../moteur/progression';
+import { ChampNombre } from './communs';
 import { creerSauvegarde, lireSauvegarde } from '../stockage/sauvegarde';
-import type { UniteAllure } from '../stockage/types';
+import type { Unite, UniteAllure } from '../stockage/types';
 import { useDonnees } from './donnees';
 
 /** Export et import du fichier de sauvegarde, réglage des unités. */
@@ -94,6 +96,33 @@ export function EcranSauvegarde() {
             ))}
           </div>
         </fieldset>
+      </section>
+
+      <section className="carte">
+        <h2>Poids disponibles au gym</h2>
+        <p className="aide">
+          L'écart entre deux poids, pour monter d'un cran. Par exemple, si les haltères vont de 2 en 2 kg, mets 2. L'app arrondit toujours au poids
+          disponible en dessous.
+        </p>
+        {(Object.keys(CRANS_PAR_DEFAUT) as Materiel[]).map((m) => (
+          <div key={m} className="ligne-crans">
+            <span>{LIBELLES_MATERIEL[m]}</span>
+            {(['kg', 'lb'] as Unite[]).map((u) => (
+              <ChampNombre
+                key={u}
+                label={`En ${u}`}
+                unite={u}
+                decimal
+                valeur={donnees.preferences.crans?.[m]?.[u] ?? CRANS_PAR_DEFAUT[m][u]}
+                onChange={(v) => {
+                  if (!v || v <= 0) return;
+                  const crans = donnees.preferences.crans ?? {};
+                  modifierPreferences({ crans: { ...crans, [m]: { ...crans[m], [u]: v } } });
+                }}
+              />
+            ))}
+          </div>
+        ))}
       </section>
     </main>
   );

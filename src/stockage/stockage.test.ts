@@ -79,7 +79,7 @@ describe('saisie préremplie', () => {
     const f9 = b.contenu.blocs.find((x) => x.type === 'force')!.exercices.find((p) => p.id === 'F9')!;
     const charge = derniereCharge(d, 'F9', '2026-12-31');
     expect(charge).toEqual({ charge: 14, unite: 'kg' });
-    expect(preremplir('force', f9, charge)).toEqual({ series: [1, 2, 3].map(() => ({ reps: 8, charge: 14 })), unite: 'kg' });
+    expect(preremplir('force', f9, charge)).toEqual({ series: [1, 2, 3].map(() => ({ reps: 8, charge: 14 })), unite: 'kg', prevu: { reps: 8, charge: 14 } });
   });
 
   it('sprints, sauts, course : le nombre ou la durée prévus', () => {

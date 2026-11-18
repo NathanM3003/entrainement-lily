@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { exercice } from '../donnees/banque';
 import { texteDosage, type Bloc, type Prescription } from '../moteur/contenu';
+import { chargePrevue, maximumEstime } from '../moteur/progression';
 import type { Phase } from '../moteur/types';
 import {
   avecCharge,
   cleExercice,
   convertirCharge,
-  derniereCharge,
   distanceCooper,
   douleursDemandees,
   genreSaisie,
@@ -24,7 +24,7 @@ import { useDonnees } from './donnees';
 const NOMS_TYPES = { A: 'Séance A', B: 'Séance B', C: 'Séance C', D: 'Séance D', U: 'Séance unique' };
 
 export function EcranSeance({ date }: { date: string }) {
-  const { saison, donnees, enregistrerResultat, supprimerResultat } = useDonnees();
+  const { saison, donnees, cal, enregistrerResultat, supprimerResultat } = useDonnees();
   const illustrations = useIllustrations();
   const semaine = saison.find((s) => s.seances.some((x) => x.seance.date === date));
   const affichee = semaine?.seances.find((x) => x.seance.date === date);
@@ -56,12 +56,21 @@ export function EcranSeance({ date }: { date: string }) {
   const valeur = (bloc: Bloc, p: Prescription): ResultatExercice => {
     const enregistre = resultat?.exercices[cleExercice(bloc.type, p)];
     if (enregistre) return enregistre;
-    const id = p.id.startsWith('T-F') ? p.id.slice(2) : p.id;
-    const charge = derniereCharge(donnees, id, date);
-    const prefere = donnees.preferences.unites[id];
-    const prerempli = preremplir(bloc.type, p, charge);
-    if (prefere && prerempli.unite && !charge) prerempli.unite = prefere;
+    const prevue = chargePrevue(cal, donnees, date, phase, p);
+    const prerempli = preremplir(bloc.type, p, prevue);
+    const prefere = donnees.preferences.unites[p.id.replace(/^T-/, '')];
+    if (prefere && prerempli.unite && !prevue) prerempli.unite = prefere;
     return prerempli;
+  };
+
+  /** En terminant, ce qui n'a pas été modifié est enregistré tel que prévu : la progression en a besoin. */
+  const completer = (r: ResultatSeance): ResultatSeance => {
+    const exercices = { ...r.exercices };
+    for (const bloc of seance.contenu.blocs) {
+      if (bloc.type === 'echauffement') continue;
+      for (const p of bloc.exercices) exercices[cleExercice(bloc.type, p)] ??= valeur(bloc, p);
+    }
+    return { ...r, exercices };
   };
 
   const changerExercice = (bloc: Bloc, p: Prescription, r: ResultatExercice) =>
@@ -111,6 +120,8 @@ export function EcranSeance({ date }: { date: string }) {
                   date={date}
                   illustrations={illustrations}
                   valeur={valeur(bloc, p)}
+                  prevue={chargePrevue(cal, donnees, date, phase, p)}
+                  maximumConnu={maximumEstime(cal, donnees, p.id, date) !== undefined}
                   enregistre={!!resultat?.exercices[cleExercice(bloc.type, p)]}
                   onChange={(r) => changerExercice(bloc, p, r)}
                 />
@@ -137,6 +148,10 @@ export function EcranSeance({ date }: { date: string }) {
             onChange={(v) => modifier((r) => ({ ...r, douleurs: { ...r.douleurs, [z]: v } }))}
           />
         ))}
+        {(['tibias', 'genou'] as const).some((z) => (resultat?.douleurs?.[z] ?? 0) >= 5) && (
+          <p className="aide">Douleur de 5 ou plus : la course recule d'une étape, et la prochaine passe sur vélo ou rameur.</p>
+        )}
+        {(resultat?.douleurs?.chevilles ?? 0) >= 5 && <p className="aide">Douleur de 5 ou plus aux chevilles : la pliométrie revient au niveau précédent.</p>}
         <div className="actions">
           {fini ? (
             <>
@@ -151,7 +166,7 @@ export function EcranSeance({ date }: { date: string }) {
               className="principal"
               disabled={resultat?.effort === undefined}
               onClick={() => {
-                modifier((r) => ({ ...r, terminee: true }));
+                modifier((r) => ({ ...completer(r), terminee: true }));
                 location.hash = `#/semaine/${semaine.semaine.numero}`;
               }}
             >
@@ -207,7 +222,11 @@ function Fiche({
   valeur,
   enregistre,
   onChange,
+  prevue,
+  maximumConnu,
 }: {
+  prevue?: ReturnType<typeof chargePrevue>;
+  maximumConnu: boolean;
   bloc: Bloc;
   p: Prescription;
   phase: Phase;
@@ -226,12 +245,12 @@ function Fiche({
   const genre = genreSaisie(bloc.type, p);
 
   const consignes: string[] = [];
-  if (p.pourcentage1RM) {
-    consignes.push(
-      `Charge : ${p.pourcentage1RM} % de ton maximum estimé${p.moinsCinqPourcent ? ', moins 5 % (première séance de la phase)' : ''}. Le calcul en kilos arrive bientôt : d'ici là, prends une charge qui te laisse 1 ou 2 répétitions en réserve.`,
-    );
-  } else if (genre === 'series' && avecCharge(p) && !derniereCharge(donnees, p.id, date) && !p.note) {
-    consignes.push('Première fois : choisis une charge qui te laisse 2 ou 3 répétitions en réserve.');
+  if (prevue) {
+    consignes.push(`Charge prévue : ${texteCharge(prevue.charge, prevue.unite)}${prevue.reps ? `, ${prevue.reps} répétitions` : ''}. ${prevue.explication}`);
+  } else if (p.pourcentage1RM && !maximumConnu) {
+    consignes.push(`Charge : ${p.pourcentage1RM} % de ton maximum. Elle sera calculée après les tests de la journée 1 : d'ici là, prends une charge qui te laisse 2 ou 3 répétitions en réserve.`);
+  } else if (genre === 'series' && avecCharge(p) && !p.note) {
+    consignes.push('Première fois : choisis une charge qui te laisse 2 ou 3 répétitions en réserve. L’app la retient pour la suite.');
   }
   if (p.derniereSeriePlus) {
     consignes.push(
@@ -445,6 +464,11 @@ function Saisie({
           <ChampNombre label="Sprints faits" valeur={valeur.nombre} onChange={(v) => set({ nombre: v })} />
           <ChampNombre label="Distance" unite="m" valeur={valeur.distance} onChange={(v) => set({ distance: v })} />
           <ChampNombre label="Temps filmé (facultatif)" unite="s" decimal valeur={valeur.temps} onChange={(v) => set({ temps: v })} />
+          <label className="case">
+            <input type="checkbox" checked={!!valeur.tension} onChange={(e) => set({ tension: e.target.checked })} />
+            Tension derrière la cuisse ou le genou : j'ai arrêté les sprints
+          </label>
+          {valeur.tension && <p className="aide">Arrête les sprints pour aujourd'hui. Pendant 1 semaine : pas de V3 ni de vitesse maximale, mais F10 et M10 restent.</p>}
         </div>
       );
     case 'sauts':
