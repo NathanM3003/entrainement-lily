@@ -23,7 +23,6 @@ import type { Decision, Donnees, RaisonPasFait, ResultatExercice, ResultatSeance
 import { ChampNombre, Echelle, Illustration, jourEtDate, majuscule, useIllustrations } from './communs';
 import { useDonnees } from './donnees';
 
-const NOMS_TYPES = { A: 'Séance A', B: 'Séance B', C: 'Séance C', D: 'Séance D', U: 'Séance unique' };
 
 export function EcranSeance({ date }: { date: string }) {
   const { saison, donnees, cal, enregistrerResultat, supprimerResultat, choisirSemaine } = useDonnees();
@@ -87,7 +86,7 @@ export function EcranSeance({ date }: { date: string }) {
         ‹ Semaine {semaine.semaine.numero}
       </a>
       <p className="surtitre">
-        {majuscule(jourEtDate(date))} · {NOMS_TYPES[seance.type]}
+        {majuscule(jourEtDate(date))}
       </p>
       <h1>{seance.libelle}</h1>
       <p className="aide">

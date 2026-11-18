@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { lieuxSeance } from '../moteur/contenu';
+import { iconeSeance } from '../moteur/semaine';
 import { ajouterJours, dateCourte, joursEntre } from '../moteur/dates';
 import { rappelSauvegarde } from '../stockage/sauvegarde';
 import { calculerSuivi, etatDuPlan } from '../stockage/suivi';
@@ -58,7 +59,9 @@ export function EcranAccueil() {
           </>
         ) : duJour ? (
           <a className={`seance etat-${duJour.etat}`} href={`#/seance/${aujourdhui}`}>
-            <span className="seance-type">{duJour.seance.type === 'U' ? '1' : duJour.seance.type}</span>
+            <span className="seance-type" aria-hidden="true">
+              {iconeSeance(duJour.seance)}
+            </span>
             <span className="seance-texte">
               <strong>{duJour.seance.libelle}</strong>
               <span className="petit">
@@ -93,7 +96,7 @@ export function EcranAccueil() {
             return (
               <span key={j} className={`jour-mini${j === aujourdhui ? ' aujourdhui' : ''}${s?.etat === 'faite' ? ' fait' : ''}`}>
                 <span className="petit">{jourCourt(j).split(' ')[0]}</span>
-                <strong>{s ? (s.seance.type === 'U' ? '1' : s.seance.type) : m ? '🥏' : '·'}</strong>
+                <strong>{s ? iconeSeance(s.seance) : m ? '🥏' : '·'}</strong>
               </span>
             );
           })}

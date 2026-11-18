@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { exercice } from '../donnees/banque';
 import { lieuxSeance, ROUTINE_AVANT_MATCH } from '../moteur/contenu';
+import { iconeSeance } from '../moteur/semaine';
 import { BilanSemaine } from './BilanSemaine';
 import { ajouterJours, dateCourte, joursEntre, jourSemaine, type DateISO } from '../moteur/dates';
 import type { ChoixSemaine } from '../moteur/semaine';
@@ -274,7 +275,9 @@ function PlanDeLaSemaine({ calc, aujourdhui, onModifier }: { calc: SemaineCalcul
               ))}
               {seance ? (
                 <a className={`seance etat-${seance.etat}`} href={`#/seance/${j}`}>
-                  <span className="seance-type">{seance.seance.type === 'U' ? '1' : seance.seance.type}</span>
+                  <span className="seance-type" aria-hidden="true">
+                    {iconeSeance(seance.seance)}
+                  </span>
                   <span className="seance-texte">
                     <strong>{seance.seance.libelle}</strong>
                     <span className="petit">

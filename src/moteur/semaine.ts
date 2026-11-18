@@ -366,7 +366,36 @@ function compositions(semaine: Semaine, base: Modele[], k: number): Modele[][] {
 
 // ---------- Point d'entrée ----------
 
-const NOMS_SEANCES: Record<TypeSeance, string> = { A: 'A', B: 'B', C: 'C', D: 'D', U: 'unique' };
+/**
+ * Nom court d'une séance, pour Lily (les lettres A, B, C, D ne lui disent rien) :
+ * « vitesse », « sauts et force », « intermittents »…
+ */
+export function nomCourt(phase: Phase, type: TypeSeance): string {
+  switch (type) {
+    case 'A':
+      return 'vitesse';
+    case 'U':
+      return 'vitesse et force';
+    case 'B':
+      return 'sauts et force';
+    case 'D':
+      return 'haut du corps et vélo';
+    case 'C':
+      return phase === 'fondation'
+        ? 'haut du corps et course'
+        : phase === 'puissance-repetition'
+          ? "répétition d'efforts"
+          : phase === 'affutage'
+            ? 'simulation de points'
+            : 'intermittents';
+  }
+}
+
+/** Icône d'une séance, d'après son type : vitesse ⚡, sauts 🦘, course ou intermittents 🏃, haut du corps 💪, tests 📋. */
+export function iconeSeance(s: Pick<SeancePlanifiee, 'type' | 'test'>): string {
+  if (s.test === 'journee1' || s.test === 'cooper') return '📋';
+  return { A: '⚡', U: '⚡', B: '🦘', C: '🏃', D: '💪' }[s.type];
+}
 
 /** Une séance de la composition par séance déjà faite (le même type, sinon la moins prioritaire). */
 function retirerFaites(modeles: Modele[], faites: SeancePlanifiee[]): Modele[] {
@@ -493,10 +522,11 @@ export function planifierSemaine(
   placements = [...fixes, ...placements];
   const attendues = ajouterTests(composer(semaine.phase, nDemande), semaine).map((m) => m.type);
   const gardees = new Set(placements.map((p) => p.mod.type));
-  const remplacantes = [...gardees].filter((t) => !attendues.includes(t) && t !== 'U').map((t) => NOMS_SEANCES[t]);
+  const nom = (t: TypeSeance) => `« ${nomCourt(semaine.phase, t)} »`;
+  const remplacantes = [...gardees].filter((t) => !attendues.includes(t) && t !== 'U').map(nom);
   const retirees = attendues
     .filter((t) => !gardees.has(t) && !(t === 'A' && gardees.has('U')) && !(t === 'B' && gardees.has('U')))
-    .map((t) => NOMS_SEANCES[t]);
+    .map(nom);
   const aLaPlace = remplacantes.length
     ? ` ${remplacantes.length > 1 ? `Les séances ${remplacantes.join(' et ')} les remplacent` : `La séance ${remplacantes[0]} ${retirees.length > 1 ? 'les' : 'la'} remplace`} (moins de charge pour les jambes).`
     : '';
@@ -512,7 +542,7 @@ export function planifierSemaine(
         : `Les jours choisis ne permettent que ${placements.length} séance${placements.length > 1 ? 's' : ''} en respectant les règles (matchs, repos, tibias) : ${liste} cette semaine.${aLaPlace}`,
     );
     if (semaine.retests.some((r) => r.type === 'cooper' && r.moment !== 'condition') && gardees.has('C') && !gardees.has('B') && nDemande >= 3) {
-      messages.push('Le test demi-Cooper est gardé : il prend la place de la séance B.');
+      messages.push(`Le test demi-Cooper est gardé : il prend la place de la séance ${nom('B')}.`);
     }
   } else if (retirees.length > 0 && remplacantes.length > 0) {
     messages.push(
@@ -539,7 +569,7 @@ export function planifierSemaine(
 
   for (const s of seances.filter((x) => !datesFaites.has(x.date))) {
     if (ctx.joursMatch.has(s.date)) {
-      messages.push(`Séance ${NOMS_SEANCES[s.type]} le jour du match : seulement du haut du corps et du tronc, sans course ni sauts.`);
+      messages.push(`Séance ${nom(s.type)} le jour du match : seulement du haut du corps et du tronc, sans course ni sauts.`);
     } else if (s.variante === 'sans-course') {
       const quoi = (d: DateISO) => (calendrier.config.tournois.some((t) => d >= t.debut && d <= t.fin) ? 'du tournoi' : 'du match');
       const veille = ajouterJours(s.date, -1);
@@ -551,10 +581,10 @@ export function planifierSemaine(
           : ctx.joursRecuperation.has(s.date)
             ? 'pendant la récupération après le tournoi'
             : 'à cause des jours choisis';
-      messages.push(`Séance ${NOMS_SEANCES[s.type]} en version sans course (vélo ou rameur) : elle tombe ${pres}.`);
+      messages.push(`Séance ${nom(s.type)} en version sans course (vélo ou rameur) : elle tombe ${pres}.`);
     }
     if (s.test === 'sprint' && ctx.dateSprint100 && s.date < ctx.dateSprint100) {
-      messages.push('Le test de sprint attend la première séance A à partir du jour où le sprint à 100 % est permis.');
+      messages.push('Le test de sprint attend la première séance de vitesse à partir du jour où le sprint à 100 % est permis.');
     }
   }
 

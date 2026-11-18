@@ -31,7 +31,7 @@ describe('exemples des Règles', () => {
     // S8 : premier 4 contre 4 le mercredi 13 janvier.
     const p = planifierSemaine(cal, 8, { nbSeances: 3, joursDisponibles: ['2027-01-11', '2027-01-14', '2027-01-16'] });
     expect(resume(p)).toEqual(['2027-01-11 A', '2027-01-14 C sans course', '2027-01-16 B']);
-    expect(p.messages).toContain('Séance C en version sans course (vélo ou rameur) : elle tombe le lendemain du match.');
+    expect(p.messages).toContain('Séance « intermittents » en version sans course (vélo ou rameur) : elle tombe le lendemain du match.');
   });
 
   it('2 matchs (mercredi et jeudi), 2 séances : lundi A, vendredi repos, samedi B', () => {
@@ -85,7 +85,7 @@ describe('placement des séances', () => {
     // Trois jours de suite : C entre A et B ne peut pas courir (2 jours de course de suite).
     const p = planifierSemaine(cal, 3, { nbSeances: 3, joursDisponibles: ['2026-12-07', '2026-12-08', '2026-12-09'] });
     expect(resume(p)).toEqual(['2026-12-07 A', '2026-12-08 C sans course', '2026-12-09 B']);
-    expect(p.messages).toEqual(['Séance C en version sans course (vélo ou rameur) : elle tombe à cause des jours choisis.']);
+    expect(p.messages).toEqual(['Séance « haut du corps et course » en version sans course (vélo ou rameur) : elle tombe à cause des jours choisis.']);
   });
 
   it('retire une séance quand les jours ne permettent pas de respecter les règles, et le dit', () => {
@@ -130,7 +130,7 @@ describe('placement des séances', () => {
 
   it('dit « lendemain du tournoi » le lundi qui suit un tournoi', () => {
     const p = planifierSemaine(cal, 10, { nbSeances: 3, joursDisponibles: ['2027-01-25', '2027-01-29', '2027-01-31'] });
-    expect(p.messages).toContain('Séance C en version sans course (vélo ou rameur) : elle tombe le lendemain du tournoi.');
+    expect(p.messages).toContain('Séance « intermittents » en version sans course (vélo ou rameur) : elle tombe le lendemain du tournoi.');
   });
 
   it('ignore un match régulier annulé', () => {
@@ -217,7 +217,7 @@ describe('semaines particulières de 2026-2027', () => {
     const p = planifierSemaine(cal, 16, { nbSeances: 1, joursDisponibles: tousLesJours(16) });
     expect(p.seances).toMatchObject([{ type: 'D', charge: 'faible' }]);
     expect(p.messages).toEqual([
-      'Les jours choisis ne permettent pas la séance unique en respectant les règles (matchs, repos, tibias). La séance D la remplace (moins de charge pour les jambes).',
+      'Les jours choisis ne permettent pas la séance « vitesse et force » en respectant les règles (matchs, repos, tibias). La séance « haut du corps et vélo » la remplace (moins de charge pour les jambes).',
     ]);
   });
 
@@ -228,7 +228,7 @@ describe('semaines particulières de 2026-2027', () => {
     expect(p.seances.map((s) => s.type).sort()).toEqual(['C', 'D']);
     expect(p.seances.some((s) => s.charge === 'elevee')).toBe(false);
     expect(p.messages).toContain(
-      'Les jours choisis ne permettent pas les séances A et B en respectant les règles (matchs, repos, tibias). Les séances C et D les remplacent (moins de charge pour les jambes).',
+      'Les jours choisis ne permettent pas les séances « vitesse » et « sauts et force » en respectant les règles (matchs, repos, tibias). Les séances « intermittents » et « haut du corps et vélo » les remplacent (moins de charge pour les jambes).',
     );
   });
 
