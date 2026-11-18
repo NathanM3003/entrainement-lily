@@ -10,6 +10,39 @@ On crée une application d'entraînement physique pour Lily, une amie qui prépa
 
 Les étapes 1 à 3 ont été faites et validées dans un projet claude.ai. **Ce dossier sert à l'étape 4 : le développement de l'application.**
 
+## État du projet (à lire en premier dans une nouvelle discussion)
+
+*Mis à jour le 18 novembre 2026.*
+
+- **L'app est finie et en ligne** : https://nathanm3003.github.io/entrainement-lily/ (dépôt GitHub `NathanM3003/entrainement-lily`, public). Les étapes 0 à 9 du plan sont faites, plus une nouvelle version demandée par Nathan.
+- **Ce qu'elle fait** :
+  - écran de bienvenue, puis accueil (séance du jour, semaine en une ligne, état du plan, bilan de la semaine) ;
+  - plusieurs programmes (un seul suivi) ;
+  - création en 5 étapes, avec un calendrier à colorier (frisbee, tournoi, indisponible, plus mollo), les blessures et leur date « à 100 % », les charges et allures de départ ;
+  - semaine (choix des jours et du nombre de séances, matchs imprévus, semaine changée en cours de route) ;
+  - séance (fiches illustrées, saisie préremplie, « Pas fait », ressenti et note par exercice, version express d'environ 40 min, lieu affiché, repères d'effort et de test) ;
+  - progression automatique, tests, Progrès (records, badges, graphiques), bilan de préparation ;
+  - réglages (programmes, sauvegarde, poids disponibles, commentaires à copier pour Claude).
+- **Toutes les décisions** prises pendant le développement sont dans `docs/Règles du programme.md`, section 7 : les « précisions » de chaque étape, les « Réponses de Lily » du 18 novembre 2026, la « Nouvelle version de l'app » et les « Ajouts du 18 novembre 2026 ». Les choix marqués « à faire valider » attendent l'avis de Lily.
+- **Anonymat** : l'app et les documents utilisent le prénom fictif **Lily**. Ne jamais remettre le vrai prénom dans les fichiers du dépôt, ni dans les messages de commit (l'historique a été nettoyé). Le dossier local garde son ancien nom : c'est normal, il n'est pas publié.
+- **Façon de travailler avec Nathan** :
+  - il transmet les retours de Lily, souvent collés en vrac ;
+  - poser les questions de règles d'entraînement avant de trancher (outil de questions, avec une recommandation) ;
+  - après chaque changement : tests, commit en français, `git push`, puis `npm run publier` ;
+  - expliquer simplement, sans jargon.
+- **Lily n'a pas encore commencé** (début le 23 novembre 2026). Les données sont sur son téléphone (IndexedDB) ; elle exporte une sauvegarde chaque semaine.
+- **L'app installée se met à jour toute seule** à chaque publication (`registerSW` dans `src/main.tsx`). Une app installée avant le 18 novembre 2026 au soir doit être fermée complètement une fois pour recevoir ce mécanisme.
+
+**Pistes pas encore faites** (proposées à Nathan) :
+- page de conseils nutrition hors repas (étape 5 « faite à part ») ;
+- mode séance guidée (un exercice à la fois, minuteur de repos, chrono des intermittents) ;
+- rappel du jour (notification) ;
+- page de bilan à montrer à la physio ;
+- plan B sans matériel ;
+- note de sommeil et d'énergie (jamais de poids) ;
+- utiliser l'état des zones, les lieux et les allures connues pour adapter davantage le plan (les Règles ne disent pas encore comment) ;
+- faire valider les choix « à faire valider » de la section 7.
+
 ## Documents de référence (dans `docs/`)
 
 Ces documents ont été validés avec Lily. Ce sont eux qui font foi. **Lis-les avant de commencer, et avant toute décision sur la logique d'entraînement.**
