@@ -1,6 +1,6 @@
 # Règles du programme
 
-*Étape 3, validé le 17 novembre 2026. S'appuie sur « Profil Lily », « Types d'entraînement » et « Banque d'exercices ». L'app programme seulement les exercices retenus (validés ou à essayer), jamais les exclus. Section 7 ajoutée le 17 novembre 2026 à l'étape 4.*
+*Étape 3, validé le 17 novembre 2026. S'appuie sur « Profil Lily », « Types d'entraînement » et « Banque d'exercices ». L'app programme seulement les exercices retenus (validés ou à essayer), jamais les exclus. Section 7 ajoutée le 17 novembre 2026 à l'étape 4, complétée le 18 novembre 2026 (contenu des séances).*
 
 ## 0. Principes généraux
 
@@ -523,6 +523,71 @@ Avant le test de Cooper : effort de 8 sur 10, comme prévu à la section 5.
 - **C de la Fondation** (force du haut du corps + course facile) compte comme une **charge moyenne**, comme un C avec des intermittents de course.
 - **Pas de course le dimanche quand c'est évitable :** la semaine suivante commence souvent par A, et ses sprints comptent comme de la course. Les séances de la semaine précédente sont prises en compte, pour ne jamais enchaîner 2 jours chargés ou 2 jours de course entre le dimanche et le lundi.
 - **Un test prévu n'est jamais retiré.** S'il faut retirer une séance la semaine d'un test de Cooper, le test prend la place de la séance la moins prioritaire (B, par exemple, quand il n'en reste que 2). Le moment prévu d'un test (début ou fin de semaine) passe avant la fraîcheur de A.
+- **Pas de séance chargée le dimanche quand c'est évitable** *(ajouté le 18 novembre 2026, à faire valider)* : même raison que pour la course. Sans cette précision, une séance B le dimanche 17 janvier empêchait toute séance A le lundi 18, seul jour chargé possible la semaine du tournoi.
+- **Quand aucun jour ne permet A ni B** *(ajouté le 18 novembre 2026, à faire valider)* : semaine d'un tournoi après un dimanche chargé, ou S16, où le lundi et le mardi suivent le tournoi, le mercredi est un match et le jeudi et le vendredi précèdent le début de la saison. L'app garde alors les séances qui le permettent parmi celles choisies par Lily, dans l'ordre de priorité de la section 4 : C (sans course si besoin) et D. Pour une seule séance, D remplace la séance « vitesse + force complète ». Avant, la semaine restait vide. La règle 7 de la section 3 (« transformer plutôt que retirer ») va dans ce sens. La séance C de l'affûtage reste retirée la semaine d'un tournoi.
+
+### Contenu des séances : précisions (étape 3)
+
+*Ajouté le 18 novembre 2026, au développement du contenu des séances. Ce sont des choix faits là où les sections 2 à 7 ne disent pas tout. À faire valider avec Lily.*
+
+**Durée.** L'app estime la durée de chaque exercice, repos compris. Si une séance dépasse 1 h 30, ou environ 1 h en période allégée (65 min au plus), elle retire dans cet ordre :
+1. les exercices de prévention en plus du minimum ;
+2. le 2e et le 3e exercice de tronc ;
+3. le 2e éducatif, puis A1, A2 et A3 ;
+4. l'essai de E3 ;
+5. le 1er éducatif ;
+6. les accessoires du haut du corps (F13, F17, F18) et le 1er exercice de tronc ;
+7. les accessoires du bas du corps (F2, F11, F8, F26).
+
+Ne sont jamais retirés : l'échauffement, les blocs de changements de direction, les exercices principaux, la vitesse, la pliométrie, les intermittents, la course facile, la prévention minimale et les tests. Lily voit la liste de ce qui a été retiré.
+
+**Échauffement.** Dans une séance sans course (B, D, C sans course), les 5 premières minutes se font sur vélo ou rameur, sans les accélérations progressives (V8). Le jour d'un match, il n'y a pas de sauts sur les pointes (P1).
+
+**Force et vitesse (phase 2), dosages qui n'étaient pas écrits :**
+- F1, F7, F14 et F16 en 4 × 4 à 6, à 80 % (les « gros mouvements » du tableau des charges) ;
+- les autres exercices gardent le dosage de la banque : F9 et F8 3 × 8 par côté, F10 3 × 10 à 12, F2 ou F11 3 × 8 à 10 ;
+- A : 2 éducatifs, V5, V6 ou V7 (6 à 8), puis V9 ou V11 (3 à 5) ;
+- B : pliométrie de niveau 3 (P10, P11, P12 ; P7 seulement quand les tibias sont calmes), complétée par le niveau 2 jusqu'à 50 à 70 sauts ;
+- C : F13, puis F17 ou F16 en alternance, F18 et 2 exercices de tronc (version de la section 2).
+
+**Séance unique (1 séance) :** accélérations (plus V9 ou V11 dans les phases 2 et 3), puis F1, F7, F16 et F14 en 3 séries, dans la fourchette de la phase.
+
+**Fondation à 2 séances :** la 2e séance (« pliométrie + force complète ») reprend la séance B et ajoute F14 et F16.
+
+**Semaine légère.** La prévention, la course facile et l'échauffement ne changent pas. Les sprints passent à environ 65 % des répétitions.
+
+**Semaine de tournoi.** La « version courte » applique la colonne « 2 matchs » de la section 4, puisqu'un tournoi compte plusieurs matchs.
+
+**Séance le jour d'un match.** Pas de cardio non plus : seulement le haut du corps, le tronc et la prévention.
+
+**Exercices à essayer.** Chaque essai prend la place de son remplacement :
+- F17 prend la place de « F13 ou F17 » (Fondation C), de « F16 ou F17 » (D, Puissance B) ou de « F17 ou F16 » (Force et vitesse C) ;
+- F21 et F23 prennent une place de tronc ;
+- M20 prend la place de F18 ;
+- E3 s'ajoute 10 min à la fin d'une séance C de la Fondation.
+
+L'app les place dans cet ordre : F17, F21, F23, M20, puis E3. Tant que Lily n'a pas répondu après l'essai, l'exercice n'est pas reprogrammé et son remplacement est utilisé.
+
+**Tests.**
+- **Journée 1 :** M1 n'est pas ajouté, puisque le test du mollet est le même mouvement poussé au maximum. M7 et M8 sont ajoutés quand il y a des sprints.
+- **Test de Cooper :** il est suivi de la partie force et tronc de la séance C.
+- **Test de sprint :** il remplace les accélérations de la séance A.
+- Le mini-retest de S5 sera placé à l'étape 6.
+
+**Changements de direction (généralisation du tableau de la section 3) :**
+- les 10 jours qui suivent la date de retour : latéral contrôlé dans toutes les séances, sauf D ;
+- la semaine suivante : bloc de S8 dans la séance B ;
+- la semaine d'après : bloc de S9 dans la séance B ;
+- ensuite, un bloc d'appoint dans la séance B, seulement les semaines sans match : A4, A12, et A8 si elle est gardée.
+
+Pour 2026-2027, cela ne met pas de bloc en S10 (semaine légère avec un match).
+
+**Questions ouvertes :**
+1. **M20 avec 3 séances par semaine.** De S1 à S3, il n'y a que 3 séances C, et chacune ne peut avoir qu'un essai. F17, F21 et F23 passent, mais M20 n'est pas essayé. Faut-il le reporter en S4, ou permettre de l'essayer en même temps qu'un autre, puisque c'est un exercice de prévention léger ?
+2. **A8 et A9 dans la même séance en S8.** Le tableau de la section 3 les met tous les deux dans le bloc de la séance B, ce qui fait 2 essais dans une séance, alors que la section 6 en permet 1. L'app suit le tableau pour l'instant.
+3. **Cardio de la séance D en Fondation.** La section 7 dit « E2 réduit si E3 est refusé », mais E2 est de la course, et D n'en contient jamais. L'app utilise E10, comme le dit la section 2.
+4. **Séance C de la phase Force et vitesse.** La section 2 dit « F13, F17 ou F16, F18, tronc », la section 7 dit « F13 ou F17 ». L'app suit la section 2 : F13 toujours, plus F17 ou F16.
+5. **Charges de la phase Puissance (à régler à l'étape 5).** F14 et F16 sont en 3 × 6 à 8, mais 85 % du 1RM ne permet que 4 ou 5 répétitions environ. Il faudra peut-être un pourcentage plus bas pour ces deux exercices.
 
 ### Séries et badges
 

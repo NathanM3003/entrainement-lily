@@ -255,7 +255,7 @@ function ecartMomentTest(p: Placement, ctx: Contexte): number {
  * 1. séances le jour d'un match (dernier recours) ;
  * 2. séances transformées (C sans course) ;
  * 3. séances sur des jours allégés d'une semaine normale (S6 : de préférence avant le 1er janvier) ;
- *    puis course le dimanche (pour ne pas enchaîner avec A le lundi suivant) ;
+ *    puis course le dimanche, puis séance chargée le dimanche (pour laisser le lundi suivant à A) ;
  * 4. moment prévu des tests (début ou fin de semaine, sprint à 100 % permis) ;
  * 5. pour chaque séance par ordre de priorité : fatigue des jours précédents
  *    (A sur le jour le plus frais), puis distance aux matchs (le plus loin possible) ;
@@ -268,6 +268,8 @@ function noter(placements: Placement[], ctx: Contexte): number[] {
     placements.filter((p) => ctx.joursAlleges.has(p.date)).length,
     // Éviter de finir la semaine par une course : la semaine suivante commence souvent par A (sprints).
     placements.filter((p) => p.course && ctx.joursSemaine.length === 7 && p.date === ctx.joursSemaine[6]).length,
+    // Pareil pour une séance chargée : le lundi suivant pourra recevoir A (et la semaine d'un tournoi, c'est souvent le seul jour possible).
+    placements.filter((p) => p.charge === 'elevee' && ctx.joursSemaine.length === 7 && p.date === ctx.joursSemaine[6]).length,
     // Le moment prévu des tests passe avant la fraîcheur de A (Cooper en début de S11, par exemple).
     placements.reduce((t, p) => t + ecartMomentTest(p, ctx), 0),
   ];
@@ -315,6 +317,28 @@ function meilleurPlacement(modeles: Modele[], jours: DateISO[], ctx: Contexte): 
   return (meilleur as { placements: Placement[] } | null)?.placements ?? null;
 }
 
+/** Combinaisons de k séances parmi « base », dans l'ordre de priorité (A, B, C, D), tests toujours gardés. */
+function compositions(semaine: Semaine, base: Modele[], k: number): Modele[][] {
+  const liste: Modele[][] = [ajouterTests(composer(semaine.phase, k), semaine)];
+  const tests = base.filter((m) => m.test);
+  const parcourir = (debut: number, courant: Modele[]) => {
+    if (courant.length === k) {
+      if (tests.every((t) => courant.includes(t))) liste.push([...courant]);
+      return;
+    }
+    for (let i = debut; i < base.length; i++) parcourir(i + 1, [...courant, base[i]!]);
+  };
+  parcourir(0, []);
+  // Dernier recours pour 1 séance : D (haut du corps, tronc, cardio sans impact), possible même quand
+  // aucun jour ne permet une séance chargée pour les jambes (règle 7 : transformer plutôt que tout retirer).
+  if (k === 1 && tests.length === 0) liste.push([{ type: 'D', deuxSeances: false }]);
+  const vues = new Set<string>();
+  return liste.filter((c) => {
+    const cle = c.map((m) => `${m.type}${m.test?.type ?? ''}${m.deuxSeances ? '2' : ''}`).join(',');
+    return vues.has(cle) ? false : (vues.add(cle), true);
+  });
+}
+
 // ---------- Point d'entrée ----------
 
 const NOMS_SEANCES: Record<TypeSeance, string> = { A: 'A', B: 'B', C: 'C', D: 'D', U: 'unique' };
@@ -349,7 +373,8 @@ export function planifierSemaine(
     phase: semaine.phase,
     joursSemaine,
     joursMatch,
-    debutsTournoi: calendrier.config.tournois.map((t) => t.debut),
+    // Rien de chargé pour les jambes dans les 48 h avant un tournoi ou avant le début de la saison (section 2, « Affûtage »).
+    debutsTournoi: [...calendrier.config.tournois.map((t) => t.debut), calendrier.config.echeance],
     joursRecuperation: new Set(semaine.joursRecuperation),
     // Jours allégés d'une semaine qui n'est pas entièrement allégée (S6) : à éviter si possible.
     joursAlleges: new Set(semaine.legere?.etendue === 'complete' ? [] : semaine.joursAlleges),
@@ -382,22 +407,32 @@ export function planifierSemaine(
   }
 
   // On essaie avec n séances, puis une de moins tant qu'aucun placement ne respecte les règles.
+  // Pour chaque nombre de séances, on essaie d'abord la composition habituelle (section 2), puis les autres
+  // combinaisons des séances choisies par Lily, dans l'ordre de priorité de la section 4. Ainsi, quand A et B
+  // ne peuvent pas être placées (semaine de tournoi, fin d'affûtage), C sans course ou D peuvent l'être.
   let placements: Placement[] = [];
   const nDemande = n;
-  for (let k = n; k >= 1; k--) {
-    const modeles = ajouterTests(composer(semaine.phase, k), semaine);
-    const trouve = meilleurPlacement(modeles, jours, ctx);
-    if (trouve) {
-      placements = trouve;
-      break;
+  let base = ajouterTests(composer(semaine.phase, Math.min(choix.nbSeances, jours.length)), semaine);
+  if (semaine.phase === 'affutage' && semaine.tournoi) base = base.filter((m) => m.type !== 'C'); // C retirée la semaine d'un tournoi
+  for (let k = n; k >= 1 && placements.length === 0; k--) {
+    for (const modeles of compositions(semaine, base, k)) {
+      const trouve = meilleurPlacement(modeles, jours, ctx);
+      if (trouve) {
+        placements = trouve;
+        break;
+      }
     }
   }
+  const attendues = ajouterTests(composer(semaine.phase, nDemande), semaine).map((m) => m.type);
+  const gardees = new Set(placements.map((p) => p.mod.type));
+  const remplacantes = [...gardees].filter((t) => !attendues.includes(t) && t !== 'U').map((t) => NOMS_SEANCES[t]);
+  const retirees = attendues
+    .filter((t) => !gardees.has(t) && !(t === 'A' && gardees.has('U')) && !(t === 'B' && gardees.has('U')))
+    .map((t) => NOMS_SEANCES[t]);
+  const aLaPlace = remplacantes.length
+    ? ` ${remplacantes.length > 1 ? `Les séances ${remplacantes.join(' et ')} les remplacent` : `La séance ${remplacantes[0]} ${retirees.length > 1 ? 'les' : 'la'} remplace`} (moins de charge pour les jambes).`
+    : '';
   if (nDemande > 0 && placements.length < nDemande) {
-    const gardees = new Set(placements.map((p) => p.mod.type));
-    const retirees = composer(semaine.phase, nDemande)
-      .map((m) => m.type)
-      .filter((t) => !gardees.has(t) && !(t === 'A' && gardees.has('U')) && !(t === 'B' && gardees.has('U')))
-      .map((t) => NOMS_SEANCES[t]);
     const liste = gardees.has('U')
       ? 'une seule séance « vitesse + force complète »'
       : retirees.length > 1
@@ -406,11 +441,15 @@ export function planifierSemaine(
     messages.push(
       placements.length === 0
         ? 'Aucune séance ne peut être placée sur ces jours en respectant les règles (matchs, repos, tibias). Ajoute un jour si tu peux.'
-        : `Les jours choisis ne permettent que ${placements.length} séance${placements.length > 1 ? 's' : ''} en respectant les règles (matchs, repos, tibias) : ${liste} cette semaine.`,
+        : `Les jours choisis ne permettent que ${placements.length} séance${placements.length > 1 ? 's' : ''} en respectant les règles (matchs, repos, tibias) : ${liste} cette semaine.${aLaPlace}`,
     );
     if (semaine.retests.some((r) => r.type === 'cooper' && r.moment !== 'condition') && gardees.has('C') && !gardees.has('B') && nDemande >= 3) {
       messages.push('Le test de Cooper est gardé : il prend la place de la séance B.');
     }
+  } else if (retirees.length > 0 && remplacantes.length > 0) {
+    messages.push(
+      `Les jours choisis ne permettent pas ${retirees.length > 1 ? `les séances ${retirees.join(' et ')}` : `la séance ${retirees[0]}`} en respectant les règles (matchs, repos, tibias).${aLaPlace}`,
+    );
   }
 
   const seances: SeancePlanifiee[] = placements

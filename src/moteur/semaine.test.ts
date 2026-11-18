@@ -208,6 +208,37 @@ describe('semaines particulières de 2026-2027', () => {
     expect(cooper!.date <= '2027-02-02').toBe(true);
   });
 
+  it('S16 : rien de chargé pour les jambes dans les 48 h avant le début de la saison', () => {
+    const p = planifierSemaine(cal, 16, { nbSeances: 4, joursDisponibles: tousLesJours(16) });
+    for (const s of p.seances.filter((x) => x.date >= '2027-03-11')) expect(s.charge).toBe('faible');
+  });
+
+  it('S16 : quand aucun jour ne permet A ni B, la séance D les remplace', () => {
+    const p = planifierSemaine(cal, 16, { nbSeances: 1, joursDisponibles: tousLesJours(16) });
+    expect(p.seances).toMatchObject([{ type: 'D', charge: 'faible' }]);
+    expect(p.messages).toEqual([
+      'Les jours choisis ne permettent pas la séance unique en respectant les règles (matchs, repos, tibias). La séance D la remplace (moins de charge pour les jambes).',
+    ]);
+  });
+
+  it('semaine de tournoi après un dimanche chargé : C et D plutôt que rien', () => {
+    const dimancheCharge = [{ date: '2027-01-17', charge: 'elevee' as const, course: false }];
+    const p = planifierSemaine(cal, 9, { nbSeances: 4, joursDisponibles: tousLesJours(9) }, dimancheCharge);
+    expect(p.seances.length).toBe(2);
+    expect(p.seances.map((s) => s.type).sort()).toEqual(['C', 'D']);
+    expect(p.seances.some((s) => s.charge === 'elevee')).toBe(false);
+    expect(p.messages).toContain(
+      'Les jours choisis ne permettent pas les séances A et B en respectant les règles (matchs, repos, tibias). Les séances C et D les remplacent (moins de charge pour les jambes).',
+    );
+  });
+
+  it('évite une séance chargée le dimanche quand c’est possible, pour laisser le lundi suivant à A', () => {
+    const s8 = planifierSemaine(cal, 8, { nbSeances: 3, joursDisponibles: tousLesJours(8) });
+    expect(s8.seances.some((s) => s.date === '2027-01-17' && s.charge === 'elevee')).toBe(false);
+    const s9 = planifierSemaine(cal, 9, { nbSeances: 3, joursDisponibles: tousLesJours(9) }, s8.seances);
+    expect(s9.seances.find((s) => s.date === '2027-01-18')?.type).toBe('A');
+  });
+
   it('S16 : la semaine s’arrête le vendredi 12 mars', () => {
     const p = planifierSemaine(cal, 16, { nbSeances: 3, joursDisponibles: tousLesJours(16) });
     expect(p.seances.every((s) => s.date <= '2027-03-12')).toBe(true);
