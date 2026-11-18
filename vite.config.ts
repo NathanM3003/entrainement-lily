@@ -10,7 +10,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icone.svg'],
+      includeAssets: ['icone.svg', 'icone-180.png', 'icone-192.png', 'icone-512.png'],
       manifest: {
         name: 'Entraînement de Lily',
         short_name: 'Entraînement',
@@ -20,7 +20,11 @@ export default defineConfig({
         display: 'standalone',
         background_color: '#f1f3ee',
         theme_color: '#14213a',
-        icons: [{ src: 'icone.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
+        icons: [
+          { src: 'icone.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+          { src: 'icone-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'icone-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+        ],
       },
       workbox: {
         // Tout est mis en cache : l'app doit marcher au gym sans réseau.

@@ -185,7 +185,7 @@ export function EcranNouveauProgramme({ mode }: { mode: 'nouveau' | 'modifier' }
                   </div>
                   {etat !== 'ok' && (
                     <>
-                      <DateChamp label="À 100 % le" valeur={r.sante[z]?.centPourCentLe ?? ''} onChange={(v) => majZone({ centPourCentLe: v || undefined })} />
+                      <DateChamp court label="À 100 % le" valeur={r.sante[z]?.centPourCentLe ?? ''} onChange={(v) => majZone({ centPourCentLe: v || undefined })} />
                       <Texte label="Précisions (facultatif)" valeur={r.sante[z]?.note ?? ''} onChange={(v) => majZone({ note: v })} />
                       <p className="aide">
                         Seuls l'état et la date changent le plan. Les précisions servent de mémo, pour toi, ta physio, et pour adapter le programme avec Claude
@@ -389,9 +389,9 @@ function Texte({ label, valeur, onChange }: { label: string; valeur: string; onC
   );
 }
 
-function DateChamp({ label, valeur, onChange, desactive }: { label: string; valeur: DateISO; onChange: (v: DateISO) => void; desactive?: boolean }) {
+function DateChamp({ label, valeur, onChange, desactive, court }: { label: string; valeur: DateISO; onChange: (v: DateISO) => void; desactive?: boolean; court?: boolean }) {
   return (
-    <label className="champ champ-texte">
+    <label className={`champ champ-texte${court ? ' champ-court' : ''}`}>
       <span className="champ-label">{label}</span>
       <input type="date" value={valeur} disabled={desactive} onChange={(e) => onChange(e.target.value)} />
     </label>

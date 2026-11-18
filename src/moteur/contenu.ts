@@ -499,8 +499,8 @@ function echauffement(ctx: Ctx, avecCourse: boolean, avecSauts: boolean): Item[]
   const e = (id: string, o: Options) => ({ bloc: 'echauffement' as const, p: px(id, 'echauffement', o) });
   const items: Item[] = [
     avecCourse
-      ? e('E2', { nom: 'Jogging léger', format: '5 min', minutes: 5 })
-      : e('E10', { nom: 'Vélo ou rameur, facile', format: '5 min', minutes: 5 }),
+      ? e('E2', { nom: 'Jogging léger', format: '5 min', minutes: 5, illustration: 'echauffement-E2' })
+      : e('E10', { nom: 'Vélo ou rameur, facile', format: '5 min', minutes: 5, illustration: 'echauffement-E10' }),
     e('M14', { format: '5 par côté', minutes: 1.25 }),
     e('M18', { format: '10 par direction, par jambe', minutes: 1.25 }),
     e('M19', { format: '5 répétitions', minutes: 1.25 }),
@@ -1434,29 +1434,36 @@ export function texteDosage(p: Prescription): string {
 // ---------- Lieu de la séance ----------
 
 /**
- * Où se fait la séance, d'après son contenu : « Piste, puis gym », « Gym »…
- * Sprints, changements de direction et tests de course : piste ; course facile : piste, tapis ou dehors ;
- * intermittents : piste ou tapis (vélo ou rameur : gym) ; sauts, force et cardio : gym.
+ * Où se fait la séance, d'après son contenu (section 7, « Lieu de chaque séance ») :
+ * - le gym n'a pas de piste : dans une séance de gym, la course facile et les intermittents se font sur le tapis ;
+ * - sprints, changements de direction et tests de course : piste, ou dehors ;
+ * - une séance de course seule : piste ou dehors.
+ * Vitesse et force dans la même séance (phases 2 et 3) : « Piste, puis gym », en attendant des séances piste à part.
  */
 export function lieuxSeance(contenu: ContenuSeance, lieux: ('gym' | 'piste' | 'tapis')[] = ['gym', 'piste', 'tapis']): string {
-  const piste = lieux.includes('piste');
-  const tapis = lieux.includes('tapis');
-  const ordre: string[] = [];
-  const ajouter = (l: string) => {
-    if (!ordre.includes(l)) ordre.push(l);
-  };
+  const exterieur = lieux.includes('piste') ? 'piste ou dehors' : 'dehors';
+  let gym = false;
+  let piste = false;
+  let course = false;
   for (const b of contenu.blocs) {
     if (b.type === 'echauffement' || b.type === 'prevention' || b.type === 'mobilite') continue;
-    if (b.type === 'vitesse' || b.type === 'agilite') ajouter(piste ? 'piste' : 'dehors');
+    if (b.type === 'vitesse' || b.type === 'agilite') piste = true;
     else if (b.type === 'tests') {
-      for (const p of b.exercices) ajouter(p.id.startsWith('T-sprint') || p.id === 'T-cooper' ? (piste ? 'piste' : 'dehors') : 'gym');
+      for (const p of b.exercices) {
+        if (p.id.startsWith('T-sprint') || p.id === 'T-cooper') piste = true;
+        else gym = true;
+      }
     } else if (b.type === 'intermittents') {
-      ajouter(b.exercices.every((p) => p.id === 'E10') ? 'gym' : piste && tapis ? 'piste ou tapis' : piste ? 'piste' : tapis ? 'tapis' : 'dehors');
-    } else if (b.type === 'course') ajouter([piste && 'piste', tapis && 'tapis', 'dehors'].filter(Boolean).join(', ').replace(/, ([^,]+)$/, ' ou $1'));
-    else ajouter('gym');
+      if (b.exercices.every((p) => p.id === 'E10')) gym = true;
+      else course = true;
+    } else if (b.type === 'course') course = true;
+    else gym = true;
   }
-  // « Piste » couvre déjà la course : on ne répète pas « piste ou tapis » après.
-  const liste = ordre.includes('piste') ? ordre.filter((l) => l === 'piste' || !l.startsWith('piste')) : ordre;
-  const texte = liste.join(', puis ');
+  const tapis = lieux.includes('tapis');
+  let texte: string;
+  if (gym && piste) texte = `${exterieur}, puis gym`;
+  else if (piste) texte = exterieur;
+  else if (gym) texte = course ? (tapis ? 'gym, avec le tapis pour la course' : `gym, puis course ${exterieur === 'dehors' ? 'dehors' : `sur ${exterieur}`}`) : 'gym';
+  else texte = course ? (tapis ? `tapis (gym), ou ${exterieur}` : exterieur) : 'gym';
   return texte.charAt(0).toUpperCase() + texte.slice(1);
 }

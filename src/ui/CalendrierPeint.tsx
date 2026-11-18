@@ -13,6 +13,16 @@ const PINCEAUX: { id: Pinceau; libelle: string; icone: string; aide: string }[] 
   { id: 'gomme', libelle: 'Effacer', icone: '⌫', aide: 'Retire ce qui est marqué sur un jour.' },
 ];
 
+/** Retire un jour d'une série de frisbee hebdomadaire, en la coupant en deux si besoin. */
+export function sansJour(series: MatchRegulier[], d: DateISO): MatchRegulier[] {
+  const touchee = series.find((s) => s.jour === jourSemaine(d) && d >= s.debut && (!s.fin || d <= s.fin));
+  if (!touchee) return series;
+  const morceaux: MatchRegulier[] = [];
+  if (d > touchee.debut) morceaux.push({ ...touchee, fin: ajouterJours(d, -7) });
+  if (!touchee.fin || touchee.fin >= ajouterJours(d, 7)) morceaux.push({ ...touchee, debut: ajouterJours(d, 7) });
+  return series.flatMap((s) => (s === touchee ? morceaux : [s]));
+}
+
 const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 const COURTS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
@@ -59,6 +69,11 @@ export function CalendrierPeint({
       else suivant[j] = pinceau as Marque;
     }
     onMarques(suivant);
+    // La gomme retire aussi le frisbee « chaque semaine » de ces jours-là (la série continue avant et après).
+    if (pinceau === 'gomme') {
+      const restantes = jours.reduce((liste, j) => sansJour(liste, j), series);
+      if (restantes !== series) onSeries(restantes);
+    }
   }
 
   // Mois à afficher, du mois du début à celui de la fin.

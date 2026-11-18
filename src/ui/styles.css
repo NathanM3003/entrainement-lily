@@ -346,3 +346,16 @@ pre.commentaires { white-space: pre-wrap; font-size: 13px; background: var(--fon
 .bilan-message { font-weight: 600; font-size: 17px; }
 .bilan-liste { margin: 8px 0 12px; padding-left: 20px; }
 .bilan-liste li { margin: 4px 0; }
+
+/* Champs de date : sur iPhone, Safari leur donne une largeur propre qui dépasse de la carte. */
+.champ-texte input[type='date'], .formulaire input[type='date'] {
+  -webkit-appearance: none; appearance: none; display: block; min-width: 0; max-width: 100%; text-align: left;
+}
+input[type='date']::-webkit-date-and-time-value { text-align: left; }
+.champ-court input[type='date'] { max-width: 220px; }
+
+/* Séance faite : toute la carte passe au vert. */
+.seance.etat-faite { background: color-mix(in srgb, var(--ok) 16%, var(--surface)); border-color: var(--ok); }
+.seance.etat-faite .seance-type { background: var(--ok); color: var(--surface); }
+.champ-duree { margin: 12px 0; }
+.champ-duree .champ { max-width: 180px; }

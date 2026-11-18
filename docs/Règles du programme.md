@@ -789,11 +789,12 @@ Lily a relu tous les choix des sections ci-dessus. Ceux qui ne sont pas listés 
 
 - **Version express, quand Lily manque de temps** (bouton sur la séance, avant de commencer). L'app garde environ 40 min, échauffement raccourci et prévention minimale compris. Elle choisit dans l'ordre de priorité de la section 4 : vitesse, force du bas du corps, pliométrie et course facile en Fondation, haut du corps et tronc, intermittents. Pas de version express pour une séance de tests. La séance garde sa place dans la semaine.
 - **Pas de course en plus.** Le profil prévoit des exercices à la maison, mais pas de course supplémentaire, à cause des tibias. Une course dehors ajoutée un jour de repos augmenterait le volume de course sans contrôle. Quand Lily n'a que 30 à 40 min, la version express d'une séance avec course facile (C en Fondation) revient à aller courir dehors, en gardant la progression.
-- **Lieu de chaque séance**, affiché dès le début, d'après son contenu :
-  - sprints, changements de direction, tests de sprint et demi-Cooper : piste (dehors s'il n'y a pas de piste) ;
-  - course facile : piste, tapis ou dehors ;
-  - intermittents : piste ou tapis ;
-  - sauts, force et vélo : gym.
+- **Lieu de chaque séance**, affiché dès le début, d'après son contenu (*corrigé le 18 novembre 2026, retour de Nathan : le gym n'a pas de piste*) :
+  - sprints, changements de direction, tests de sprint et demi-Cooper : piste ou dehors ;
+  - sauts, force et vélo : gym ;
+  - dans une séance de gym, la course facile et les intermittents se font sur le tapis du gym ;
+  - une séance de course seule (A en Fondation) : piste ou dehors ;
+  - en attendant une décision, A des phases 2 et 3 (vitesse + force) s'affiche « Piste ou dehors, puis gym ». Nathan demande de ne plus mettre de sprints les jours de gym, avec des séances piste à part : **la nouvelle organisation est à décider avec Lily.**
 - **Note d'effort :** 7 correspond à une séance réussie (tu as forcé, c'était dur mais correct et tu te sentais bien) ; un bouton « Rien à signaler : 7 » la donne en un geste. 9 ou plus bloque la hausse des charges à la séance suivante (section 5).
 - **Repères le jour des tests :**
   - squat, squat bulgare, développé et tirage : environ le maximum estimé ÷ 1,2, la charge pour 5 répétitions avec 1 en réserve ;

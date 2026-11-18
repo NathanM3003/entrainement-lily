@@ -3,7 +3,7 @@ import { dateCourte } from '../moteur/dates';
 import { CRANS_PAR_DEFAUT, cranConverti, LIBELLES_MATERIEL, type Materiel } from '../moteur/progression';
 import { texteCommentaires } from '../stockage/commentaires';
 import { ChampNombre } from './communs';
-import { creerSauvegarde, lireSauvegarde } from '../stockage/sauvegarde';
+import { creerSauvegarde, lireSauvegarde, rappelSauvegarde } from '../stockage/sauvegarde';
 import type { Unite, UniteAllure } from '../stockage/types';
 import { useDonnees } from './donnees';
 
@@ -59,6 +59,7 @@ export function EcranSauvegarde() {
 
       <h2 className="titre-section">Sauvegarde</h2>
       <section className="carte">
+        {rappelSauvegarde(donnees, aujourdhui) && <p className="bandeau">Pense à sauvegarder tes données : une fois par semaine.</p>}
         <p>
           Tes données restent sur ce téléphone, sans compte ni serveur. Une fois par semaine, crée une sauvegarde et garde-la
           ailleurs (Fichiers, courriel, nuage) : si le téléphone est perdu ou changé, tu pourras tout récupérer. Elle contient tous tes programmes.

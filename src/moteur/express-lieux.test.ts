@@ -17,16 +17,21 @@ function donnees(n: number, express: string[] = []): Donnees {
 const seances = (d: Donnees, n: number) => calculerSaison(cal, d, '2026-11-20')[n - 1]!.seances.map((s) => s.seance);
 
 describe('lieu de chaque séance', () => {
-  it('Fondation : A sur la piste, B au gym, C au gym puis course', () => {
+  it('Fondation : A sur la piste ou dehors, B au gym, C au gym avec le tapis (le gym n’a pas de piste)', () => {
     const [a, b, c] = ['A', 'B', 'C'].map((t) => seances(donnees(3), 3).find((s) => s.type === t)!);
-    expect(lieuxSeance(a!.contenu)).toBe('Piste');
+    expect(lieuxSeance(a!.contenu)).toBe('Piste ou dehors');
     expect(lieuxSeance(b!.contenu)).toBe('Gym');
-    expect(lieuxSeance(c!.contenu)).toBe('Gym, puis piste, tapis ou dehors');
+    expect(lieuxSeance(c!.contenu)).toBe('Gym, avec le tapis pour la course');
   });
 
   it('sans piste : les sprints se font dehors', () => {
     const a = seances(donnees(3), 3).find((s) => s.type === 'A')!;
-    expect(lieuxSeance(a.contenu, ['gym', 'tapis'])).toBe('Dehors, puis tapis ou dehors');
+    expect(lieuxSeance(a.contenu, ['gym', 'tapis'])).toBe('Dehors');
+  });
+
+  it('phase 2 : vitesse et force dans la même séance, en deux temps', () => {
+    const a = seances(donnees(9), 9).find((s) => s.type === 'A')!;
+    expect(lieuxSeance(a.contenu)).toBe('Piste ou dehors, puis gym');
   });
 });
 

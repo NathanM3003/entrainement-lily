@@ -34,6 +34,7 @@ Les étapes 1 à 3 ont été faites et validées dans un projet claude.ai. **Ce 
 - **L'app installée se met à jour toute seule** à chaque publication (`registerSW` dans `src/main.tsx`). Une app installée avant le 18 novembre 2026 au soir doit être fermée complètement une fois pour recevoir ce mécanisme.
 
 **Pistes pas encore faites** (proposées à Nathan) :
+- **séances piste à part** : le gym n'a pas de piste et Nathan ne veut plus de sprints les jours de gym. Il faut réorganiser A des phases 2 et 3 (vitesse + force lourde), le cas « 1 séance » et C de la phase 3 (E11, E12). Organisation à décider avec Lily avant de toucher au moteur ;
 - page de conseils nutrition hors repas (étape 5 « faite à part ») ;
 - mode séance guidée (un exercice à la fois, minuteur de repos, chrono des intermittents) ;
 - rappel du jour (notification) ;

@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { lieuxSeance } from '../moteur/contenu';
 import { iconeSeance } from '../moteur/semaine';
 import { ajouterJours, dateCourte, joursEntre } from '../moteur/dates';
-import { rappelSauvegarde } from '../stockage/sauvegarde';
 import { calculerSuivi, etatDuPlan } from '../stockage/suivi';
 import { BilanSemaine } from './BilanSemaine';
 import { jourCourt, jourEtDate, majuscule } from './communs';
@@ -33,11 +32,6 @@ export function EcranAccueil() {
         {plan.joursAvantEcheance} jour{plan.joursAvantEcheance > 1 ? 's' : ''} avant : {cal.config.echeanceNom.toLowerCase()} ({dateCourte(cal.config.echeance)}).
       </p>
 
-      {rappelSauvegarde(donnees, aujourdhui) && (
-        <p className="bandeau">
-          Pense à sauvegarder tes données (une fois par semaine). <a href="#/reglages">Sauvegarder</a>
-        </p>
-      )}
       {nouveaux.length > 0 && (
         <p className="bandeau">
           ★ {nouveaux.length === 1 ? `Nouveau badge : ${nouveaux[0]!.nom}` : `${nouveaux.length} nouveaux badges`}. <a href="#/progres">Voir</a>

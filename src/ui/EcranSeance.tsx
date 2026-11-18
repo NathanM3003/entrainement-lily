@@ -164,6 +164,15 @@ export function EcranSeance({ date }: { date: string }) {
             Rien à signaler : 7
           </button>
         )}
+        <div className="champ-duree">
+          <ChampNombre
+            label="Durée de la séance"
+            unite="min"
+            valeur={resultat?.duree ?? seance.contenu.minutes}
+            onChange={(v) => modifier((r) => ({ ...r, duree: v === undefined || v === seance.contenu.minutes ? undefined : v }))}
+          />
+          <p className="aide">Prévu : environ {seance.contenu.minutes} min. Change-la seulement si c'était différent.</p>
+        </div>
         {zones.map((z) => (
           <Echelle
             key={z}
@@ -321,7 +330,7 @@ function Fiche({
   if (p.vitesseKmh) {
     const effort = { E5: 15, E6: 30, E8: 30 }[p.id as 'E5'];
     consignes.push(
-      `Allure : ${texteVitesse(p.vitesseKmh, unite)}${effort ? `, soit environ ${distanceEffort(p.vitesseKmh.min, effort)} m en ${effort} s sur la piste` : ''}.${p.id === 'E7' ? ' 100 % sur les efforts de 15 et 30 s, 95 % sur ceux de 45 et 60 s.' : ''}${p.id === 'E8' ? ' Au moins cette allure.' : ''}`,
+      `Allure : ${texteVitesse(p.vitesseKmh, unite)}${effort ? `, soit environ ${distanceEffort(p.vitesseKmh.min, effort)} m en ${effort} s` : ''}.${p.id === 'E7' ? ' 100 % sur les efforts de 15 et 30 s, 95 % sur ceux de 45 et 60 s.' : ''}${p.id === 'E8' ? ' Au moins cette allure.' : ''}`,
     );
     if (p.allureEstimee) consignes.push("D'après tes allures connues, en attendant le test demi-Cooper.");
     if (p.recuperationKmh) consignes.push(`Récupération trottinée : ${texteVitesse(p.recuperationKmh, unite)} (la marche est permise).`);

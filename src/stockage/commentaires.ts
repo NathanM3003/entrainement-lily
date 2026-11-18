@@ -42,7 +42,7 @@ export function texteCommentaires(programme: string, donnees: Donnees): string {
     const douleurs = Object.entries(r.douleurs ?? {})
       .map(([z, v]) => `${z} ${v}/10`)
       .join(', ');
-    lignes.push(`## ${r.date}, semaine ${r.semaine} : ${r.seance.libelle} (effort ${r.effort ?? '?'}/10${douleurs ? `, douleurs : ${douleurs}` : ''})`, ...notes, '');
+    lignes.push(`## ${r.date}, semaine ${r.semaine} : ${r.seance.libelle} (effort ${r.effort ?? '?'}/10${r.duree ? `, ${r.duree} min au lieu d'environ ${r.seance.contenu.minutes}` : ''}${douleurs ? `, douleurs : ${douleurs}` : ''})`, ...notes, '');
   }
   return lignes.join('\n').trim();
 }

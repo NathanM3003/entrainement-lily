@@ -7,7 +7,6 @@ import { ajouterJours, dateCourte, joursEntre, jourSemaine, type DateISO } from 
 import type { ChoixSemaine } from '../moteur/semaine';
 import { LIBELLES_PHASES, type Semaine } from '../moteur/types';
 import { douleursDemandees, LIBELLES_DOULEURS } from '../stockage/saisie';
-import { rappelSauvegarde } from '../stockage/sauvegarde';
 import { calculerSuivi } from '../stockage/suivi';
 import type { SeanceAffichee, SemaineCalculee } from '../stockage/saison';
 import type { Douleurs } from '../stockage/types';
@@ -76,11 +75,6 @@ export function EcranSemaine({ numero }: { numero: number }) {
         </a>
       </nav>
 
-      {rappelSauvegarde(donnees, aujourdhui) && (
-        <p className="bandeau">
-          Pense à sauvegarder tes données (une fois par semaine). <a href="#/sauvegarde">Sauvegarder</a>
-        </p>
-      )}
 
       <NouveauxBadges />
 
@@ -281,7 +275,7 @@ function PlanDeLaSemaine({ calc, aujourdhui, onModifier }: { calc: SemaineCalcul
                   <span className="seance-texte">
                     <strong>{seance.seance.libelle}</strong>
                     <span className="petit">
-                      {lieuxSeance(seance.seance.contenu, lieux)} · environ {seance.seance.contenu.minutes} min · {ETATS[seance.etat]}
+                      {lieuxSeance(seance.seance.contenu, lieux)} · {donnees.resultats[j]?.duree ? `${donnees.resultats[j]!.duree} min` : `environ ${seance.seance.contenu.minutes} min`} · {ETATS[seance.etat]}
                       {seance.seance.contenu.essais.length > 0 && ' · à essayer'}
                     </span>
                   </span>
