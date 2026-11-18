@@ -100,7 +100,7 @@ Exclus : P2 Corde à sauter.
 
 ## Endurance (E) · 12 retenus
 
-Volume de course augmenté lentement à cause des tibias, de préférence sur tapis ou sur piste. Les allures « vite » viendront du test de Cooper ; d'ici là, viser un effort de 8 sur 10. Formats courts et variés.
+Volume de course augmenté lentement à cause des tibias, de préférence sur tapis ou sur piste. Les allures « vite » viendront du test demi-Cooper ; d'ici là, viser un effort de 8 sur 10. Formats courts et variés.
 
 | ID | Exercice | Statut | Dosage | Matériel | Plus facile | Plus difficile | Dès |
 |---|---|---|---|---|---|---|---|

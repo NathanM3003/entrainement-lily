@@ -27,12 +27,12 @@ function enregistrer(d: Donnees, n: number, s: SeanceDetaillee, exercices: Recor
 
 const cooper = (tours: number, reste: number) => ({ 'tests:T-cooper': { cooper: { tours, reste } } });
 
-describe('test de Cooper et allures (sections 5 et 7)', () => {
-  it('VMA = distance ÷ 200, puis ±0,5 km/h selon les intermittents', () => {
+describe('test demi-Cooper et allures (sections 5 et 7)', () => {
+  it('VMA = distance du demi-Cooper ÷ 100, puis ±0,5 km/h selon les intermittents', () => {
     const d = donnees([11, 12, 13, 14]);
     const c11 = seanceDe(d, 11, 'C');
-    enregistrer(d, 11, c11, cooper(5, 120)); // 2 420 m
-    expect(allures(d)).toMatchObject({ vma: 12.1, ajustement: 0 });
+    enregistrer(d, 11, c11, cooper(2, 320)); // 1 240 m en 6 min
+    expect(allures(d)).toMatchObject({ vma: 12.4, ajustement: 0 });
     const c14 = seanceDe(d, 14, 'C');
     const format = c14.contenu.blocs.find((b) => b.type === 'intermittents')!.exercices[0]!;
     expect(format.id).not.toBe('E10');
@@ -40,7 +40,7 @@ describe('test de Cooper et allures (sections 5 et 7)', () => {
     fois('2027-02-22', { rythme: 'plus-vite' });
     expect(allures(d).ajustement).toBe(0);
     fois('2027-02-24', { rythme: 'plus-vite' });
-    expect(allures(d)).toMatchObject({ vma: 12.6, ajustement: 0.5 });
+    expect(allures(d)).toMatchObject({ vma: 12.9, ajustement: 0.5 });
     fois('2027-02-26', { rythme: 'plus-lent' });
     expect(allures(d).ajustement).toBe(0);
   });
@@ -80,7 +80,7 @@ describe('test de Cooper et allures (sections 5 et 7)', () => {
     expect(conditionCooper(d, '2026-12-14')).toBe(true);
     const s4 = saison(d)[3]!;
     expect(s4.seances.some((s) => s.seance.test === 'cooper')).toBe(true);
-    expect(s4.messages).toContain('Test de Cooper proposé cette semaine : tu as couru 20 min en continu deux fois sans douleur.');
+    expect(s4.messages).toContain('Test demi-Cooper proposé cette semaine : tu as couru 20 min en continu deux fois sans douleur.');
   });
 });
 
@@ -117,19 +117,20 @@ describe('retests (section 6)', () => {
 });
 
 describe('semaine légère anticipée (section 6)', () => {
-  it('après 2 séances à 9 ou plus d’effort dans la même semaine', () => {
+  it('plus de semaine légère automatique (décision de Lily) : 2 séances à 9 ne changent pas la semaine suivante', () => {
     const d = donnees([2, 3]);
     for (const type of ['A', 'B']) enregistrer(d, 2, seanceDe(d, 2, type), {}, { effort: 9 });
-    expect(semainesLegeresAnticipees(d).map((l) => l.semaine)).toEqual([3]);
-    const s3 = saison(d)[2]!;
-    expect(s3.semaine.legere?.raisons[0]).toMatch(/effort de 9 ou plus/);
-    expect(s3.seances.every((s) => s.seance.contenu.messages.includes('Semaine légère : 1 série de moins, moins de sprints et de sauts, mêmes charges.'))).toBe(true);
+    expect(semainesLegeresAnticipees(d)).toEqual([]);
+    expect(saison(d)[2]!.semaine.legere).toBeNull();
+    // La règle reste écrite, désactivée : elle se rallume avec le 3e paramètre.
+    expect(semainesLegeresAnticipees(d, [], true).map((l) => l.semaine)).toEqual([3]);
   });
 
-  it('après une douleur de 3 ou 4 à deux endroits en même temps', () => {
+  it('douleur de 3 ou 4 à deux endroits : pas de semaine légère automatique non plus', () => {
     const d = donnees([2]);
     enregistrer(d, 2, seanceDe(d, 2, 'C'), {}, { douleurs: { tibias: 3, genou: 4 } });
-    expect(semainesLegeresAnticipees(d).map((l) => l.semaine)).toEqual([3]);
+    expect(semainesLegeresAnticipees(d)).toEqual([]);
+    expect(semainesLegeresAnticipees(d, [], true).map((l) => l.semaine)).toEqual([3]);
   });
 
   it('quand Lily la demande, et le compte des semaines normales repart à zéro', () => {

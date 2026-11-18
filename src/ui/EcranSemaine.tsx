@@ -19,7 +19,7 @@ const ETATS: Record<SeanceAffichee['etat'], string> = {
   manquee: 'Pas faite',
 };
 
-const NOMS_TESTS = { journee1: 'Tests de la journée 1', sprint: 'Test de sprint', mini: 'Mini-retest', cooper: 'Test de Cooper' };
+const NOMS_TESTS = { journee1: 'Tests de la journée 1', sprint: 'Test de sprint', mini: 'Mini-retest', cooper: 'Test demi-Cooper' };
 
 /** Ce qui se passe cette semaine : phase, semaine légère, tournoi, matchs, tests, dates clés. */
 function evenements(s: Semaine): string[] {
@@ -35,7 +35,7 @@ function evenements(s: Semaine): string[] {
     if (e.type === 'changements-de-direction') liste.push(`Retour des changements de direction le ${jourEtDate(e.date)}`);
   }
   for (const r of s.retests) {
-    if (r.moment === 'condition') liste.push('Test de Cooper possible dès que tu cours 20 min sans douleur');
+    if (r.moment === 'condition') liste.push('Test demi-Cooper possible dès que tu cours 20 min sans douleur');
     else liste.push(`${NOMS_TESTS[r.type]}${r.final ? ' (retest final)' : ''}`);
   }
   return liste;
@@ -81,7 +81,6 @@ export function EcranSemaine({ numero }: { numero: number }) {
       )}
 
       <NouveauxBadges />
-      <DouleursDuLendemain />
 
       {evenements(semaine).length > 0 && (
         <ul className="evenements">
@@ -196,7 +195,7 @@ function ChoixDeLaSemaine({
           ))}
         </div>
       </fieldset>
-      <p className="aide">L'app choisit les jours, le type de chaque séance et son contenu.</p>
+      <p className="aide">Coche seulement les jours où tu veux t'entraîner : l'app place tes séances sur ces jours et choisit le type et le contenu de chacune.</p>
       <div className="actions">
         <button type="button" className="principal" disabled={dispo.filter((j) => !passe(j)).length === 0 && faites.length === 0} onClick={valider}>
           Prévoir ma semaine
@@ -245,7 +244,7 @@ function PlanDeLaSemaine({ calc, aujourdhui, onModifier }: { calc: SemaineCalcul
                   </p>
                   {j >= aujourdhui && j >= routineDes && (
                     <details className="routine">
-                      <summary>Routine d'avant-match (10 min)</summary>
+                      <summary>Routine d'avant-match proposée (facultative)</summary>
                       <ul>
                         {ROUTINE_AVANT_MATCH.map((id) => (
                           <li key={id}>
@@ -253,7 +252,7 @@ function PlanDeLaSemaine({ calc, aujourdhui, onModifier }: { calc: SemaineCalcul
                           </li>
                         ))}
                       </ul>
-                      <p className="aide">Mets tes chevillères aux deux chevilles.</p>
+                      <p className="aide">Environ 10 min. Si tu as déjà ta routine d'avant-match, garde-la. Mets tes chevillères aux deux chevilles.</p>
                     </details>
                   )}
                   {j <= aujourdhui && (
@@ -327,33 +326,5 @@ function NouveauxBadges() {
     <p className="bandeau">
       ★ {nouveaux.length === 1 ? `Nouveau badge : ${nouveaux[0]!.nom}` : `${nouveaux.length} nouveaux badges`}. <a href="#/progres">Voir</a>
     </p>
-  );
-}
-
-/** Le lendemain d'une course ou de sauts, l'app demande les douleurs du matin (section 5). */
-function DouleursDuLendemain() {
-  const { donnees, aujourdhui, enregistrerResultat } = useDonnees();
-  const hier = donnees.resultats[ajouterJours(aujourdhui, -1)];
-  const zones = hier?.terminee ? douleursDemandees(hier.seance) : [];
-  const [notes, setNotes] = useState<Douleurs>({});
-  if (!hier || zones.length === 0 || hier.douleursLendemain) return null;
-  return (
-    <section className="carte">
-      <h2>Ce matin, comment ça va ?</h2>
-      <p className="aide">Après la séance d'hier. 0 = aucune douleur, 10 = très forte.</p>
-      {zones.map((z) => (
-        <Echelle key={z} label={LIBELLES_DOULEURS[z]} valeur={notes[z]} onChange={(v) => setNotes((n) => ({ ...n, [z]: v }))} />
-      ))}
-      <div className="actions">
-        <button
-          type="button"
-          className="principal"
-          disabled={zones.some((z) => notes[z] === undefined)}
-          onClick={() => enregistrerResultat({ ...hier, douleursLendemain: notes, modifieLe: new Date().toISOString() })}
-        >
-          Enregistrer
-        </button>
-      </div>
-    </section>
   );
 }

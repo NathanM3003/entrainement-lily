@@ -75,8 +75,8 @@ function composer(phase: Phase, n: number): Modele[] {
 }
 
 /**
- * Une séance de test de la journée 1 remplace A (ou la séance unique) ; le test de Cooper remplace C.
- * Un test prévu n'est jamais retiré : s'il n'y a pas de séance C, le test de Cooper prend la place
+ * Une séance de test de la journée 1 remplace A (ou la séance unique) ; le test demi-Cooper remplace C.
+ * Un test prévu n'est jamais retiré : s'il n'y a pas de séance C, le test demi-Cooper prend la place
  * de la séance la moins prioritaire.
  */
 function ajouterTests(modeles: Modele[], semaine: Semaine): Modele[] {
@@ -124,7 +124,7 @@ const LIBELLES: Record<'fondation' | 'phases23' | 'affutage', Record<TypeSeance,
 
 function libelle(phase: Phase, mod: Modele, variante: SeancePlanifiee['variante']): string {
   if (mod.test?.type === 'journee1') return 'Tests de la journée 1';
-  if (mod.test?.type === 'cooper') return 'Test de Cooper';
+  if (mod.test?.type === 'cooper') return 'Test demi-Cooper';
   let texte: string;
   if (phase === 'fondation' && mod.deuxSeances) {
     texte = mod.type === 'A' ? 'Vitesse + course facile' : 'Pliométrie + force complète';
@@ -184,6 +184,8 @@ interface Contexte {
   dateSprint100?: DateISO;
   /** Séances des jours qui précèdent la semaine. */
   anterieures: SeancesPrecedentes;
+  /** Lily a mis le lundi suivant dans ses jours disponibles : on évite alors de courir ou de se charger le dimanche. */
+  lundiSuivantPrevu: boolean;
 }
 
 const POIDS_CHARGE: Record<Charge, number> = { elevee: 3, moyenne: 2, faible: 1 };
@@ -284,9 +286,10 @@ function noter(placements: Placement[], ctx: Contexte): number[] {
     placements.filter((p) => p.variante === 'sans-course').length,
     placements.filter((p) => ctx.joursAlleges.has(p.date)).length,
     // Éviter de finir la semaine par une course : la semaine suivante commence souvent par A (sprints).
-    placements.filter((p) => p.course && ctx.joursSemaine.length === 7 && p.date === ctx.joursSemaine[6]).length,
+    // Seulement quand Lily a prévu de s'entraîner le lundi suivant (décision du 18 novembre 2026).
+    ctx.lundiSuivantPrevu ? placements.filter((p) => p.course && ctx.joursSemaine.length === 7 && p.date === ctx.joursSemaine[6]).length : 0,
     // Pareil pour une séance chargée : le lundi suivant pourra recevoir A (et la semaine d'un tournoi, c'est souvent le seul jour possible).
-    placements.filter((p) => p.charge === 'elevee' && ctx.joursSemaine.length === 7 && p.date === ctx.joursSemaine[6]).length,
+    ctx.lundiSuivantPrevu ? placements.filter((p) => p.charge === 'elevee' && ctx.joursSemaine.length === 7 && p.date === ctx.joursSemaine[6]).length : 0,
     // Le moment prévu des tests passe avant la fraîcheur de A (Cooper en début de S11, par exemple).
     placements.reduce((t, p) => t + ecartMomentTest(p, ctx), 0),
   ];
@@ -380,6 +383,8 @@ export function planifierSemaine(
   seancesPrecedentes: SeancesPrecedentes = [],
   /** Séances déjà faites ou commencées de cette semaine, quand elle est changée en cours de route. */
   seancesFaites: SeancePlanifiee[] = [],
+  /** Le lundi suivant fait partie des jours disponibles de la semaine d'après. */
+  lundiSuivantPrevu = false,
 ): PlanSemaine {
   const semaine = calendrier.semaines[numero - 1];
   if (!semaine) throw new Error(`Semaine ${numero} absente du programme.`);
@@ -414,6 +419,7 @@ export function planifierSemaine(
       ? ajouterJours(calendrier.config.restrictions.sprint.jusquau, 1)
       : undefined,
     anterieures: seancesPrecedentes.filter((s) => s.date < semaine.debut && ecartJours(s.date, semaine.debut) <= 3),
+    lundiSuivantPrevu,
   };
 
   const faites = seancesFaites.filter((f) => joursSemaine.includes(f.date));
@@ -502,7 +508,7 @@ export function planifierSemaine(
         : `Les jours choisis ne permettent que ${placements.length} séance${placements.length > 1 ? 's' : ''} en respectant les règles (matchs, repos, tibias) : ${liste} cette semaine.${aLaPlace}`,
     );
     if (semaine.retests.some((r) => r.type === 'cooper' && r.moment !== 'condition') && gardees.has('C') && !gardees.has('B') && nDemande >= 3) {
-      messages.push('Le test de Cooper est gardé : il prend la place de la séance B.');
+      messages.push('Le test demi-Cooper est gardé : il prend la place de la séance B.');
     }
   } else if (retirees.length > 0 && remplacantes.length > 0) {
     messages.push(

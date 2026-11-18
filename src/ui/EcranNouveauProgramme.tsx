@@ -25,7 +25,7 @@ const COURSES = [
   '30 min en continu',
 ];
 
-const NOMS_TESTS = { journee1: 'Tests de la journée 1', sprint: 'Test de sprint', mini: 'Mini-retest', cooper: 'Test de Cooper' };
+const NOMS_TESTS = { journee1: 'Tests de la journée 1', sprint: 'Test de sprint', mini: 'Mini-retest', cooper: 'Test demi-Cooper' };
 
 /** Questionnaire de création d'un programme (Règles, section 0), prérempli avec le programme en cours. */
 export function EcranNouveauProgramme() {

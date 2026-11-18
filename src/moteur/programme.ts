@@ -91,7 +91,7 @@ export function nombreSemaines(debut: DateISO, echeance: DateISO): number {
  * Retests d'un autre programme (Règles, section 6) :
  * - tests de la journée 1 au début (sans le sprint s'il est limité) ;
  * - test de sprint à la première séance A où le sprint à 100 % est permis ;
- * - test de Cooper dès que la condition est remplie, de la fin de la Fondation au début de la phase suivante,
+ * - test demi-Cooper dès que la condition est remplie, de la fin de la Fondation au début de la phase suivante,
  *   puis au début de la phase 3 pour ses allures ;
  * - un retest à la fin de chaque phase, sauf pendant l'affûtage ; le dernier, à la fin de la phase 3, est le retest final.
  */

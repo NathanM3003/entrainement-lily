@@ -153,7 +153,7 @@ export function texteVitesse(kmh: { min: number; max: number }, unite: UniteAllu
 /** Distance à couvrir sur la piste pendant un effort, arrondie à 5 m. */
 export const distanceEffort = (kmh: number, secondes: number) => Math.round((kmh / 3.6) * secondes / 5) * 5;
 
-/** Distance du test de Cooper, en mètres, sur la piste de 460 m. */
+/** Distance du test demi-Cooper, en mètres, sur la piste de 460 m. */
 export { distanceCooper, LONGUEUR_PISTE } from '../moteur/progression';
 
 export const nomExercice = (p: Prescription) => p.nom || exercice(p.id).nom;

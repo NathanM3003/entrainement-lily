@@ -26,7 +26,7 @@
 
 ### 5. Endurance, en deux volets
 - **5a. Base aérobie :** course continue facile, autour de 6:00/km, sur tapis ou piste. On augmente le volume progressivement à cause de la périostite.
-- **5b. Répétition d'efforts (le plus important pour l'ultimate) :** intermittents courts. Lily n'aime pas les intervalles, donc on utilise des formats courts et variés (15 s/15 s, 30 s/30 s, pyramides, objectifs à battre) plutôt que de longues séries répétitives. Les allures viendront du test de Cooper.
+- **5b. Répétition d'efforts (le plus important pour l'ultimate) :** intermittents courts. Lily n'aime pas les intervalles, donc on utilise des formats courts et variés (15 s/15 s, 30 s/30 s, pyramides, objectifs à battre) plutôt que de longues séries répétitives. Les allures viendront du test demi-Cooper.
 - **À partir de janvier :** les matchs de frisbee remplacent en partie le 5b.
 
 ### 6. Prévention et mobilité

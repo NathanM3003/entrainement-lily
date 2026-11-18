@@ -152,7 +152,7 @@ export interface EtatContenu {
   pausePlio?: boolean;
   /** La première course facile après cette date passe sur vélo ou rameur (douleur après la dernière course). */
   courseEnCardioApres?: DateISO;
-  /** VMA en km/h (test de Cooper), pour traduire les allures. */
+  /** VMA en km/h (test demi-Cooper), pour traduire les allures. */
   vma?: number;
   /** Répétitions en plus par série, par format d'intermittent. */
   intermittentsEnPlus?: Record<string, number>;
@@ -701,11 +701,11 @@ const TESTS: Record<string, { nom: string; illustration: string; mesure: string;
     format: '1 s pour monter, 1 s pour descendre. Arrêter quand l’amplitude diminue.',
   },
   'T-cooper': {
-    nom: 'Test de Cooper (12 min)',
+    nom: 'Test demi-Cooper (6 min)',
     illustration: 'E9',
     mesure: 'm',
-    minutes: 15,
-    format: 'Courir le plus loin possible en 12 min sur la piste de 460 m. Noter les tours et le dernier tour partiel.',
+    minutes: 9,
+    format: 'Courir le plus loin possible en 6 min sur la piste de 460 m. Noter les tours et le dernier tour partiel.',
   },
 };
 
@@ -964,7 +964,7 @@ function affutage(ctx: Ctx): Item[] {
   return seanceD(ctx).map((it) => ({ ...it, p: uneSerieDeMoins(it.p) }));
 }
 
-/** Test de Cooper : remplace la séance C. Le reste de C (force et tronc) suit le test. */
+/** Test demi-Cooper : remplace la séance C. Le reste de C (force et tronc) suit le test. */
 function seanceCooper(ctx: Ctx): Item[] {
   const sansCourse = { ...ctx, sansCourse: true }; // le contenu de C, sans sa partie course
   const reste = (ctx.phase === 'fondation' ? fondation(sansCourse) : ctx.phase === 'puissance-repetition' ? puissanceRepetition(sansCourse) : forceVitesse(sansCourse)).filter(
@@ -1200,7 +1200,14 @@ function composerSeance(ctx: Ctx): ContenuSeance {
     messages.push('Semaine légère : 1 série de moins, moins de sprints et de sauts, mêmes charges.');
   }
   if (!seance.test) corps = couperPourLesMatchs(corps, ctx, messages);
-  if (ctx.jourDeMatch) corps = jourDeMatch(corps);
+  if (ctx.jourDeMatch) {
+    corps = jourDeMatch(corps);
+    // Décision de Lily (18 novembre 2026) : du cardio très facile est permis le jour d'un match, s'il y a une séance.
+    corps.push({
+      bloc: 'cardio',
+      p: px('E10', 'cardio', { nom: 'Vélo ou rameur, très facile', format: '10 à 15 min, facultatif', minutes: 12, note: 'Sans forcer : le match passe avant.' }),
+    });
+  }
 
   const course = corps.some((it) => ['acceleration', 'vitesse-max', 'course', 'intermittent'].includes(it.p.role) && it.p.id !== 'E10') || corps.some((it) => it.p.id.startsWith('T-sprint') || it.p.id === 'T-cooper');
   let items: Item[] = [

@@ -23,7 +23,7 @@ function saison(nbSeances: number, etat: EtatContenu = {}): SeanceDetaillee[] {
   const essais: Record<string, number> = { ...etat.essais };
   let precedentes: SeancesPrecedentes = [];
   for (const s of cal.semaines) {
-    const plan = planifierSemaine(cal, s.numero, { nbSeances, joursDisponibles: tousLesJours(s.numero) }, precedentes);
+    const plan = planifierSemaine(cal, s.numero, { nbSeances, joursDisponibles: tousLesJours(s.numero) }, precedentes, [], true);
     precedentes = plan.seances;
     const d = detaillerSemaine(cal, plan, { ...etat, essais: { ...essais } });
     for (const id of d.essaisPrevus) essais[id] = (essais[id] ?? 0) + 1;
@@ -370,7 +370,8 @@ describe('matchs (section 4)', () => {
     const jour = p.seances.find((s) => s.date === '2027-01-13')!;
     expect(jour.contenu.course).toBe(false);
     expect(jour.contenu.sauts).toBe(0);
-    expect(blocs(jour)).toEqual(['echauffement', 'force', 'prevention']);
+    // Décision de Lily : du cardio très facile est permis, facultatif.
+    expect(blocs(jour)).toEqual(['echauffement', 'force', 'cardio', 'prevention']);
     expect(ids(jour)).not.toContain('P1');
   });
 });
@@ -406,7 +407,7 @@ describe('tests et affûtage', () => {
     expect(ids(a)).toEqual(expect.arrayContaining(['M7', 'M8']));
   });
 
-  it('S11 : test de Cooper, puis le tronc et F18 de la séance C', () => {
+  it('S11 : test demi-Cooper, puis le tronc et F18 de la séance C', () => {
     const c = detailler(11).seances.find((s) => s.test === 'cooper')!;
     expect(blocs(c)).toEqual(['echauffement', 'tests', 'force', 'prevention']);
     expect(ids(c)).toContain('F18');

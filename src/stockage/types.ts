@@ -37,7 +37,7 @@ export interface ResultatExercice {
   km?: number;
   /** Tests : une valeur, ou une par côté. */
   mesure?: { valeur?: number; gauche?: number; droite?: number };
-  /** Test de Cooper : tours de piste et mètres du dernier tour partiel. */
+  /** Test demi-Cooper : tours de piste et mètres du dernier tour partiel. */
   cooper?: { tours?: number; reste?: number };
   decision?: Decision;
   /** Ce qui était prévu (répétitions visées, charge), pour la progression. */

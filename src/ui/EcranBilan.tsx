@@ -19,7 +19,7 @@ export function EcranBilan() {
       <p className="surtitre">Retests</p>
       <h1>Bilan de préparation</h1>
       <p className="aide">
-        Tes tests de la journée 1, le mini-retest et le test de Cooper, du premier au dernier. Le retest final est prévu en S14. Les charges sont en kg.
+        Tes tests de la journée 1, le mini-retest et le test demi-Cooper, du premier au dernier. Le retest final est prévu en S14. Les charges sont en kg.
       </p>
       {faites.length === 0 && <p className="aide">Pas encore de test. Les tests de la journée 1 ont lieu en S1.</p>}
       <ul className="bilan">

@@ -113,7 +113,7 @@ describe('unités', () => {
     expect(texteAllure(30, 5, 'mi/h')).toBe('6,2 mi/h');
   });
 
-  it('calcule la distance du test de Cooper sur la piste de 460 m', () => {
+  it('calcule la distance du test demi-Cooper sur la piste de 460 m', () => {
     expect(distanceCooper(5, 120)).toBe(2420);
   });
 });

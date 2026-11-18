@@ -61,14 +61,14 @@ Le programme commence le lundi 23 novembre 2026. La saison commence le samedi 13
 | S1 | 23 → 29 nov. | Fondation | Tests de la journée 1 (sans le sprint) |
 | S2 | 30 nov. → 6 déc. | Fondation | Sprint à 100 % dès le 1er décembre ; test de sprint |
 | S3 | 7 → 13 déc. | Fondation | |
-| S4 | 14 → 20 déc. | Fondation | Test de Cooper possible entre S4 et S6, quand la condition est remplie |
+| S4 | 14 → 20 déc. | Fondation | Test demi-Cooper possible entre S4 et S6, quand la condition est remplie |
 | S5 | 21 → 27 déc. | Fondation | **Noël : semaine allégée** ; mini-retest |
 | S6 | 28 déc. → 3 janv. | Force et vitesse | Vacances à partir du 1er janvier ; changements de direction permis |
 | S7 | 4 → 10 janv. | Force et vitesse | **Vacances : semaine allégée** (gym avec tapis disponible) |
 | S8 | 11 → 17 janv. | Force et vitesse | **Premier 4 contre 4 le mercredi 13 janvier** |
 | S9 | 18 → 24 janv. | Force et vitesse | **Tournoi les 23 et 24 janvier** |
 | S10 | 25 → 31 janv. | Force et vitesse | Récupération lundi et mardi ; retest de la journée 1 en fin de semaine |
-| S11 | 1er → 7 févr. | Puissance et répétition | Test de Cooper en début de semaine |
+| S11 | 1er → 7 févr. | Puissance et répétition | Test demi-Cooper en début de semaine |
 | S12 | 8 → 14 févr. | Puissance et répétition | **Tournoi les 13 et 14 février** |
 | S13 | 15 → 21 févr. | Puissance et répétition | Récupération lundi et mardi |
 | S14 | 22 → 28 févr. | Puissance et répétition | **Retest final** |
@@ -186,7 +186,7 @@ Chaque exercice a une date « Dès » dans la banque. L'app le débloque automat
 
 **Règles :**
 1. Jamais deux jours de charge élevée de suite.
-2. Une séance le jour d'un match est permise seulement si Lily a mis ce jour disponible. Ce sera alors une séance à faible charge (haut du corps et tronc, sans course ni sauts). L'app ne l'utilise qu'en dernier recours.
+2. Une séance le jour d'un match est permise seulement si Lily a mis ce jour disponible. Ce sera alors une séance à faible charge (haut du corps et tronc, sans course ni sauts, avec du cardio très facile si elle le veut). L'app ne l'utilise qu'en dernier recours.
 3. La veille d'un match : charge faible ou repos.
 4. Le lendemain d'un match : charge faible ou repos. Si C tombe ce jour-là, ses intermittents de course passent sur vélo ou rameur (E10).
 5. Jamais deux jours de course de suite, pour les tibias. Les sprints de A comptent comme de la course.
@@ -309,10 +309,10 @@ Un match charge surtout les chevilles (changements de direction), les tibias (co
 | 7 | 30 min en continu |
 
 - Au maximum une étape par semaine, et le temps de course de la semaine n'augmente pas de plus de 10 à 15 %. *Décision du 18 novembre 2026 : l'app avance d'une étape par semaine quand toutes les courses prévues sont faites sans douleur, même si le passage d'une étape à l'autre dépasse 15 % (par exemple +33 % de l'étape 1 à l'étape 2).*
-- **Test de Cooper :** l'app le propose dès que Lily a couru 20 min en continu deux fois sans douleur.
+- **Test demi-Cooper :** l'app le propose dès que Lily a couru 20 min en continu deux fois sans douleur.
 - Courir plus longtemps ou plus vite que prévu est noté comme record, mais **ne fait jamais avancer la progression plus vite.**
 
-**Douleur.** Après chaque course, puis le lendemain matin, l'app demande une note de 0 à 10 pour les **tibias** et pour l'**arrière du genou**. Après la pliométrie et les changements de direction, elle demande la même chose pour les **chevilles**.
+**Douleur.** Après chaque course, l'app demande (*plus de note le lendemain matin : décision de Lily, 18 novembre 2026*) une note de 0 à 10 pour les **tibias** et pour l'**arrière du genou**. Après la pliométrie et les changements de direction, elle demande la même chose pour les **chevilles**.
 
 | Note | Ce que fait l'app |
 |---|---|
@@ -340,7 +340,7 @@ Un match charge surtout les chevilles (changements de direction), les tibias (co
 - Les meilleures distances (P5) et hauteurs de boîte (P4) deviennent des records. Elles ne changent pas le volume.
 
 ### Intermittents
-- **Allures :** elles viennent du test de Cooper (distance en mètres ÷ 200 ≈ VMA en km/h). L'app les traduit en vitesse sur le tapis, ou en distance à couvrir sur la piste (par exemple, environ 50 m en 15 s). Avant le test, Lily vise un effort de 8 sur 10.
+- **Allures :** elles viennent du test demi-Cooper (distance en mètres ÷ 100 ≈ VMA en km/h). L'app les traduit en min/km (décision de Lily, 18 novembre 2026) et en distance à couvrir sur la piste (par exemple, environ 50 m en 15 s). Avant le test, Lily vise un effort de 8 sur 10.
 - **Variété :** jamais le même format deux semaines de suite.
 - **Progression :** 1 ou 2 répétitions de plus par série chaque semaine, dans la fourchette de l'exercice. Une fois le haut atteint, l'app change de format.
 - **Selon les chiffres entrés :**
@@ -350,8 +350,8 @@ Un match charge surtout les chevilles (changements de direction), les tibias (co
 
 ### Fatigue, absences et records
 - **Note globale de 9 ou plus :** la séance suivante ne progresse pas.
-- **Note globale de 9 ou plus à 2 séances dans la même semaine :** la semaine suivante devient légère (voir point 6).
-- **Retour après 10 jours ou plus sans entraînement :** charges à −20 %, et la course recule d'une étape.
+- ~~**Note globale de 9 ou plus à 2 séances dans la même semaine :** la semaine suivante devient légère.~~ *Retiré le 18 novembre 2026 à la demande de Lily : elle veut continuer le programme même après des séances intenses.*
+- **Retour après 10 jours ou plus sans entraînement :** charges à −15 % (*−20 % avant le 18 novembre 2026, changé à la demande de Lily*), et la course recule d'une étape.
 - **Le principe à retenir :** les bonnes performances font progresser les charges et les allures, **jamais le volume de course ni le nombre de sauts.** Ce sont eux qui menacent les tibias et les chevilles.
 - Les records (charges, tests, sprints, sauts, E8) alimentent les badges et les graphiques.
 
@@ -366,10 +366,7 @@ Un match charge surtout les chevilles (changements de direction), les tibias (co
   - la course reste à la même étape.
 - **Règle générale :** au maximum 4 semaines normales de suite. Les vacances, la semaine qui suit un tournoi et les semaines de retest comptent comme des semaines légères.
 - **Saison 2026-2027 :** S5, S7, S10, le début de S13, puis S15 et S16 (affûtage). Il n'y a pas besoin d'en ajouter.
-- **Semaine légère anticipée.** L'app la déclenche dans trois cas, et le compteur repart alors à zéro :
-  - une note globale de 9 ou plus à 2 séances dans la même semaine ;
-  - une douleur de 3 ou 4 sur deux zones en même temps ;
-  - Lily appuie sur « J'ai besoin d'une semaine légère ».
+- **Semaine légère anticipée.** Seulement quand Lily appuie sur « J'ai besoin d'une semaine légère ». Le compteur repart alors à zéro. *Décision de Lily, 18 novembre 2026 : plus de semaine légère automatique après 2 séances à 9 ou plus, ni après une douleur de 3 ou 4 sur deux zones.*
 
 ### Retests
 
@@ -377,20 +374,20 @@ Un match charge surtout les chevilles (changements de direction), les tibias (co
 |---|---|
 | S1 | Journée 1, sans le sprint |
 | S2 | Sprint de 10 et 20 m (première séance A après le 1er décembre) |
-| Dès que la condition est remplie (probablement S4 à S6) | Test de Cooper |
+| Dès que la condition est remplie (probablement S4 à S6) | Test demi-Cooper |
 | S5 (Noël) | Mini-retest de 20 min : flexion de cheville, saut en longueur, mollet sur une jambe |
 | S10 (fin de semaine) | Journée 1 complète + saut sur une jambe |
-| Début de S11 | Test de Cooper, pour les allures de la phase 3 |
+| Début de S11 | Test demi-Cooper, pour les allures de la phase 3 |
 | S14 (fin de semaine) | Retest final de la journée 1, avec une page « bilan de préparation » |
 
 - **Pas de test pendant l'affûtage.**
-- **Le test intermittent 30-15 IFT est retiré :** il demande des allers-retours avec demi-tours, et le test de Cooper suffit pour les allures.
-- Une séance de test de la journée 1 remplace la séance A. Le test de Cooper remplace la séance C. Les deux comptent comme une charge élevée dans les règles de placement.
+- **Le test intermittent 30-15 IFT est retiré :** il demande des allers-retours avec demi-tours, et le test demi-Cooper suffit pour les allures.
+- Une séance de test de la journée 1 remplace la séance A. Le test demi-Cooper remplace la séance C. Les deux comptent comme une charge élevée dans les règles de placement.
 - **Pour un autre programme :** un retest à la fin de chaque phase, sauf pendant l'affûtage. Le dernier retest a lieu à la fin de la phase 3.
 
 **Ce que les retests changent :**
 - nouvelles charges à partir des tests de musculation ;
-- nouvelles allures à partir du test de Cooper ;
+- nouvelles allures à partir du test demi-Cooper ;
 - records et graphiques ;
 - **écarts entre les côtés :** si l'écart dépasse 10 % (squat bulgare, mollet, flexion de cheville, saut sur une jambe), l'app ajoute 1 série du côté le plus faible sur F7, M1 ou P10, jusqu'au retest suivant.
 
@@ -492,7 +489,7 @@ Un match charge surtout les chevilles (changements de direction), les tibias (co
 
 ### Allures en pourcentage de la VMA
 
-VMA = distance du test de Cooper en mètres ÷ 200 (en km/h).
+VMA = distance du test demi-Cooper en mètres ÷ 100 (en km/h).
 
 | Format | Allure |
 |---|---|
@@ -506,7 +503,7 @@ VMA = distance du test de Cooper en mètres ÷ 200 (en km/h).
 | E2 course facile | 60 à 70 % |
 | E4 course progressive | 65 %, puis 75 %, puis 80 % |
 
-Avant le test de Cooper : effort de 8 sur 10, comme prévu à la section 5.
+Avant le test demi-Cooper : effort de 8 sur 10, comme prévu à la section 5.
 
 ### Semaine S6 (28 décembre → 3 janvier)
 
@@ -521,9 +518,9 @@ Avant le test de Cooper : effort de 8 sur 10, comme prévu à la section 5.
 
 - **Le jour le plus frais** est celui qui a le moins de charge dans les 3 jours précédents, en comptant les matchs, les tournois et les séances déjà placées, y compris celles de la fin de la semaine précédente. A y va en premier. En cas d'égalité, A va sur le jour le plus loin des matchs. B, C et D suivent dans cet ordre.
 - **C de la Fondation** (force du haut du corps + course facile) compte comme une **charge moyenne**, comme un C avec des intermittents de course.
-- **Pas de course le dimanche quand c'est évitable :** la semaine suivante commence souvent par A, et ses sprints comptent comme de la course. Les séances de la semaine précédente sont prises en compte, pour ne jamais enchaîner 2 jours chargés ou 2 jours de course entre le dimanche et le lundi.
-- **Un test prévu n'est jamais retiré.** S'il faut retirer une séance la semaine d'un test de Cooper, le test prend la place de la séance la moins prioritaire (B, par exemple, quand il n'en reste que 2). Le moment prévu d'un test (début ou fin de semaine) passe avant la fraîcheur de A.
-- **Pas de séance chargée le dimanche quand c'est évitable** *(ajouté le 18 novembre 2026, à faire valider)* : même raison que pour la course. Sans cette précision, une séance B le dimanche 17 janvier empêchait toute séance A le lundi 18, seul jour chargé possible la semaine du tournoi.
+- **Pas de course le dimanche quand c'est évitable** *(seulement si le lundi suivant est prévu, décision de Lily du 18 novembre 2026)* : la semaine suivante commence souvent par A, et ses sprints comptent comme de la course. Les séances de la semaine précédente sont prises en compte, pour ne jamais enchaîner 2 jours chargés ou 2 jours de course entre le dimanche et le lundi.
+- **Un test prévu n'est jamais retiré.** S'il faut retirer une séance la semaine d'un test demi-Cooper, le test prend la place de la séance la moins prioritaire (B, par exemple, quand il n'en reste que 2). Le moment prévu d'un test (début ou fin de semaine) passe avant la fraîcheur de A.
+- **Pas de séance chargée le dimanche quand c'est évitable** *(ajouté le 18 novembre 2026 ; seulement si le lundi suivant est prévu, décision de Lily)* : même raison que pour la course. Sans cette précision, une séance B le dimanche 17 janvier empêchait toute séance A le lundi 18, seul jour chargé possible la semaine du tournoi.
 - **Quand aucun jour ne permet A ni B** *(ajouté le 18 novembre 2026, à faire valider)* : semaine d'un tournoi après un dimanche chargé, ou S16, où le lundi et le mardi suivent le tournoi, le mercredi est un match et le jeudi et le vendredi précèdent le début de la saison. L'app garde alors les séances qui le permettent parmi celles choisies par Lily, dans l'ordre de priorité de la section 4 : C (sans course si besoin) et D. Pour une seule séance, D remplace la séance « vitesse + force complète ». Avant, la semaine restait vide. La règle 7 de la section 3 (« transformer plutôt que retirer ») va dans ce sens. La séance C de l'affûtage reste retirée la semaine d'un tournoi.
 
 ### Contenu des séances : précisions (étape 3)
@@ -570,7 +567,7 @@ L'app les place dans cet ordre : F17, F21, F23, M20, puis E3. Tant que Lily n'a 
 
 **Tests.**
 - **Journée 1 :** M1 n'est pas ajouté, puisque le test du mollet est le même mouvement poussé au maximum. M7 et M8 sont ajoutés quand il y a des sprints.
-- **Test de Cooper :** il est suivi de la partie force et tronc de la séance C.
+- **Test demi-Cooper :** il est suivi de la partie force et tronc de la séance C.
 - **Test de sprint :** il remplace les accélérations de la séance A.
 - Le mini-retest de S5 sera placé à l'étape 6.
 
@@ -632,10 +629,10 @@ Pour 2026-2027, cela ne met pas de bloc en S10 (semaine légère avec un match).
 
 *Ajouté le 18 novembre 2026. Choix faits pour appliquer les sections 5 et 6, à faire valider.*
 
-- **Test de Cooper sous condition (S4 à S6).**
+- **Test demi-Cooper sous condition (S4 à S6).**
   - Il est proposé la semaine qui suit 2 courses de 20 min ou plus en continu (étape 5 ou plus), avec une douleur de 2 ou moins aux tibias et au genou, et de moins de 3 le lendemain matin.
   - Il prend la place de la séance C.
-  - **À savoir :** avec 1 étape par semaine, la course facile atteint l'étape 4 au mieux à la fin de la Fondation (S5 est légère). Or la phase Force et vitesse n'a que 10 min de course facile. Le premier test de Cooper aura donc sans doute lieu en S11, et d'ici là les intermittents se font à un effort de 8 sur 10.
+  - **À savoir :** avec 1 étape par semaine, la course facile atteint l'étape 4 au mieux à la fin de la Fondation (S5 est légère). Or la phase Force et vitesse n'a que 10 min de course facile. Le premier test demi-Cooper aura donc sans doute lieu en S11, et d'ici là les intermittents se font à un effort de 8 sur 10.
 - **Ajustement des allures (±0,5 km/h).** Après chaque séance d'intermittents, Lily indique si elle était « plus vite », « comme prévu » ou « plus lente » sur la plupart des efforts. L'app ne demande pas l'allure de chaque effort.
 - **Progression des intermittents.** Quand un format revient après une séance réussie, il gagne 1 répétition par série, jusqu'à la version « plus difficile » de la banque :
 
@@ -651,8 +648,7 @@ Pour 2026-2027, cela ne met pas de bloc en S10 (semaine légère avec un match).
 - **Test manqué.** Un test qui n'a pas été fait dans sa semaine est reporté à la semaine suivante, jamais pendant l'affûtage. Une journée 1 reportée après le 1er décembre comprend le sprint.
 - **Écarts entre les côtés.** La flexion de cheville et le mollet donnent 1 série de plus sur M1, le squat bulgare sur F7, le saut sur une jambe sur P10. L'écart le plus récent compte, jusqu'au retest suivant.
 - **Semaine légère anticipée.**
-  - 2 séances à 9 ou plus d'effort, ou une douleur de 3 ou 4 à deux endroits sur la même note : c'est la semaine suivante qui devient légère.
-  - Le bouton « J'ai besoin d'une semaine légère » rend légère la semaine affichée, celle en cours ou une semaine à venir.
+  - Seulement à la demande de Lily (décision du 18 novembre 2026) : le bouton « J'ai besoin d'une semaine légère » rend légère la semaine affichée, celle en cours ou une semaine à venir.
   - Dans tous les cas, le compte des semaines normales de suite repart à zéro.
 
 ### Matchs, tournois et semaine changée : précisions (étape 7)
@@ -665,9 +661,9 @@ Pour 2026-2027, cela ne met pas de bloc en S10 (semaine légère avec un match).
   - déclarer un match imprévu, même déjà joué, ou annuler un match régulier.
 
   Les séances faites ou commencées restent à leur place et comptent dans les règles de placement. Les autres sont replacées à partir du jour du changement, sur les jours encore libres. Un test déjà fait n'est pas reprogrammé.
-- **Pas de rattrapage automatique.** Une séance passée sans saisie reste « pas faite ». Elle n'est replacée que si Lily change sa semaine, et seulement dans le nombre de séances qu'elle choisit alors.
+- **Pas de rattrapage automatique.** Une séance passée sans saisie reste « pas faite ». Le programme ne prend jamais de retard : les phases et les tests suivent les dates du calendrier, et une séance manquée est simplement sautée. Elle n'est replacée que si Lily change sa semaine, sur un jour qui reste dans la même semaine.
 - **Note d'effort après un match ou un jour de tournoi :** elle se donne sur la ligne du match, dans l'écran de la semaine. Pour l'instant, elle est seulement gardée : elle ne compte pas dans la règle « 2 séances à 9 ou plus ».
-- **Routine d'avant-match :** à partir du retour des changements de direction, chaque match à venir l'affiche, avec le rappel de mettre les chevillères. Elle comprend A12, A4, P14 et M1, environ 10 min en tout, sans dosage précis.
+- **Routine d'avant-match :** à partir du retour des changements de direction, chaque match à venir la propose, avec le rappel de mettre les chevillères. Elle comprend A12, A4, P14 et M1, environ 10 min en tout, sans dosage précis. Elle est facultative : Lily a déjà sa propre routine d'avant-match.
 - **Ligue du jeudi et autres matchs réguliers, tournois ajoutés :** ils se déclarent dans l'écran Réglages et entrent dans le calendrier comme ceux de la saison : semaine de tournoi, récupération, coupes selon le nombre de matchs.
 
 ### Nouveau programme : précisions (étape 9)
@@ -695,8 +691,8 @@ Pour 2026-2027, cela ne met pas de bloc en S10 (semaine légère avec un match).
 - **Retests d'un autre programme** (règle générale de la section 6) :
   - tests de la journée 1 en S1, sans le sprint s'il est limité ;
   - test de sprint à la première séance A où le sprint à 100 % est permis ;
-  - test de Cooper dès que la condition est remplie, de l'avant-dernière semaine de la Fondation à la 1re semaine de la phase suivante ;
-  - test de Cooper au début de la phase 3 ;
+  - test demi-Cooper dès que la condition est remplie, de l'avant-dernière semaine de la Fondation à la 1re semaine de la phase suivante ;
+  - test demi-Cooper au début de la phase 3 ;
   - journée 1 complète à la fin de chaque phase, sauf l'affûtage, avec le saut sur une jambe une fois les changements de direction permis ;
   - la dernière journée 1 est le retest final.
 
@@ -735,7 +731,7 @@ Pour 2026-2027, cela ne met pas de bloc en S10 (semaine légère avec un match).
   - les sprints de 10 m et 20 m (tests et temps filmés) ;
   - le saut en longueur (test et P5) ;
   - la hauteur de boîte (P4) ;
-  - le test de Cooper ;
+  - le test demi-Cooper ;
   - la distance de E8 ;
   - la plus longue course en continu.
 
@@ -751,6 +747,23 @@ Pour 2026-2027, cela ne met pas de bloc en S10 (semaine légère avec un match).
   - chaque test, de la première à la dernière mesure, avec l'évolution en valeur et en % ;
   - l'écart entre les côtés ;
   - les charges en kg.
+
+### Réponses de Lily (18 novembre 2026)
+
+Lily a relu tous les choix des sections ci-dessus. Ceux qui ne sont pas listés ici sont **validés tels quels**, avec la proposition de séries et de badges.
+
+**Changements demandés, appliqués dans l'app et dans ce document :**
+- **Dimanche :** pas de course ni de séance chargée le dimanche quand c'est évitable, **seulement si Lily a prévu de s'entraîner le lundi suivant** (le lundi est coché dans les jours disponibles de la semaine d'après).
+- **Choix des jours :** Lily choisit ses jours chaque semaine en ne cochant que ceux où elle veut s'entraîner ; l'app place les séances sur ces jours. L'exemple des 2 matchs n'est qu'une illustration. Pas de déplacement manuel d'une séance (décision de Nathan).
+- **Séance le jour d'un match :** du cardio très facile est permis (vélo ou rameur, 10 à 15 min, facultatif). Lily ne prévoit pas de séance les jours de match, mais garde la possibilité.
+- **Course facile :** une course manquée n'arrête pas la progression. L'étape avance si au moins une course de la semaine a été faite sans douleur. Une semaine sans aucune course garde l'étape.
+- **Allures :** toujours en min/km (c'est le réglage par défaut), sans la vitesse du tapis en km/h.
+- **Plus de note de douleur le lendemain matin :** trop de gestion. Seules les notes juste après la séance comptent.
+- **Plus de semaine légère automatique :** seulement le bouton « J'ai besoin d'une semaine légère ».
+- **Retour après 10 jours sans entraînement :** −15 % au lieu de −20 % (choix de Nathan entre les −10 % ou −15 % proposés par Lily).
+- **Test demi-Cooper (6 min) à la place du test de Cooper (12 min) :** VMA = distance en mètres ÷ 100. La condition pour le proposer (20 min de course deux fois sans douleur) et son moment (début de S11) ne changent pas.
+
+**Précisés, sans changement :** pas de rattrapage (le programme ne prend jamais de retard) ; routine d'avant-match proposée mais facultative.
 
 ## Points à suivre
 

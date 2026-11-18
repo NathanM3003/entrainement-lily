@@ -158,12 +158,12 @@ describe('charge prévue', () => {
     expect(chargePrevue(cal, d, b.date, 'fondation', prescription(b, 'F1'))).toMatchObject({ charge: 85, unite: 'lb' });
   });
 
-  it('retour après 10 jours ou plus sans entraînement : −20 %', () => {
+  it('retour après 10 jours ou plus sans entraînement : −15 %', () => {
     const d = donnees();
     faire(d, 1, 'B', { 'force:F1': { series: series(3, 8, 40), unite: 'kg' } });
     const b3 = seanceDe(d, 3, 'B');
-    // 40 × 0,8 = 32 → 30 kg (cran du dessous).
-    expect(chargePrevue(cal, d, b3.date, 'fondation', prescription(b3, 'F1'))).toMatchObject({ charge: 30 });
+    // 40 × 0,85 = 34 → 32,5 kg (cran du dessous).
+    expect(chargePrevue(cal, d, b3.date, 'fondation', prescription(b3, 'F1'))).toMatchObject({ charge: 32.5 });
   });
 
   it('affûtage : la dernière charge lourde utilisée', () => {
@@ -272,5 +272,16 @@ describe('course facile, sprints et sauts d’une semaine à l’autre', () => {
     const suivi = suiviDouleurs(d);
     expect(suivi.pauseCourse).toBe(true);
     expect(suivi.alertes[0]).toMatch(/Va voir la physio/);
+  });
+});
+
+describe('décisions de Lily (18 novembre 2026)', () => {
+  const cal2 = genererCalendrier(SAISON_2026_2027);
+  it('une course manquée n’arrête pas la progression : une course faite sans douleur suffit', () => {
+    const d = donnees();
+    faire(d, 1, 'C', {}, { douleurs: { tibias: 0 } });
+    // S2 : seule la séance A est faite, la séance C (avec course) est manquée.
+    faire(d, 2, 'A', {}, { douleurs: { tibias: 1 } });
+    expect(calculerSaison(cal2, d, '2026-11-20')[2]!.progression.etapeCourse).toBe(3);
   });
 });

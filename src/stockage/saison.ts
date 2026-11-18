@@ -2,7 +2,7 @@
 // Une séance déjà commencée garde le contenu figé à sa première saisie.
 
 import { detaillerSemaine, type EtatContenu, type SeanceDetaillee } from '../moteur/contenu';
-import { ecartJours, type DateISO } from '../moteur/dates';
+import { ajouterJours, ecartJours, type DateISO } from '../moteur/dates';
 import { genererCalendrier } from '../moteur/calendrier';
 import {
   allures,
@@ -121,15 +121,15 @@ export function calculerSaison(calBase: Calendrier, donnees: Donnees, aujourdhui
         if (semaine.retests.some((x) => x.type === r.type)) continue;
         // Reportée après le 1er décembre, la journée 1 comprend aussi le sprint.
         semaine.retests.push({ ...r, semaine: semaine.numero, moment: 'semaine', sansSprint: false });
-        messagesTests.push(`${r.type === 'cooper' ? 'Test de Cooper' : r.type === 'sprint' ? 'Test de sprint' : 'Tests de la journée 1'} reporté de la semaine dernière.`);
+        messagesTests.push(`${r.type === 'cooper' ? 'Test demi-Cooper' : r.type === 'sprint' ? 'Test de sprint' : 'Tests de la journée 1'} reporté de la semaine dernière.`);
       }
     }
     reportes = [];
-    // Test de Cooper « dès que la condition est remplie » : 20 min de course en continu, deux fois, sans douleur.
+    // Test demi-Cooper « dès que la condition est remplie » : 20 min de course en continu, deux fois, sans douleur.
     const condition = semaine.retests.find((r) => r.type === 'cooper' && r.moment === 'condition');
     if (condition && !testFait(donnees, 'cooper') && conditionCooper(donnees, semaine.debut)) {
       semaine.retests = semaine.retests.map((r) => (r === condition ? { ...r, moment: 'semaine' } : r));
-      messagesTests.push('Test de Cooper proposé cette semaine : tu as couru 20 min en continu deux fois sans douleur.');
+      messagesTests.push('Test demi-Cooper proposé cette semaine : tu as couru 20 min en continu deux fois sans douleur.');
     }
     const resultats = Object.values(donnees.resultats).filter((r) => r.semaine === semaine.numero);
     const auDebut = progression;
@@ -160,7 +160,9 @@ export function calculerSaison(calBase: Calendrier, donnees: Donnees, aujourdhui
     const retour = aVenir && progression.dernierJour !== undefined && ecartJours(progression.dernierJour, reference) >= 10;
     // Semaine changée en cours de route : les séances déjà faites ou commencées restent à leur place.
     const faites = choix.depuis ? resultats.map((r) => r.seance) : [];
-    const plan = planifierSemaine(cal, semaine.numero, choix, precedentes, faites);
+    const lundiSuivant = ajouterJours(semaine.fin, 1);
+    const lundiSuivantPrevu = (donnees.choix[semaine.numero + 1]?.joursDisponibles ?? []).includes(lundiSuivant);
+    const plan = planifierSemaine(cal, semaine.numero, choix, precedentes, faites, lundiSuivantPrevu);
     const contenu = detaillerSemaine(cal, plan, {
       statuts,
       reessais,

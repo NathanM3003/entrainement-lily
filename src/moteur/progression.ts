@@ -186,10 +186,10 @@ export function chargePrevue(cal: Calendrier, donnees: Donnees, date: DateISO, p
   }
   if (!resultat) return undefined;
 
-  // Retour après 10 jours ou plus sans entraînement : −20 % (section 5).
+  // Retour après 10 jours ou plus sans entraînement : −15 % (section 5, décision du 18 novembre 2026).
   const dernierJour = dernierEntrainement(donnees, date);
   if (dernierJour && ecartJours(dernierJour, date) >= 10) {
-    resultat = { ...resultat, charge: arrondiBas(resultat.charge * 0.8, pas), explication: `${resultat.explication} Retour après ${ecartJours(dernierJour, date)} jours sans entraînement : −20 %.` };
+    resultat = { ...resultat, charge: arrondiBas(resultat.charge * 0.85, pas), explication: `${resultat.explication} Retour après ${ecartJours(dernierJour, date)} jours sans entraînement : −15 %.` };
   }
   return resultat;
 }
@@ -304,17 +304,18 @@ export function apresSemaine(etat: EtatProgression, semaine: Semaine, seances: {
   const premier = faites[0];
   if (premier && etat.dernierJour && ecartJours(etat.dernierJour, premier.date) >= 10) suivant.etapeCourse = Math.max(1, suivant.etapeCourse - 1);
 
-  // Course facile : au plus une étape par semaine, seulement si toutes les courses prévues sont faites sans douleur.
+  // Course facile : au plus une étape par semaine, sans douleur. Une course manquée n'arrête pas la progression
+  // (décision de Lily, 18 novembre 2026) : il suffit d'au moins une course faite dans la semaine.
   const avecCourse = seances.filter((s) => s.seance.contenu.blocs.some((b) => b.exercices.some(estCourseFacile)));
   if (avecCourse.length) {
     const douleurs = avecCourse.map((s) => (s.resultat?.terminee ? douleurCourse(s.resultat) : 'ok'));
-    const toutesFaites = avecCourse.every((s) => {
+    const auMoinsUne = avecCourse.some((s) => {
       const r = s.resultat;
       if (!r?.terminee) return false;
-      return s.seance.contenu.blocs.every((b) => b.exercices.filter(estCourseFacile).every((p) => !r.exercices[`${b.type}:${p.id}`]?.pasFait));
+      return s.seance.contenu.blocs.some((b) => b.exercices.filter(estCourseFacile).some((p) => !r.exercices[`${b.type}:${p.id}`]?.pasFait));
     });
     if (douleurs.includes('recul')) suivant.etapeCourse = Math.max(1, suivant.etapeCourse - 1);
-    else if (!douleurs.includes('garde') && toutesFaites && !legere) suivant.etapeCourse = Math.min(7, suivant.etapeCourse + 1);
+    else if (!douleurs.includes('garde') && auMoinsUne && !legere) suivant.etapeCourse = Math.min(7, suivant.etapeCourse + 1);
   }
 
   // Sprints : +1 la semaine suivante quand la séance de vitesse est faite en entier, sans tension.
@@ -413,13 +414,13 @@ export function suiviDouleurs(donnees: Donnees): SuiviDouleurs {
   return suivi;
 }
 
-// ---------- Test de Cooper, VMA et allures (sections 5 et 7) ----------
+// ---------- Test demi-Cooper, VMA et allures (sections 5 et 7) ----------
 
 export const LONGUEUR_PISTE = 460;
 export const distanceCooper = (tours = 0, reste = 0) => tours * LONGUEUR_PISTE + reste;
 
 export interface Allures {
-  /** VMA en km/h, ajustements compris. Absente avant le premier test de Cooper. */
+  /** VMA en km/h, ajustements compris. Absente avant le premier test demi-Cooper. */
   vma?: number;
   /** VMA tirée du dernier test : distance en mètres ÷ 200. */
   vmaTest?: number;
@@ -432,7 +433,7 @@ const estIntermittentDeCourse = (p: Prescription) => p.role === 'intermittent' &
 const effortsPrevus = (p: Prescription) => (p.id === 'E7' ? 1 : (p.series ?? 1) * (p.reps?.min ?? 1));
 
 /**
- * VMA = distance du test de Cooper ÷ 200. Ensuite (section 5, « Selon les chiffres entrés ») :
+ * VMA = distance du test demi-Cooper (6 min) ÷ 100 (décision de Lily, 18 novembre 2026). Ensuite (section 5, « Selon les chiffres entrés ») :
  * plus vite que prévu sur au moins la moitié des efforts deux séances de suite : +0,5 km/h ;
  * efforts manqués, ou plus lente sur au moins la moitié des efforts : −0,5 km/h.
  */
@@ -443,7 +444,7 @@ export function allures(donnees: Donnees): Allures {
   for (const r of faites) {
     const c = r.exercices['tests:T-cooper'];
     if (c?.cooper?.tours !== undefined && !c.pasFait) {
-      const vmaTest = distanceCooper(c.cooper.tours, c.cooper.reste) / 200;
+      const vmaTest = distanceCooper(c.cooper.tours, c.cooper.reste) / 100;
       resultat = { vmaTest, vma: vmaTest, ajustement: 0, dateTest: r.date };
       viteDeSuite = 0;
       continue;
@@ -523,9 +524,9 @@ export function seriesEnPlus(donnees: Donnees): Record<string, SerieEnPlus> {
   return resultat;
 }
 
-// ---------- Test de Cooper sous condition, semaine légère anticipée (section 6) ----------
+// ---------- Test demi-Cooper sous condition, semaine légère anticipée (section 6) ----------
 
-/** Le test de Cooper est proposé dès que Lily a couru 20 min en continu deux fois sans douleur (section 5). */
+/** Le test demi-Cooper est proposé dès que Lily a couru 20 min en continu deux fois sans douleur (section 5). */
 export function conditionCooper(donnees: Donnees, avant: DateISO): boolean {
   let fois = 0;
   for (const r of terminees(donnees, avant)) {
@@ -541,8 +542,10 @@ export function conditionCooper(donnees: Donnees, avant: DateISO): boolean {
  * Semaine légère anticipée (section 6) : la semaine qui suit 2 séances avec une note d'effort de 9 ou plus,
  * ou une douleur de 3 ou 4 à deux endroits en même temps. Plus les semaines que Lily a demandées.
  */
-export function semainesLegeresAnticipees(donnees: Donnees, demandees: number[] = []): { semaine: number; raison: string }[] {
+export function semainesLegeresAnticipees(donnees: Donnees, demandees: number[] = [], automatiques = false): { semaine: number; raison: string }[] {
   const liste = demandees.map((semaine) => ({ semaine, raison: 'Semaine légère demandée' }));
+  // Décision de Lily (18 novembre 2026) : pas de semaine légère automatique, seulement à sa demande.
+  if (!automatiques) return liste;
   const parSemaine = new Map<number, ResultatSeance[]>();
   for (const r of terminees(donnees, '9999-12-31')) parSemaine.set(r.semaine, [...(parSemaine.get(r.semaine) ?? []), r]);
   for (const [semaine, resultats] of parSemaine) {

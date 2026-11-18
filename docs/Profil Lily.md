@@ -77,10 +77,10 @@
    Les ischios ne sont pas testés : on les suit par les charges à l'entraînement (F9, F10).
 6. **Mollet sur une jambe, maximum de répétitions** (chaque côté), en dernier pour ne pas fatiguer les mollets avant les sprints : jambe tendue, pleine amplitude, un doigt au mur pour l'équilibre, 1 seconde pour monter et 1 seconde pour descendre. Arrêter quand l'amplitude diminue. Repère : environ 25 répétitions, et un écart entre les côtés à surveiller.
 
-**Journée 2 : course.** **Test de Cooper (12 min)** sur la piste de 460 m : noter le nombre de tours et la distance du dernier tour partiel. L'app en tirera la VMA et les allures d'entraînement (distance en mètres ÷ 200 ≈ VMA en km/h). À faire seulement quand elle court 20 à 30 min en continu sans douleur aux tibias.
+**Journée 2 : course.** **Test demi-Cooper (6 min)** sur la piste de 460 m *(choisi par Lily le 18 novembre 2026, à la place du test de Cooper de 12 min)* : noter le nombre de tours et la distance du dernier tour partiel. L'app en tirera la VMA et les allures d'entraînement (distance en mètres ÷ 100 ≈ VMA en km/h). À faire seulement quand elle court 20 à 30 min en continu sans douleur aux tibias.
 
 **À partir de janvier :** saut sur une jambe, pour la symétrie des chevilles.
 
-**Retirés :** le test aller-retour 5-0-5 (pas d'espace pour les changements de direction) et le test intermittent 30-15 IFT (allers-retours avec demi-tours ; le test de Cooper suffit pour les allures).
+**Retirés :** le test aller-retour 5-0-5 (pas d'espace pour les changements de direction) et le test intermittent 30-15 IFT (allers-retours avec demi-tours ; le test demi-Cooper suffit pour les allures).
 
 **Calendrier des retests :** voir « Règles du programme », section 6 (S5 mini-retest, S10 et début de S11, S14 retest final).

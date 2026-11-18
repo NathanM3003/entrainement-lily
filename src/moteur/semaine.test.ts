@@ -114,9 +114,9 @@ describe('placement des séances', () => {
     expect(actifs.size).toBeLessThan(7);
   });
 
-  it('évite de finir la semaine par une course', () => {
+  it('évite de finir la semaine par une course quand le lundi suivant est prévu', () => {
     for (const n of [3, 8, 11]) {
-      const p = planifierSemaine(cal, n, { nbSeances: 3, joursDisponibles: tousLesJours(n) });
+      const p = planifierSemaine(cal, n, { nbSeances: 3, joursDisponibles: tousLesJours(n) }, [], [], true);
       expect(p.seances.some((s) => s.course && s.date === semaine(n).fin), `S${n}`).toBe(false);
     }
   });
@@ -185,14 +185,14 @@ describe('semaines particulières de 2026-2027', () => {
   });
 
   it('S10 : lundi et mardi en charge faible, tests de la journée 1 en fin de semaine', () => {
-    const p = planifierSemaine(cal, 10, { nbSeances: 3, joursDisponibles: tousLesJours(10) });
+    const p = planifierSemaine(cal, 10, { nbSeances: 3, joursDisponibles: tousLesJours(10) }, [], [], true);
     for (const s of p.seances.filter((x) => x.date <= '2027-01-26')) expect(s.charge).toBe('faible');
     const test = p.seances.find((s) => s.test === 'journee1');
-    // Vendredi plutôt que dimanche : S11 commence par le test de Cooper le lundi.
+    // Vendredi plutôt que dimanche : S11 commence par le test demi-Cooper le lundi.
     expect(test?.date).toBe('2027-01-29');
   });
 
-  it('S10 puis S11 : le test de Cooper ne suit pas un jour chargé ou de course', () => {
+  it('S10 puis S11 : le test demi-Cooper ne suit pas un jour chargé ou de course', () => {
     const s10 = planifierSemaine(cal, 10, { nbSeances: 3, joursDisponibles: tousLesJours(10) });
     const s11 = planifierSemaine(cal, 11, { nbSeances: 3, joursDisponibles: tousLesJours(11) }, s10.seances);
     const cooper = s11.seances.find((s) => s.test === 'cooper')!;
@@ -201,10 +201,10 @@ describe('semaines particulières de 2026-2027', () => {
     expect(veille === undefined || (veille.charge !== 'elevee' && !veille.course)).toBe(true);
   });
 
-  it('S11 : le test de Cooper remplace la séance C, en début de semaine', () => {
+  it('S11 : le test demi-Cooper remplace la séance C, en début de semaine', () => {
     const p = planifierSemaine(cal, 11, { nbSeances: 3, joursDisponibles: tousLesJours(11) });
     const cooper = p.seances.find((s) => s.test === 'cooper');
-    expect(cooper).toMatchObject({ type: 'C', libelle: 'Test de Cooper', charge: 'elevee' });
+    expect(cooper).toMatchObject({ type: 'C', libelle: 'Test demi-Cooper', charge: 'elevee' });
     expect(cooper!.date <= '2027-02-02').toBe(true);
   });
 
@@ -232,8 +232,15 @@ describe('semaines particulières de 2026-2027', () => {
     );
   });
 
+  it('sans lundi prévu la semaine suivante, le dimanche reste possible', () => {
+    const avec = planifierSemaine(cal, 3, { nbSeances: 3, joursDisponibles: ['2026-12-07', '2026-12-10', '2026-12-13'] }, [], [], true);
+    const sans = planifierSemaine(cal, 3, { nbSeances: 3, joursDisponibles: ['2026-12-07', '2026-12-10', '2026-12-13'] });
+    expect(sans.seances.map((s) => s.date)).toContain('2026-12-13');
+    expect(avec.seances.find((s) => s.date === '2026-12-13')?.course ?? false).toBe(false);
+  });
+
   it('évite une séance chargée le dimanche quand c’est possible, pour laisser le lundi suivant à A', () => {
-    const s8 = planifierSemaine(cal, 8, { nbSeances: 3, joursDisponibles: tousLesJours(8) });
+    const s8 = planifierSemaine(cal, 8, { nbSeances: 3, joursDisponibles: tousLesJours(8) }, [], [], true);
     expect(s8.seances.some((s) => s.date === '2027-01-17' && s.charge === 'elevee')).toBe(false);
     const s9 = planifierSemaine(cal, 9, { nbSeances: 3, joursDisponibles: tousLesJours(9) }, s8.seances);
     expect(s9.seances.find((s) => s.date === '2027-01-18')?.type).toBe('A');

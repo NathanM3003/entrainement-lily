@@ -145,8 +145,8 @@ export function EcranProgres() {
       <Graphique titre="Douleurs après les séances" etiquettes={douleurs.etiquettes} series={douleurs.series} unite="sur 10" min={0} max={10} />
       {suivi.courbes.cooper.length > 0 && (
         <p className="aide">
-          Test de Cooper :{' '}
-          {suivi.courbes.cooper.map((p) => `${NOMBRE(p.valeur)} m le ${dateCourte(p.date)} (VMA ${NOMBRE(p.valeur / 200)} km/h)`).join(', ')}.
+          Test demi-Cooper :{' '}
+          {suivi.courbes.cooper.map((p) => `${NOMBRE(p.valeur)} m le ${dateCourte(p.date)} (VMA ${NOMBRE(p.valeur / 100)} km/h)`).join(', ')}.
         </p>
       )}
     </main>

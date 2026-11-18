@@ -198,7 +198,7 @@ export function calculerSuivi(saison: SemaineCalculee[], donnees: Donnees, aujou
     [...faits(resultats)].filter(({ p, x }) => p.id === 'P4' && x?.hauteur).map(({ r, x }) => ({ date: r.date, valeur: x!.hauteur! })),
   );
   const cooper = pointsTest(resultats, 'T-cooper');
-  ajouterRecord('cooper', 'test de Cooper', 'm', cooper);
+  ajouterRecord('cooper', 'test demi-Cooper', 'm', cooper);
   ajouterRecord('e8', 'objectif à battre (E8)', 'm', [...faits(resultats)].filter(({ p, x }) => p.id === 'E8' && x?.distance).map(({ r, x }) => ({ date: r.date, valeur: x!.distance! })));
   ajouterRecord(
     'course',
@@ -317,7 +317,7 @@ const TESTS_BILAN: { test: string; nom: string; unite: string; plusPetitEstMieux
   { test: 'T-F14', nom: 'Développé des épaules (5 répétitions)', unite: 'kg' },
   { test: 'T-F16', nom: 'Tirage horizontal (5 répétitions)', unite: 'kg' },
   { test: 'T-mollet', nom: 'Mollet sur une jambe', unite: 'répétitions' },
-  { test: 'T-cooper', nom: 'Test de Cooper', unite: 'm' },
+  { test: 'T-cooper', nom: 'Test demi-Cooper', unite: 'm' },
 ];
 
 /** Tous les tests faits, du premier au dernier, avec l'évolution et l'écart entre les côtés. */

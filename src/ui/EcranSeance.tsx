@@ -263,13 +263,12 @@ function Fiche({
   const unite = donnees.preferences.allure;
   if (p.vitesseKmh) {
     const effort = { E5: 15, E6: 30, E8: 30 }[p.id as 'E5'];
-    const tapis = unite === 'km/h' ? '' : ` (tapis : ${texteVitesse(p.vitesseKmh, 'km/h')})`;
     consignes.push(
-      `Allure : ${texteVitesse(p.vitesseKmh, unite)}${tapis}${effort ? `, soit environ ${distanceEffort(p.vitesseKmh.min, effort)} m en ${effort} s sur la piste` : ''}.${p.id === 'E7' ? ' 100 % sur les efforts de 15 et 30 s, 95 % sur ceux de 45 et 60 s.' : ''}${p.id === 'E8' ? ' Au moins cette allure.' : ''}`,
+      `Allure : ${texteVitesse(p.vitesseKmh, unite)}${effort ? `, soit environ ${distanceEffort(p.vitesseKmh.min, effort)} m en ${effort} s sur la piste` : ''}.${p.id === 'E7' ? ' 100 % sur les efforts de 15 et 30 s, 95 % sur ceux de 45 et 60 s.' : ''}${p.id === 'E8' ? ' Au moins cette allure.' : ''}`,
     );
     if (p.recuperationKmh) consignes.push(`Récupération trottinée : ${texteVitesse(p.recuperationKmh, unite)} (la marche est permise).`);
   } else if (p.allure) {
-    consignes.push(p.role === 'intermittent' && p.pctVMA ? 'Avant le test de Cooper : effort de 8 sur 10.' : `${p.allure}.`);
+    consignes.push(p.role === 'intermittent' && p.pctVMA ? 'Avant le test demi-Cooper : effort de 8 sur 10.' : `${p.allure}.`);
   }
   if (p.serieEnPlus) {
     consignes.push(`1 série de plus du côté ${p.serieEnPlus.cote} (écart de ${p.serieEnPlus.ecart} % au dernier test).`);
@@ -559,7 +558,7 @@ function SaisieTest({
         <ChampNombre label="Dernier tour partiel" unite="m" valeur={c.reste} onChange={(v) => set({ cooper: { ...c, reste: v } })} />
         {c.tours !== undefined && (
           <p className="petit">
-            Distance : {distanceCooper(c.tours, c.reste)} m · VMA environ {(distanceCooper(c.tours, c.reste) / 200).toLocaleString('fr-CA', { maximumFractionDigits: 1 })} km/h
+            Distance : {distanceCooper(c.tours, c.reste)} m · VMA environ {(distanceCooper(c.tours, c.reste) / 100).toLocaleString('fr-CA', { maximumFractionDigits: 1 })} km/h
           </p>
         )}
       </div>
