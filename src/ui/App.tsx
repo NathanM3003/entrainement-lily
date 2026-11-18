@@ -3,6 +3,7 @@ import { semaineDuJour } from '../stockage/saison';
 import { useDonnees } from './donnees';
 import { EcranBilan } from './EcranBilan';
 import { EcranExercices } from './EcranExercices';
+import { EcranNouveauProgramme } from './EcranNouveauProgramme';
 import { EcranProgres } from './EcranProgres';
 import { EcranSauvegarde } from './EcranSauvegarde';
 import { EcranSeance } from './EcranSeance';
@@ -37,6 +38,9 @@ export function App() {
   else if (ecran === 'exercices') {
     contenu = <EcranExercices />;
     onglet = 'exercices';
+  } else if (ecran === 'nouveau') {
+    contenu = <EcranNouveauProgramme />;
+    onglet = 'sauvegarde';
   } else if (ecran === 'sauvegarde' || ecran === 'reglages') {
     contenu = <EcranSauvegarde />;
     onglet = 'sauvegarde';

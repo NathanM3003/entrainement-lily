@@ -135,7 +135,8 @@ function ChoixDeLaSemaine({
     }
     return jours;
   };
-  const [nb, setNb] = useState(Math.max(calc.choix?.nbSeances ?? precedent?.nbSeances ?? 3, faites.length));
+  const { cal } = useDonnees();
+  const [nb, setNb] = useState(Math.max(calc.choix?.nbSeances ?? precedent?.nbSeances ?? cal.config.disponibilites?.seancesParSemaine ?? 3, faites.length));
   const [dispo, setDispo] = useState<DateISO[]>(joursParDefaut);
   const basculer = (j: DateISO) => setDispo((d) => (d.includes(j) ? d.filter((x) => x !== j) : [...d, j].sort()));
   const passe = (j: DateISO) => enCours && j < aujourdhui;

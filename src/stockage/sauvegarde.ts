@@ -29,6 +29,8 @@ export function lireSauvegarde(texte: string): Donnees {
   const d = o.donnees;
   if (typeof d.choix !== 'object' || typeof d.resultats !== 'object') throw new Error('Cette sauvegarde est incomplète.');
   return {
+    ...(d.programme ? { programme: d.programme } : {}),
+    statuts: d.statuts ?? {},
     choix: d.choix ?? {},
     legeresDemandees: Array.isArray(d.legeresDemandees) ? d.legeresDemandees : [],
     saison: { matchsReguliers: d.saison?.matchsReguliers ?? [], tournois: d.saison?.tournois ?? [] },

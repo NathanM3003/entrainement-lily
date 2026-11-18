@@ -1244,7 +1244,7 @@ function composerSeance(ctx: Ctx): ContenuSeance {
     retires.push(pire.p.nom.toLowerCase());
   }
   if (retires.length) {
-    messages.push(`Séance raccourcie pour tenir en ${seance.dureeMax === 90 ? '1 h 30' : 'environ 1 h'} : ${retires.join(', ')} retiré${retires.length > 1 ? 's' : ''}.`);
+    messages.push(`Séance raccourcie pour tenir en ${texteDuree(seance.dureeMax)} : ${retires.join(', ')} retiré${retires.length > 1 ? 's' : ''}.`);
   }
 
   const essais = items.filter((it) => it.p.essai).map((it) => it.p.id);
@@ -1344,6 +1344,9 @@ export function detaillerSemaine(cal: Calendrier, plan: PlanSemaine, etat: EtatC
 }
 
 // ---------- Affichage du dosage ----------
+
+/** « 1 h 30 », « environ 1 h », « 75 min ». */
+export const texteDuree = (minutes: number) => (minutes === 60 ? 'environ 1 h' : minutes % 60 === 0 ? `${minutes / 60} h` : minutes > 60 ? `${Math.floor(minutes / 60)} h ${minutes % 60}` : `${minutes} min`);
 
 const fourchette = (r: Fourchette) => (r.min === r.max ? `${r.min}` : `${r.min} à ${r.max}`);
 

@@ -44,6 +44,8 @@ export async function chargerDonnees(): Promise<Donnees> {
     else if (texte === 'saison') donnees.saison = valeur as Donnees['saison'];
     else if (texte === 'notesMatchs') donnees.notesMatchs = valeur as Donnees['notesMatchs'];
     else if (texte === 'routines') donnees.routinesMaison = valeur as string[];
+    else if (texte === 'programme') donnees.programme = valeur as Donnees['programme'];
+    else if (texte === 'statuts') donnees.statuts = valeur as Donnees['statuts'];
   });
   return donnees;
 }
@@ -68,6 +70,10 @@ export async function enregistrerSaison(saison: Donnees['saison']): Promise<void
 
 export async function enregistrerNotesMatchs(notes: Donnees['notesMatchs']): Promise<void> {
   await attendre((await table('readwrite')).put(notes, 'notesMatchs'));
+}
+
+export async function enregistrerStatuts(statuts: Donnees['statuts']): Promise<void> {
+  await attendre((await table('readwrite')).put(statuts, 'statuts'));
 }
 
 export async function enregistrerRoutines(jours: string[]): Promise<void> {
@@ -95,6 +101,8 @@ export async function remplacerDonnees(donnees: Donnees): Promise<void> {
   t.put(donnees.saison, 'saison');
   t.put(donnees.notesMatchs, 'notesMatchs');
   t.put(donnees.routinesMaison, 'routines');
+  t.put(donnees.statuts, 'statuts');
+  if (donnees.programme) t.put(donnees.programme, 'programme');
   await new Promise<void>((resolve, reject) => {
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);

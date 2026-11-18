@@ -3,7 +3,8 @@
 import type { SeanceDetaillee } from '../moteur/contenu';
 import type { DateISO } from '../moteur/dates';
 import type { ChoixSemaine } from '../moteur/semaine';
-import type { MatchRegulier, Periode } from '../moteur/types';
+import type { Statut } from '../donnees/types';
+import type { MatchRegulier, Periode, ProgrammeConfig } from '../moteur/types';
 
 export type Unite = 'kg' | 'lb';
 export type UniteAllure = 'min/km' | 'km/h' | 'mi/h';
@@ -82,6 +83,10 @@ export interface Preferences {
 }
 
 export interface Donnees {
+  /** Programme créé avec le questionnaire. Absent : la saison 2026-2027. */
+  programme?: ProgrammeConfig;
+  /** Statuts des exercices changés par Lily dans l'écran Exercices (section 6). */
+  statuts: Record<string, Statut>;
   choix: Record<number, ChoixSemaine>;
   /** Semaines que Lily a demandées légères (« J'ai besoin d'une semaine légère »). */
   legeresDemandees: number[];
@@ -96,6 +101,7 @@ export interface Donnees {
 }
 
 export const DONNEES_VIDES: Donnees = {
+  statuts: {},
   choix: {},
   legeresDemandees: [],
   saison: { matchsReguliers: [], tournois: [] },

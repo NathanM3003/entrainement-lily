@@ -670,6 +670,41 @@ Pour 2026-2027, cela ne met pas de bloc en S10 (semaine légère avec un match).
 - **Routine d'avant-match :** à partir du retour des changements de direction, chaque match à venir l'affiche, avec le rappel de mettre les chevillères. Elle comprend A12, A4, P14 et M1, environ 10 min en tout, sans dosage précis.
 - **Ligue du jeudi et autres matchs réguliers, tournois ajoutés :** ils se déclarent dans l'écran Réglages et entrent dans le calendrier comme ceux de la saison : semaine de tournoi, récupération, coupes selon le nombre de matchs.
 
+### Nouveau programme : précisions (étape 9)
+
+*Ajouté le 18 novembre 2026. Choix faits pour appliquer les sections 0 et 6, à faire valider.*
+
+- **Questionnaire.** Il pose les 6 questions de la section 0 (dates, événements, santé, disponibilités, niveau, exercices), puis montre un résumé :
+  - le nombre de semaines ;
+  - les phases ;
+  - les tests prévus ;
+  - les semaines légères.
+
+  Il est prérempli avec le programme en cours. Pour 2026-2027, il reprend le profil de Lily.
+- **Ce que les réponses changent :**
+  - les dates, les événements et les restrictions datées (sprint, changements de direction) ;
+  - le nombre de séances proposé par défaut chaque semaine ;
+  - la durée maximale d'une séance (l'app retire alors des exercices, comme en période allégée) ;
+  - l'étape de course facile de départ, d'après la dernière course faite sans douleur.
+- **Ce qu'elles ne changent pas encore :**
+  - l'état de chaque zone (« ça va », « sensible », « en rééducation ») ;
+  - les lieux ;
+  - les allures et les charges connues.
+
+  Ils sont gardés, mais les Règles ne disent pas quoi en faire, en dehors des restrictions datées. Ce sont des questions à trancher si besoin.
+- **Retests d'un autre programme** (règle générale de la section 6) :
+  - tests de la journée 1 en S1, sans le sprint s'il est limité ;
+  - test de sprint à la première séance A où le sprint à 100 % est permis ;
+  - test de Cooper dès que la condition est remplie, de l'avant-dernière semaine de la Fondation à la 1re semaine de la phase suivante ;
+  - test de Cooper au début de la phase 3 ;
+  - journée 1 complète à la fin de chaque phase, sauf l'affûtage, avec le saut sur une jambe une fois les changements de direction permis ;
+  - la dernière journée 1 est le retest final.
+
+  Appliquée aux dates de 2026-2027, cette règle retrouve le calendrier validé, sauf en S5 : une journée 1 complète au lieu du mini-retest de Noël.
+- **Programme validé gardé.** Tant que le début et l'échéance ne changent pas, les retests et la semaine légère S10 validés sont gardés. Si les dates changent, ils sont recalculés.
+- **Créer un programme remplace la saison en cours** : semaines, séances, résultats, matchs et tournois ajoutés. Les réglages et les statuts des exercices restent. L'app conseille de créer une sauvegarde avant.
+- **Statuts des exercices.** Lily les change dans l'écran Exercices. Ce choix passe avant les décisions prises après un essai.
+
 ### Séries et badges
 
 *Proposition à faire valider par Lily.*

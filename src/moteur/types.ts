@@ -64,7 +64,15 @@ export interface ProgrammeConfig {
   retests: RetestPrevu[];
   /** Semaines légères fixées en plus de celles que le moteur déduit (Règles, section 6). */
   semainesLegeres: SemaineLegerePrevue[];
+  /** Questions de création (Règles, section 0) : santé, disponibilités, niveau. */
+  sante?: Partial<Record<ZoneSante, { etat: EtatSante; note?: string }>>;
+  disponibilites?: { seancesParSemaine: number; dureeMax: number; lieux: Lieu[] };
+  niveau?: { etapeCourse: number; derniereCourse?: string; allures?: string; charges?: string };
 }
+
+export type ZoneSante = 'chevilles' | 'genoux' | 'ischios' | 'tibias' | 'autre';
+export type EtatSante = 'ok' | 'sensible' | 'reeducation';
+export type Lieu = 'gym' | 'piste' | 'tapis';
 
 // ---------- Résultat du moteur ----------
 

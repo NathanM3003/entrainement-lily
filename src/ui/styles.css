@@ -275,3 +275,18 @@ legend { padding: 0; margin-bottom: 8px; font-weight: 600; }
 .tableau { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; margin-top: 6px; }
 .tableau th, .tableau td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--ligne); }
 .bilan { list-style: none; margin: 0; padding: 0; }
+
+/* ---------- Étape 9 : questionnaire ---------- */
+.etapes { margin: 8px 0 0; }
+.champ-texte { margin: 8px 0; }
+.champ-texte input, .formulaire input[type='number'] {
+  width: 100%; min-height: 44px; font: inherit; padding: 6px 10px;
+  border: 1px solid var(--ligne); border-radius: 10px; background: var(--fond); color: var(--encre);
+}
+a.bouton {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 8px 14px; border-radius: 10px;
+  border: 1px solid var(--ligne); background: var(--surface); text-decoration: none; color: var(--encre);
+}
+.statut { margin-top: 12px; }
+.etapes { flex-wrap: nowrap; }
+.etapes button { flex: 1; min-width: 0; padding: 8px 0; }

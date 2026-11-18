@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { exercice } from '../donnees/banque';
-import { texteDosage, type Bloc, type Prescription } from '../moteur/contenu';
+import { texteDosage, texteDuree, type Bloc, type Prescription } from '../moteur/contenu';
 import { chargePrevue, maximumEstime } from '../moteur/progression';
 import type { Phase } from '../moteur/types';
 import {
@@ -91,7 +91,7 @@ export function EcranSeance({ date }: { date: string }) {
       </p>
       <h1>{seance.libelle}</h1>
       <p className="aide">
-        Environ {seance.contenu.minutes} min{seance.dureeMax < 90 ? ' (environ 1 h au plus)' : ' (1 h 30 au plus)'}
+        Environ {seance.contenu.minutes} min ({texteDuree(seance.dureeMax)} au plus)
         {seance.courte && ' · version courte, sans record'}
       </p>
       {(seance.contenu.messages.length > 0 || affichee.etat === 'manquee') && (

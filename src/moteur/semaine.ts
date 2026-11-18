@@ -520,7 +520,8 @@ export function planifierSemaine(
       test: p.mod.test?.type,
       charge: p.charge,
       course: p.course,
-      dureeMax: semaineAllegee || ctx.joursAlleges.has(p.date) ? 60 : 90,
+      // Durée maximale choisie à la création (1 h 30 pour 2026-2027) ; environ 1 h en période allégée.
+      dureeMax: Math.min(semaineAllegee || ctx.joursAlleges.has(p.date) ? 60 : 90, calendrier.config.disponibilites?.dureeMax ?? 90),
       courte: semaine.tournoi,
     }))
     .sort((a, b) => (a.date < b.date ? -1 : 1));

@@ -94,6 +94,19 @@ export function EcranSauvegarde() {
       </section>
 
       <section className="carte">
+        <h2>Programme</h2>
+        <p>
+          {cal.config.nom} : du {dateCourte(cal.config.debut)} au {dateCourte(cal.config.echeance)} ({cal.config.echeanceNom}), {cal.semaines.length} semaines.
+        </p>
+        <p className="aide">Pour une autre saison : réponds aux questions de création. Le questionnaire est prérempli avec le programme en cours.</p>
+        <div className="actions">
+          <a className="bouton" href="#/nouveau">
+            Créer un nouveau programme
+          </a>
+        </div>
+      </section>
+
+      <section className="carte">
         <h2>Unités</h2>
         <p className="aide">Pour les charges, le choix kg ou lb se fait sur chaque exercice.</p>
         <fieldset className="choix">

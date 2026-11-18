@@ -97,14 +97,18 @@ export function calculerSaison(calBase: Calendrier, donnees: Donnees, aujourdhui
     matchsReguliers: [...calBase.config.matchsReguliers, ...ajouts.matchsReguliers],
     tournois: [...calBase.config.tournois, ...ajouts.tournois].sort((a, b) => (a.debut < b.debut ? -1 : 1)),
   });
-  const { statuts, reessais } = decisionsEssais(donnees);
+  // Les statuts changés dans l'écran Exercices passent après les décisions d'essai.
+  const decisions = decisionsEssais(donnees);
+  const statuts = { ...decisions.statuts, ...donnees.statuts };
+  const reessais = decisions.reessais;
   const vitesses = allures(donnees);
   const cotes = seriesEnPlus(donnees);
   let reportes: RetestPrevu[] = [];
   const essais: Record<string, number> = {};
   const compter = (ids: string[]) => ids.forEach((id) => (essais[id] = (essais[id] ?? 0) + 1));
   let precedentes: SeancesPrecedentes = [];
-  let progression: EtatProgression = PROGRESSION_INITIALE;
+  // Étape de course de départ : d'après la dernière course faite sans douleur (questionnaire de création).
+  let progression: EtatProgression = { ...PROGRESSION_INITIALE, etapeCourse: calBase.config.niveau?.etapeCourse ?? PROGRESSION_INITIALE.etapeCourse };
   const douleurs = suiviDouleurs(donnees);
   let courseEnCardioApres = douleurs.courseEnCardioApres;
 
