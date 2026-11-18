@@ -29,9 +29,13 @@ describe('lieu de chaque séance', () => {
     expect(lieuxSeance(a.contenu, ['gym', 'tapis'])).toBe('Dehors');
   });
 
-  it('phase 2 : vitesse et force dans la même séance, en deux temps', () => {
-    const a = seances(donnees(9), 9).find((s) => s.type === 'A')!;
-    expect(lieuxSeance(a.contenu)).toBe('Piste ou dehors, puis gym');
+  it('phases 2 et 3 : jamais de sprints et de musculation le même jour', () => {
+    for (const n of [8, 13]) {
+      const liste = seances(donnees(n), n);
+      expect(lieuxSeance(liste.find((s) => s.type === 'A')!.contenu)).toBe('Piste ou dehors');
+      for (const s of liste) expect(lieuxSeance(s.contenu)).not.toContain('puis');
+    }
+    expect(lieuxSeance(seances(donnees(8), 8).find((s) => s.type === 'C')!.contenu)).toBe('Gym, avec le tapis pour la course');
   });
 });
 

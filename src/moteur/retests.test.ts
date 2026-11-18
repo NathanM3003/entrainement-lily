@@ -33,7 +33,7 @@ describe('test demi-Cooper et allures (sections 5 et 7)', () => {
     const c11 = seanceDe(d, 11, 'C');
     enregistrer(d, 11, c11, cooper(2, 320)); // 1 240 m en 6 min
     expect(allures(d)).toMatchObject({ vma: 12.4, ajustement: 0 });
-    const c14 = seanceDe(d, 14, 'C');
+    const c14 = seanceDe(d, 14, 'A'); // les intermittents se font sur la piste
     const format = c14.contenu.blocs.find((b) => b.type === 'intermittents')!.exercices[0]!;
     expect(format.id).not.toBe('E10');
     const fois = (date: string, r: ResultatExercice) => enregistrer(d, 14, { ...c14, date }, { [`intermittents:${format.id}`]: r });
@@ -47,7 +47,7 @@ describe('test demi-Cooper et allures (sections 5 et 7)', () => {
 
   it('les intermittents affichent leur vitesse et la distance sur la piste', () => {
     const plan = planifierSemaine(cal, 8, { nbSeances: 4, joursDisponibles: jours(8) });
-    const c = detaillerSemaine(cal, plan, { vma: 12 }).seances.find((s) => s.type === 'C' && s.variante === 'normale')!;
+    const c = detaillerSemaine(cal, plan, { vma: 12 }).seances.find((s) => s.type === 'A')!;
     const inter = c.contenu.blocs.find((b) => b.type === 'intermittents')!.exercices[0]!;
     const pct = inter.pctVMA!.min;
     expect(inter.vitesseKmh?.min).toBeCloseTo((12 * pct) / 100);
@@ -58,9 +58,9 @@ describe('test demi-Cooper et allures (sections 5 et 7)', () => {
 
   it('un format d’intermittents réussi revient avec 1 répétition de plus par série', () => {
     const d = donnees([6, 7, 8]);
-    const c6 = seanceDe(d, 6, 'C');
+    const c6 = seanceDe(d, 8, 'A');
     const format = c6.contenu.blocs.find((b) => b.type === 'intermittents')!.exercices[0]!;
-    enregistrer(d, 6, c6, { [`intermittents:${format.id}`]: { nombre: 100 } });
+    enregistrer(d, 8, c6, { [`intermittents:${format.id}`]: { nombre: 100 } });
     expect(intermittentsEnPlus(cal, d, '2027-03-01')).toEqual({ [format.id]: 1 });
   });
 
@@ -98,9 +98,11 @@ describe('retests (section 6)', () => {
     const s2 = saison(d, '2026-11-30')[1]!;
     expect(s2.semaine.retests.map((r) => r.type)).toEqual(['sprint', 'journee1']);
     expect(s2.messages).toContain('Tests de la journée 1 reporté de la semaine dernière.');
-    // Reportée après le 1er décembre, la journée 1 comprend le sprint.
+    // Reportée après le 1er décembre, la journée 1 se fait au gym ; son sprint, dans la séance piste.
     const tests = s2.seances.find((s) => s.seance.test === 'journee1')!.seance;
-    expect(ids(tests)).toEqual(expect.arrayContaining(['T-F1', 'T-sprint-10']));
+    expect(ids(tests)).toContain('T-F1');
+    expect(tests.lieu).toBe('gym');
+    expect(ids(s2.seances.find((s) => s.seance.test === 'sprint')!.seance)).toContain('T-sprint-10');
   });
 
   it('écart de plus de 10 % entre les côtés : 1 série de plus du côté le plus faible', () => {

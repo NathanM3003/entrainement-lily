@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { exercice, exercices } from '../donnees/banque';
 import { SAISON_2026_2027 } from '../donnees/saison-2026-2027';
 import { genererCalendrier } from './calendrier';
-import { detaillerSemaine, texteDosage, type EtatContenu, type SeanceDetaillee } from './contenu';
+import { detaillerSemaine, lieuxSeance, texteDosage, type EtatContenu, type SeanceDetaillee } from './contenu';
 import { joursEntre } from './dates';
 import { dateDeblocage } from './restrictions';
 import { planifierSemaine, type ChoixSemaine, type SeancesPrecedentes } from './semaine';
@@ -39,6 +39,16 @@ const prescription = (s: SeanceDetaillee, id: string) => s.contenu.blocs.flatMap
 const blocs = (s: SeanceDetaillee) => s.contenu.blocs.map((b) => b.type);
 
 describe('règles valables pour toute la saison (1 à 4 séances par semaine)', () => {
+  it('le gym n’a pas de piste : jamais de sprints, d’intermittents de course ou d’agilité le même jour que la musculation', () => {
+    for (const { n, seances } of SAISONS) {
+      for (const s of seances) {
+        expect(lieuxSeance(s.contenu, undefined, s.lieu), `${n} séances, ${s.date} ${s.libelle}`).not.toContain('puis');
+        const surPiste = s.contenu.blocs.some((b) => b.type === 'vitesse' || b.type === 'agilite' || (b.type === 'intermittents' && b.exercices.some((p) => p.id !== 'E10')));
+        if (s.lieu === 'gym') expect(surPiste, `${s.date} ${s.libelle}`).toBe(false);
+      }
+    }
+  });
+
   it('ne programme jamais un exercice exclu, ni F5 (exercice de réserve)', () => {
     const exclus = new Set(exercices.filter((e) => e.statut === 'exclu').map((e) => e.id));
     for (const { seances } of SAISONS) {
@@ -177,14 +187,35 @@ describe('modèles de la section 7', () => {
     expect(blocs(c)).toContain('course');
   });
 
-  it('Puissance A : V9 ou V11, V6, puis F25 en premier, F1 à 85 %, F26 et F10', () => {
+  it('Puissance A, sur la piste : V9 ou V11, V6, sauts de patineur, puis E11, E12 ou E7 ; pas de musculation', () => {
     const a = detailler(13).seances.find((s) => s.type === 'A')!;
-    const force = a.contenu.blocs.find((b) => b.type === 'force')!.exercices;
-    expect(force.map((p) => p.id)).toEqual(['F25', 'F1', 'F26', 'F10']);
-    expect(force[1]).toMatchObject({ series: 3, reps: { min: 3, max: 5 }, pourcentage1RM: 85 });
+    expect(a.lieu).toBe('piste');
+    expect(blocs(a)).not.toContain('force');
     const vitesse = a.contenu.blocs.find((b) => b.type === 'vitesse')!.exercices.map((p) => p.id);
     expect(vitesse).toContain('V6');
     expect(vitesse.some((id) => id === 'V9' || id === 'V11')).toBe(true);
+    expect(ids(a)).toContain('P14');
+    expect(['E11', 'E12', 'E7']).toContain(a.contenu.blocs.find((b) => b.type === 'intermittents')!.exercices[0]!.id);
+  });
+
+  it('Puissance B, au gym : F25 en premier, F1 à 85 %, F7, F9 ou F26 en alternance, F10', () => {
+    const force = (n: number) => detailler(n).seances.find((s) => s.type === 'B' && !s.test)!.contenu.blocs.find((b) => b.type === 'force')!.exercices;
+    const f13 = force(13);
+    expect(f13.map((p) => p.id)).toEqual(['F25', 'F1', 'F7', expect.stringMatching(/^F(9|26)$/), 'F10']);
+    expect(f13[1]).toMatchObject({ series: 3, reps: { min: 3, max: 5 }, pourcentage1RM: 85 });
+    expect(force(11)[3]!.id).not.toBe(f13[3]!.id);
+  });
+
+  it('Force et vitesse : B au gym avec F1 4 × 4 à 6 ; C au gym avec F14, F16 et course facile sur tapis', () => {
+    const d = detailler(8);
+    const b = d.seances.find((s) => s.type === 'B')!;
+    expect(b.lieu).toBe('gym');
+    expect(prescription(b, 'F1')).toMatchObject({ series: 4, reps: { min: 4, max: 6 } });
+    expect(ids(b)).not.toContain('F14');
+    const c = d.seances.find((s) => s.type === 'C' && s.variante === 'normale')!;
+    expect(c.lieu).toBe('gym');
+    expect(ids(c)).toEqual(expect.arrayContaining(['F14', 'F16', 'E2']));
+    expect(blocs(c)).not.toContain('intermittents');
   });
 
   it('Puissance B : pliométrie de côté (P14 ou P15) plus P10, P11 ou P12 ; prévention M1, M10, M11', () => {
@@ -203,7 +234,7 @@ describe('modèles de la section 7', () => {
   });
 
   it('intermittents de la phase 2 : jamais le même format deux semaines de suite', () => {
-    const formats = [6, 8].map((n) => detailler(n, { nbSeances: 4 }).seances.find((s) => s.type === 'C' && !s.test))
+    const formats = [6, 8].map((n) => detailler(n, { nbSeances: 4 }).seances.find((s) => s.type === 'A' && !s.test))
       .map((s) => s?.contenu.blocs.find((b) => b.type === 'intermittents')?.exercices[0]?.id);
     expect(formats[0]).toBeDefined();
     expect(formats[0]).not.toBe(formats[1]);
@@ -285,8 +316,8 @@ describe('exercices « à essayer » (section 6)', () => {
     expect(blocs(c).indexOf('essai')).toBeGreaterThan(blocs(c).indexOf('course'));
   });
 
-  it('S8 : A8 et A9 sont essayés dans le bloc de changements de direction de la séance B', () => {
-    const b = detailler(8).seances.find((s) => s.type === 'B')!;
+  it('S8 : A8 et A9 sont essayés dans le bloc de changements de direction de la séance piste', () => {
+    const b = detailler(8).seances.find((s) => s.type === 'A')!;
     const bloc = b.contenu.blocs.find((x) => x.type === 'agilite')!.exercices;
     expect(bloc.map((p) => p.id)).toEqual(['A4', 'A9', 'P15', 'A8']);
     expect(b.contenu.essais).toEqual(['A9', 'A8']);
@@ -311,19 +342,21 @@ describe('restrictions datées (section 3)', () => {
   });
 
   it('changements de direction : latéral contrôlé du 1er au 10 janvier, dans les séances de la semaine', () => {
+    // Le gym n'a pas de coin dégagé : seulement dans la séance piste.
     const s7 = detailler(7, { nbSeances: 2 });
     for (const s of s7.seances) {
-      expect(s.contenu.blocs.find((b) => b.type === 'agilite')?.exercices.map((p) => p.id)).toEqual(['A12', 'A4', 'P14']);
+      expect(s.contenu.blocs.find((b) => b.type === 'agilite')?.exercices.map((p) => p.id)).toEqual(s.lieu === 'piste' ? ['A12', 'A4', 'P14'] : undefined);
     }
+    expect(s7.seances.some((s) => s.lieu === 'piste')).toBe(true);
     // S6 : rien avant le 1er janvier.
     const s6 = detailler(6, { nbSeances: 3 });
     for (const s of s6.seances.filter((x) => x.date < '2027-01-01')) expect(blocs(s)).not.toContain('agilite');
   });
 
-  it('S9 : coupe de handler (A8) à 85-90 % dans la séance B si A8 est gardée, sinon pas chassés rapides', () => {
-    // S9 en 3 séances ne contient pas de B (tournoi). On regarde le bloc avec un plan qui met B le lundi.
+  it('S9 : coupe de handler (A8) à 85-90 % dans la séance piste si A8 est gardée, sinon pas chassés rapides', () => {
+    // On regarde le bloc avec un plan qui met la séance piste le lundi.
     const plan = planifierSemaine(cal, 9, { nbSeances: 2, joursDisponibles: ['2027-01-18'] });
-    const avecB = { ...plan, seances: plan.seances.map((s) => ({ ...s, type: 'B' as const })) };
+    const avecB = { ...plan, seances: plan.seances.map((s) => ({ ...s, type: 'A' as const, lieu: 'piste' as const })) };
     const garde = detaillerSemaine(cal, avecB, { statuts: { A8: 'valide' } }).seances[0]!;
     expect(garde.contenu.blocs.find((b) => b.type === 'agilite')?.exercices[0]).toMatchObject({ id: 'A8', intensite: 90 });
     const pasGarde = detaillerSemaine(cal, avecB).seances[0]!;
@@ -334,14 +367,14 @@ describe('restrictions datées (section 3)', () => {
     for (const n of [11, 13, 14]) {
       for (const s of detailler(n, { nbSeances: 4 }).seances) expect(blocs(s), `S${n} ${s.date}`).not.toContain('agilite');
     }
-    const sansMatch = detailler(13, { nbSeances: 3, matchsAnnules: ['2027-02-17'] }).seances.find((s) => s.type === 'B')!;
+    const sansMatch = detailler(13, { nbSeances: 3, matchsAnnules: ['2027-02-17'] }).seances.find((s) => s.type === 'A')!;
     expect(blocs(sansMatch)).toContain('agilite');
   });
 });
 
 describe('matchs (section 4)', () => {
   it('1 match : intermittents réduits de moitié', () => {
-    const c = detailler(8, { nbSeances: 4 }).seances.find((s) => s.type === 'C' && s.variante === 'normale')!;
+    const c = detailler(8, { nbSeances: 4 }).seances.find((s) => s.type === 'A')!;
     const inter = c.contenu.blocs.find((b) => b.type === 'intermittents')!.exercices[0]!;
     expect(inter.series ?? 1).toBe(1);
     expect(c.contenu.messages).toContain('1 match cette semaine : intermittents réduits de moitié.');
@@ -361,7 +394,11 @@ describe('matchs (section 4)', () => {
     const a = deux.seances.find((s) => s.type === 'A')!;
     expect(ids(a).some((id) => id === 'V9' || id === 'V11')).toBe(false);
     expect(prescription(a, 'V6')?.reps).toEqual({ min: 2, max: 3 });
-    expect(prescription(a, 'F1')?.series).toBe(prescription(normal.seances.find((s) => s.type === 'A')!, 'F1')!.series! - 1);
+    expect(blocs(a)).not.toContain('intermittents');
+    // B est retirée avec les matchs du mercredi et du jeudi : on la regarde avec 2 matchs en début de semaine.
+    const finDeSemaine = detailler(13, { nbSeances: 3, matchsAnnules: ['2027-02-17'], matchsSupplementaires: ['2027-02-15', '2027-02-16'] });
+    const b = finDeSemaine.seances.find((s) => s.type === 'B')!;
+    expect(prescription(b, 'F1')?.series).toBe(prescription(normal.seances.find((s) => s.type === 'B')!, 'F1')!.series! - 1);
     expect(deux.messages).toContain('2 matchs ou plus cette semaine : ajoute 1 routine de prévention de 10 min à la maison (M1, M7, M3).');
   });
 
@@ -391,12 +428,18 @@ describe('tests et affûtage', () => {
     expect(t.contenu.minutes).toBeLessThanOrEqual(90);
   });
 
-  it('S10 et S14 : journée 1 complète avec le saut sur une jambe et le sprint', () => {
+  it('S10 et S14 : journée 1 complète au gym avec le saut sur une jambe ; le sprint dans la séance piste', () => {
     for (const n of [10, 14]) {
-      const t = detailler(n).seances.find((s) => s.test === 'journee1')!;
+      const d = detailler(n);
+      const t = d.seances.find((s) => s.test === 'journee1')!;
+      expect(t.lieu).toBe('gym');
       const tests = t.contenu.blocs.find((b) => b.type === 'tests')!.exercices.map((p) => p.id);
-      expect(tests).toEqual(expect.arrayContaining(['T-saut-une-jambe', 'T-sprint-10', 'T-sprint-20']));
+      expect(tests).toContain('T-saut-une-jambe');
+      expect(tests).not.toContain('T-sprint-10');
       expect(t.contenu.minutes).toBeLessThanOrEqual(90);
+      const a = d.seances.find((s) => s.test === 'sprint')!;
+      expect(a.lieu).toBe('piste');
+      expect(ids(a)).toEqual(expect.arrayContaining(['T-sprint-10', 'T-sprint-20']));
     }
   });
 
@@ -407,21 +450,26 @@ describe('tests et affûtage', () => {
     expect(ids(a)).toEqual(expect.arrayContaining(['M7', 'M8']));
   });
 
-  it('S11 : test demi-Cooper, puis le tronc et F18 de la séance C', () => {
+  it('S11 : test demi-Cooper sur la piste, puis pompes et gainage au sol', () => {
     const c = detailler(11).seances.find((s) => s.test === 'cooper')!;
+    expect(c.lieu).toBe('piste');
     expect(blocs(c)).toEqual(['echauffement', 'tests', 'force', 'prevention']);
-    expect(ids(c)).toContain('F18');
+    expect(ids(c)).toContain('F13');
+    expect(ids(c)).not.toContain('F18');
     expect(c.contenu.course).toBe(true);
   });
 
-  it('affûtage A : V6, V9, F1 en 2 ou 3 séries de 3 à sa charge lourde, F10 2 × 8', () => {
+  it('affûtage : A sur la piste (V6, V9, sauts de patineur) ; F1 en 2 ou 3 séries de 3 et F10 2 × 8 passent dans B', () => {
     const plan = planifierSemaine(cal, 16, { nbSeances: 1, joursDisponibles: ['2027-03-08'] });
-    const avecA = { ...plan, seances: [{ ...plan.seances[0]!, type: 'A' as const, variante: 'normale' as const }] };
-    const a = detaillerSemaine(cal, avecA).seances[0]!;
-    expect(idsHorsEchauffement(a).filter((id) => !id.startsWith('M'))).toEqual(['V6', 'V9', 'F1', 'F10']);
-    expect(texteDosage(prescription(a, 'F1')!)).toBe('2 ou 3 séries de 3');
-    expect(prescription(a, 'F1')?.note).toBe('À sa charge lourde habituelle');
+    const avec = (type: 'A' | 'B', lieu: 'piste' | 'gym') => ({ ...plan, seances: [{ ...plan.seances[0]!, type, lieu, variante: 'normale' as const }] });
+    const a = detaillerSemaine(cal, avec('A', 'piste')).seances[0]!;
+    expect(idsHorsEchauffement(a).filter((id) => !id.startsWith('M'))).toEqual(['V6', 'V9', 'P14']);
     expect(a.contenu.minutes).toBeLessThanOrEqual(65);
+    const b = detaillerSemaine(cal, avec('B', 'gym')).seances[0]!;
+    expect(texteDosage(prescription(b, 'F1')!)).toBe('2 ou 3 séries de 3');
+    expect(prescription(b, 'F1')?.note).toBe('À sa charge lourde habituelle');
+    expect(prescription(b, 'F10')).toMatchObject({ series: 2, reps: { min: 8, max: 8 } });
+    expect(b.contenu.minutes).toBeLessThanOrEqual(75);
   });
 
   it('S15 et S16 : aucune séance chargée pour les jambes dans les 48 h avant le tournoi ou le début de la saison', () => {
@@ -438,7 +486,7 @@ describe('affichage du dosage', () => {
   it('écrit le dosage en toutes lettres', () => {
     const b = detailler(3).seances.find((s) => s.type === 'B')!;
     expect(texteDosage(prescription(b, 'F7')!)).toBe('3 × 8 par côté');
-    const c = detailler(8, { nbSeances: 4 }).seances.find((s) => s.type === 'C' && s.variante === 'normale')!;
+    const c = detailler(8, { nbSeances: 4 }).seances.find((s) => s.type === 'A')!;
     expect(texteDosage(c.contenu.blocs.find((x) => x.type === 'intermittents')!.exercices[0]!)).toMatch(/^\d/);
   });
 });

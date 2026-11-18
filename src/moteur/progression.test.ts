@@ -127,7 +127,7 @@ describe('charge prévue', () => {
 
   it('puissance (F25) : +1 cran quand toutes les répétitions sont faites deux séances de suite', () => {
     const d = donnees([11]);
-    const a = seanceDe(d, 11, 'A');
+    const a = seanceDe(d, 11, 'B');
     const fois = (date: string, reps: number) =>
       (d.resultats[date] = {
         date,
@@ -168,9 +168,10 @@ describe('charge prévue', () => {
 
   it('affûtage : la dernière charge lourde utilisée', () => {
     const d = donnees([13, 14, 15, 16]);
-    faire(d, 14, 'B', { 'force:F7': { series: series(3, 5, 22), unite: 'kg' } });
+    faire(d, 13, 'B', { 'force:F7': { series: series(3, 5, 22), unite: 'kg' } });
     const p = { id: 'F7', role: 'force-bas', series: 2, reps: { min: 5, max: 5 } } as Prescription;
-    expect(chargePrevue(cal, d, '2027-03-08', 'affutage', p)).toMatchObject({ charge: 22, explication: 'Ta dernière charge lourde.' });
+    // S14 est une semaine de tests (journée 1 à la place de B) : la dernière charge lourde vient de S13.
+    expect(chargePrevue(cal, d, '2027-03-01', 'affutage', p)).toMatchObject({ charge: 22, explication: 'Ta dernière charge lourde.' });
   });
 });
 

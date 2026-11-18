@@ -13,7 +13,7 @@ import type { Exercice, Statut } from '../donnees/types';
 import { ajouterJours, dateCourte, lundiDe, type DateISO } from './dates';
 import { INTERMITTENTS_MAX, niveauDe, type SerieEnPlus } from './progression';
 import { dateDeblocage, restrictionsAu } from './restrictions';
-import type { PlanSemaine, SeancePlanifiee } from './semaine';
+import type { LieuSeance, PlanSemaine, SeancePlanifiee } from './semaine';
 import type { Calendrier, Phase, Semaine } from './types';
 
 // ---------- Types ----------
@@ -406,6 +406,8 @@ interface Ctx {
   reste: { cardio: boolean };
   /** Mini-retest de la semaine (S5) placé dans cette séance. */
   miniRetest?: boolean;
+  /** Gym ou piste : le gym n'a pas de piste, la piste n'a pas de matériel. */
+  lieu: LieuSeance;
   messages: string[];
 }
 
@@ -723,7 +725,8 @@ const sprint100Permis = (ctx: Ctx) => restrictionsAu(ctx.cal.config, ctx.seance.
 /** Journée 1 : du moins fatigant au plus fatigant (Profil). Remplace la séance A. */
 function seanceJournee1(ctx: Ctx): Item[] {
   const retest = ctx.semaine.retests.find((r) => r.type === 'journee1');
-  const avecSprint = !retest?.sansSprint && sprint100Permis(ctx);
+  // Au gym, qui n'a pas de piste : le sprint de 10 et 20 m se fait dans la séance piste de la semaine.
+  const avecSprint = ctx.lieu === 'piste' && !retest?.sansSprint && sprint100Permis(ctx);
   const ids = [
     'T-cheville',
     'T-saut',
@@ -773,6 +776,7 @@ function fondation(ctx: Ctx): Item[] {
     ];
   }
   if (type === 'C') {
+    if (ctx.lieu === 'piste') return versionPisteC(ctx);
     const essaiE3 = ctx.essai === 'E3' ? item('essai', enEssai(px('E3', 'cardio', { format: '10 min à effort modéré, à la fin de la séance', minutes: 10, retrait: 5 }))) : [];
     return [
       ...item('force', teste(ctx, 'F14', 'force-haut', 3, f(8, 10))),
@@ -811,19 +815,43 @@ function seanceD(ctx: Ctx): Item[] {
   ];
 }
 
+/** Accélérations, ou test de sprint de 10 et 20 m à leur place (journée 1 ou test de sprint de la semaine). */
+function accelerationsOuTest(ctx: Ctx, ids: string[], reps: Fourchette): Item[] {
+  if (ctx.seance.test === 'sprint' && sprint100Permis(ctx)) return [test('T-sprint-10'), test('T-sprint-20')].map((p) => ({ bloc: 'vitesse' as const, p }));
+  const acc = choisir(ids, ctx.rot, ctx);
+  return item('vitesse', acc ? sprint(acc, 'acceleration', reps) : undefined);
+}
+
+/**
+ * Version piste de C (décision du 18 novembre 2026) : quand Lily n'a que la piste ce jour-là.
+ * Sa course, puis pompes et gainage au sol, sans matériel.
+ */
+function versionPisteC(ctx: Ctx): Item[] {
+  const course = ctx.phase === 'fondation' ? courseFacile(ctx) : item('course', px('E2', 'course', { format: '10 min', minutes: 10, pctVMA: f(60, 70), allure: 'Allure facile' }));
+  const sol = plusieurs(['F19', 'F20', 'F22'], 2, r2(ctx), ctx).map((id, i) => ({ bloc: 'force' as const, p: dosage(id, { retrait: i === 0 ? 4 : 7 }) }));
+  return [
+    ...item('force', dispo('F13', ctx) ? accessoire('F13', 'force-haut', 3, f(8, 15), { retrait: 4 }) : undefined),
+    ...sol,
+    ...course,
+    ...prevention(ctx, ['M1', 'M7', 'M8'], true),
+  ];
+}
+
+/**
+ * Force et vitesse (section 7, corrigée le 18 novembre 2026 : le gym n'a pas de piste) :
+ * A sur la piste (sprints, puis intermittents), B au gym (pliométrie et jambes), C au gym (haut du corps et course sur tapis).
+ */
 function forceVitesse(ctx: Ctx): Item[] {
-  const { type } = ctx.seance;
+  const { type, deuxSeances } = ctx.seance;
   if (type === 'A') {
-    const acc = choisir(['V5', 'V6', 'V7'], ctx.rot, ctx);
     const max = choisir(['V9', 'V11'], ctx.rot, ctx);
-    const acc2 = choisir(['F2', 'F11'], r2(ctx), ctx);
+    // À 2 séances, il n'y a pas d'intermittents (les matchs remplacent C, section 2).
+    const format = deuxSeances ? undefined : choisir(['E5', 'E6', 'E8'], ctx.rot, ctx);
     return [
       ...educatifs(ctx),
-      ...item('vitesse', acc ? sprint(acc, 'acceleration', f(6, 8)) : undefined),
+      ...accelerationsOuTest(ctx, ['V5', 'V6', 'V7'], f(6, 8)),
       ...item('vitesse', max ? sprint(max, 'vitesse-max', f(3, 5)) : undefined),
-      ...item('force', teste(ctx, 'F1', 'force-bas', 4, f(4, 6))),
-      ...item('force', accessoire('F10', 'force-bas', 3, f(10, 12))),
-      ...item('force', acc2 ? accessoire(acc2, 'force-bas', 3, f(8, 10), { retrait: 3 }) : undefined),
+      ...item('intermittents', format ? intermittent(format) : undefined),
       ...prevention(ctx, ['M1', 'M7', 'M8'], true),
     ];
   }
@@ -832,56 +860,76 @@ function forceVitesse(ctx: Ctx): Item[] {
     const plio = remplirSauts(ctx, [niveau3, ['P4', 'P5', 'P6', 'P9', 'P13']], f(50, 70), 3);
     return [
       ...plio.map((p) => ({ bloc: 'pliometrie' as const, p })),
+      ...item('force', teste(ctx, 'F1', 'force-bas', 4, f(4, 6))),
       ...item('force', teste(ctx, 'F7', 'force-bas', 4, f(4, 6))),
-      ...item('force', accessoire('F9', 'force-bas', 3, f(8), { parCote: true })),
-      ...item('force', dispo('F8', ctx) ? accessoire('F8', 'force-bas', 3, f(8), { parCote: true, retrait: 3 }) : undefined),
-      ...item('force', teste(ctx, 'F14', 'force-haut', 4, f(4, 6))),
-      ...item('force', teste(ctx, 'F16', 'force-haut', 4, f(4, 6))),
+      ...item('force', accessoire('F9', 'force-bas', 3, f(8), { parCote: true, retrait: 3 })),
+      ...item('force', accessoire('F10', 'force-bas', 3, f(10, 12))),
+      // 2 séances : force complète.
+      ...(deuxSeances ? [teste(ctx, 'F14', 'force-haut', 4, f(4, 6)), teste(ctx, 'F16', 'force-haut', 4, f(4, 6))].map((p) => ({ bloc: 'force' as const, p })) : []),
       ...prevention(ctx, ['M1', 'M10'], false),
     ];
   }
   if (type === 'C') {
-    const format = choisir(['E5', 'E6', 'E8'], ctx.rot, ctx);
+    if (ctx.lieu === 'piste') return versionPisteC(ctx);
     const deuxMatchs = ctx.nbMatchs >= 2;
     return [
-      ...(deuxMatchs ? [] : ctx.sansCourse ? item('intermittents', intermittent('E10')) : item('intermittents', format ? intermittent(format) : undefined)),
-      ...item('force', dispo('F13', ctx) ? accessoire('F13', 'force-haut', 3, f(8, 10), { retrait: 4 }) : undefined),
-      ...tirage(ctx, ['F17', 'F16'], f(8, 10), 4),
+      ...item('force', teste(ctx, 'F14', 'force-haut', 4, f(4, 6))),
+      ...item('force', teste(ctx, 'F16', 'force-haut', 4, f(4, 6))),
+      ...tirageOuPompes(ctx, f(8, 10)),
       ...tirageVisage(ctx),
       ...tronc(ctx, 2),
-      ...(deuxMatchs || ctx.sansCourse ? [] : item('course', px('E2', 'course', { format: '10 min', minutes: 10, pctVMA: f(60, 70), allure: 'Allure facile' }))),
+      // Course facile sur le tapis du gym ; vélo ou rameur près d'un match ; rien avec 2 matchs (section 4).
+      ...(deuxMatchs ? [] : ctx.sansCourse ? item('intermittents', intermittent('E10')) : item('course', px('E2', 'course', { format: '10 min', minutes: 10, pctVMA: f(60, 70), allure: 'Allure facile' }))),
       ...prevention(ctx, ['M1', 'M7', 'M8'], !deuxMatchs && !ctx.sansCourse),
     ];
   }
   return seanceD(ctx);
 }
 
+/**
+ * Puissance et répétition (section 7, corrigée le 18 novembre 2026) : A sur la piste (vitesse maximale,
+ * sauts de patineur, efforts répétés), B au gym (pliométrie, force et puissance des jambes), C au gym
+ * (haut du corps, tronc et vélo).
+ */
 function puissanceRepetition(ctx: Ctx): Item[] {
-  const { type } = ctx.seance;
+  const { type, deuxSeances } = ctx.seance;
   if (type === 'A') {
     const max = choisir(['V9', 'V11'], ctx.rot, ctx);
+    const format = deuxSeances ? undefined : choisir(['E11', 'E12', 'E7'], ctx.rot, ctx);
+    // Les sauts de patineur demandent de la place : ils se font sur la piste (réponse de Lily, 18 novembre 2026).
+    const patineur = plioPermis('P14', ctx) ? dosage('P14') : undefined;
     return [
       ...item('vitesse', max ? sprint(max, 'vitesse-max', f(3, 5)) : undefined),
-      ...item('vitesse', sprint('V6', 'acceleration', f(3, 4))),
-      ...item('force', px('F25', 'puissance', { series: 4, reps: f(4, 5), note: 'En premier' })),
-      ...item('force', teste(ctx, 'F1', 'force-bas', 3, f(3, 5))),
-      ...item('force', px('F26', 'puissance', { series: 4, reps: f(8, 10), retrait: 3 })),
-      ...item('force', accessoire('F10', 'force-bas', 3, f(8, 10))),
+      ...accelerationsOuTest(ctx, ['V6'], f(3, 4)),
+      ...item('pliometrie', patineur),
+      ...item('intermittents', format ? intermittent(format) : undefined),
       ...prevention(ctx, ['M1', 'M7', 'M8'], true),
     ];
   }
   if (type === 'B') {
-    const cote = choisir(['P14', 'P15'].filter((id) => plioPermis(id, ctx)), ctx.rot, ctx);
+    const cote = plioPermis('P15', ctx) ? 'P15' : undefined;
     const uneJambe = choisir(['P10', 'P11', 'P12'].filter((id) => plioPermis(id, ctx)), ctx.rot, ctx);
     // Niveau 4 (de côté) pas encore atteint : on reste aux niveaux permis, dans la même fourchette de sauts.
     const plio =
       cote && uneJambe
         ? [dosage(cote), dosage(uneJambe)]
-        : remplirSauts(ctx, [['P10', 'P11', 'P12', 'P14', 'P15'], ['P4', 'P5', 'P6', 'P9', 'P13']], f(60, 80), 3);
+        : remplirSauts(ctx, [['P10', 'P11', 'P12', 'P15'], ['P4', 'P5', 'P6', 'P9', 'P13']], f(60, 80), 3);
+    // F9 et le balancé de kettlebell (F26) alternent toutes les 2 semaines, pour tenir en 1 h 30.
+    const alterne = r2(ctx) % 2 === 0 ? accessoire('F9', 'force-bas', 3, f(6), { parCote: true, retrait: 3 }) : px('F26', 'puissance', { series: 4, reps: f(8, 10), retrait: 3 });
     return [
       ...plio.map((p) => ({ bloc: 'pliometrie' as const, p })),
+      ...item('force', px('F25', 'puissance', { series: 4, reps: f(4, 5), note: 'En premier' })),
+      ...item('force', teste(ctx, 'F1', 'force-bas', 3, f(3, 5))),
       ...item('force', teste(ctx, 'F7', 'force-bas', 3, f(4, 6))),
-      ...item('force', accessoire('F9', 'force-bas', 3, f(6), { parCote: true })),
+      ...item('force', alterne),
+      ...item('force', accessoire('F10', 'force-bas', 3, f(8, 10))),
+      ...(deuxSeances ? [teste(ctx, 'F14', 'force-haut', 3, f(6, 8)), teste(ctx, 'F16', 'force-haut', 3, f(6, 8))].map((p) => ({ bloc: 'force' as const, p })) : []),
+      ...prevention(ctx, ['M1', 'M10', 'M11'], false),
+    ];
+  }
+  if (type === 'C') {
+    if (ctx.lieu === 'piste') return versionPisteC(ctx);
+    return [
       ...item('force', teste(ctx, 'F14', 'force-haut', 3, f(6, 8))),
       ...(ctx.essai === 'F17'
         ? item('force', enEssai(accessoire('F17', 'force-haut', 3, f(6, 8), { parCote: true })))
@@ -890,40 +938,33 @@ function puissanceRepetition(ctx: Ctx): Item[] {
             if (!id) return [];
             return item('force', id === 'F16' ? teste(ctx, 'F16', 'force-haut', 3, f(6, 8)) : accessoire('F17', 'force-haut', 3, f(6, 8), { parCote: true }));
           })()),
-      ...prevention(ctx, ['M1', 'M10', 'M11'], false),
-    ];
-  }
-  if (type === 'C') {
-    const deuxMatchs = ctx.nbMatchs >= 2;
-    const format = choisir(['E11', 'E12', 'E7'], ctx.rot, ctx);
-    return [
-      ...(deuxMatchs ? [] : ctx.sansCourse ? item('intermittents', intermittent('E10')) : item('intermittents', format ? intermittent(format) : undefined)),
-      // 2 matchs : « C devient force du haut du corps + tronc, sans course » (section 4).
-      ...(deuxMatchs
-        ? [...item('force', dispo('F13', ctx) ? accessoire('F13', 'force-haut', 3, f(8, 10), { retrait: 4 }) : undefined), ...tirage(ctx, ['F16', 'F17'], f(8, 10), 4)]
-        : []),
       ...tronc(ctx, 3),
       ...(dispo('F18', ctx) ? item('force', accessoire('F18', 'force-haut', 3, f(12, 15), { retrait: 4 })) : []),
-      ...prevention(ctx, ['M1', 'M20', 'M7', 'M8'], !deuxMatchs && !ctx.sansCourse),
+      // Ses efforts répétés sont passés sur la piste : il garde du cardio sans impact.
+      ...(ctx.jourDeMatch ? [] : item('intermittents', intermittent('E10'))),
+      ...prevention(ctx, ['M1', 'M20'], false),
     ];
   }
   return seanceD(ctx);
 }
 
-/** Séance unique : vitesse + force complète (squat, squat bulgare, tirage, développé), environ 1 h. */
+/**
+ * Séance unique (section 2, corrigée le 18 novembre 2026) : une semaine sur la piste (le contenu de A),
+ * la suivante au gym (force complète : squat, squat bulgare, tirage, développé).
+ */
 function seanceUnique(ctx: Ctx): Item[] {
-  const p2 = ctx.phase !== 'fondation';
-  const acc = choisir(p2 ? ['V6'] : ['V5', 'V6', 'V7'], ctx.rot, ctx);
-  const max = p2 ? choisir(['V9', 'V11'], ctx.rot, ctx) : undefined;
+  if (ctx.lieu === 'piste') {
+    const a = { ...ctx, seance: { ...ctx.seance, type: 'A' as const, deuxSeances: true } };
+    return ctx.phase === 'fondation' ? fondation(a) : ctx.phase === 'puissance-repetition' ? puissanceRepetition(a) : forceVitesse(a);
+  }
   const reps = ctx.phase === 'fondation' ? f(8, 10) : ctx.phase === 'puissance-repetition' ? f(3, 5) : f(4, 6);
   return [
-    ...item('vitesse', max ? sprint(max, 'vitesse-max', f(3, 5)) : undefined),
-    ...item('vitesse', acc ? sprint(acc, 'acceleration', p2 ? f(3, 4) : f(4, 8)) : undefined),
     ...item('force', teste(ctx, 'F1', 'force-bas', 3, reps)),
     ...item('force', teste(ctx, 'F7', 'force-bas', 3, ctx.phase === 'fondation' ? f(8) : reps)),
     ...item('force', teste(ctx, 'F16', 'force-haut', 3, ctx.phase === 'fondation' ? f(8, 10) : f(6, 8))),
     ...item('force', teste(ctx, 'F14', 'force-haut', 3, ctx.phase === 'fondation' ? f(8, 10) : f(6, 8))),
-    ...prevention(ctx, ['M1', 'M7', 'M8'], true),
+    ...item('force', accessoire('F10', 'force-bas', 3, f(10, 12), { retrait: 3 })),
+    ...prevention(ctx, ['M1', 'M10'], false),
   ];
 }
 
@@ -931,26 +972,20 @@ function seanceUnique(ctx: Ctx): Item[] {
 function affutage(ctx: Ctx): Item[] {
   const { type } = ctx.seance;
   const lourd = { note: 'À sa charge lourde habituelle', derniereSeriePlus: false };
-  if (type === 'A' || type === 'U') {
-    const items: Item[] = [
+  // Corrigé le 18 novembre 2026 : A garde les sprints et les sauts de patineur (piste) ; le squat et les ischios passent dans B (gym).
+  if ((type === 'A' || type === 'U') && ctx.lieu === 'piste') {
+    return [
       ...item('vitesse', sprint('V6', 'acceleration', f(3, 4), { note: 'À 100 %, récupération complète' })),
       ...item('vitesse', dispo('V9', ctx) ? sprint('V9', 'vitesse-max', f(2)) : undefined),
+      ...item('pliometrie', plioPermis('P14', ctx) ? px('P14', 'plio', { series: 2, reps: f(4), parCote: true }) : undefined),
+      ...prevention(ctx, ['M1', 'M7', 'M8'], true),
+    ];
+  }
+  if (type === 'B' || type === 'U') {
+    return [
+      ...item('pliometrie', type === 'B' ? px('P4', 'plio', { series: 3, reps: f(3) }) : undefined),
       ...item('force', px('F1', 'force-bas', { series: 2, reps: f(3), format: '2 ou 3 séries de 3', ...lourd })),
       ...item('force', accessoire('F10', 'force-bas', 2, f(8))),
-    ];
-    if (type === 'U') {
-      items.push(
-        ...item('force', px('F7', 'force-bas', { series: 2, reps: f(5), parCote: true, ...lourd })),
-        ...item('force', accessoire('F16', 'force-haut', 2, f(8))),
-        ...item('force', accessoire('F14', 'force-haut', 2, f(8))),
-      );
-    }
-    return [...items, ...prevention(ctx, ['M1', 'M7', 'M8'], true)];
-  }
-  if (type === 'B') {
-    return [
-      ...item('pliometrie', px('P4', 'plio', { series: 3, reps: f(3) })),
-      ...item('pliometrie', plioPermis('P14', ctx) ? px('P14', 'plio', { series: 2, reps: f(4), parCote: true }) : undefined),
       ...item('force', px('F7', 'force-bas', { series: 2, reps: f(5), parCote: true, ...lourd })),
       ...item('force', accessoire('F16', 'force-haut', 2, f(8))),
       ...item('force', accessoire('F14', 'force-haut', 2, f(8))),
@@ -968,12 +1003,12 @@ function affutage(ctx: Ctx): Item[] {
   return seanceD(ctx).map((it) => ({ ...it, p: uneSerieDeMoins(it.p) }));
 }
 
-/** Test demi-Cooper : remplace la séance C. Le reste de C (force et tronc) suit le test. */
+/**
+ * Test demi-Cooper : remplace la séance C, sur la piste. Après le test : pompes et gainage au sol,
+ * comme la version piste de C (corrigé le 18 novembre 2026 : pas de matériel de gym sur la piste).
+ */
 function seanceCooper(ctx: Ctx): Item[] {
-  const sansCourse = { ...ctx, sansCourse: true }; // le contenu de C, sans sa partie course
-  const reste = (ctx.phase === 'fondation' ? fondation(sansCourse) : ctx.phase === 'puissance-repetition' ? puissanceRepetition(sansCourse) : forceVitesse(sansCourse)).filter(
-    (it) => it.bloc === 'force',
-  );
+  const reste = versionPisteC({ ...ctx, sansCourse: true }).filter((it) => it.bloc === 'force');
   return [{ bloc: 'tests', p: test('T-cooper') }, ...reste, ...prevention(ctx, ['M1', 'M7', 'M8'], true)];
 }
 
@@ -999,9 +1034,14 @@ function etapeChangementsDeDirection(ctx: Ctx): 0 | 1 | 2 | 3 | 4 {
   return 4;
 }
 
+/**
+ * Blocs d'agilité (section 3). Le gym n'a pas de coin dégagé (réponse de Lily, 18 novembre 2026) :
+ * ils se font seulement sur la piste. Les blocs de S8 et S9, et l'appoint ensuite, passent de B à la séance piste.
+ */
 function blocAgilite(ctx: Ctx): Item[] {
   const { type } = ctx.seance;
-  if (ctx.jourDeMatch || type === 'D' || ctx.seance.test || ctx.phase === 'affutage') return [];
+  if (ctx.jourDeMatch || ctx.lieu !== 'piste' || ctx.seance.test === 'cooper' || ctx.phase === 'affutage') return [];
+  const seancePiste = type === 'A' || type === 'U';
   const etape = etapeChangementsDeDirection(ctx);
   const a = (id: string, o: Options) => (dispo(id, ctx) ? [{ bloc: 'agilite' as const, p: px(id, 'agilite', o) }] : []);
   const essaiOu = (id: string, o: Options): Item[] => {
@@ -1018,7 +1058,7 @@ function blocAgilite(ctx: Ctx): Item[] {
         ...a('P14', { series: 3, reps: f(5), parCote: true, note: 'Sauts courts, réception tenue', minutes: 3 }),
       ];
     case 2: {
-      if (type !== 'B') return [];
+      if (!seancePiste) return [];
       const items = [
         ...a('A4', { series: 4, secondes: f(10, 15), note: 'Rapides', minutes: 2.5 }),
         ...essaiOu('A9', { series: 4, secondes: f(10, 15), minutes: 2.5 }),
@@ -1028,13 +1068,13 @@ function blocAgilite(ctx: Ctx): Item[] {
       return dedoublonner(items);
     }
     case 3:
-      if (type !== 'B') return [];
+      if (!seancePiste) return [];
       return dispo('A8', ctx)
         ? a('A8', { reps: f(4, 6), note: 'À 85-90 %, peu de répétitions, des deux côtés', intensite: 90, minutes: 5 })
         : a('A4', { series: 4, secondes: f(10, 15), note: 'Rapides', minutes: 3 });
     case 4:
       // Appoint, seulement les semaines sans match (section 4 : retirés dès 1 match à partir de février).
-      if (type !== 'B' || ctx.nbMatchs > 0) return [];
+      if (!seancePiste || ctx.nbMatchs > 0) return [];
       return [
         ...a('A4', { series: 4, secondes: f(10, 15), minutes: 3 }),
         ...a('A12', { series: 3, reps: f(8), parCote: true, minutes: 4 }),
@@ -1096,6 +1136,7 @@ function couperPourLesMatchs(items: Item[], ctx: Ctx, messages: string[]): Item[
   // 2 matchs ou plus (une semaine de tournoi compte ici) : coupes de la colonne « 2 matchs ».
   resultat = resultat
     .filter((it) => it.p.role !== 'vitesse-max') // accélérations seulement
+    .filter((it) => !(it.p.role === 'intermittent' && it.p.id !== 'E10')) // intermittents de course retirés
     .filter((it) => !(it.bloc === 'pliometrie' && (it.p.id === 'P14' || it.p.id === 'P15'))) // rien de côté
     .map((it) => {
       const p = it.p;
@@ -1110,7 +1151,7 @@ function couperPourLesMatchs(items: Item[], ctx: Ctx, messages: string[]): Item[
     avant.some((it) => it.p.role === 'acceleration' || it.p.role === 'vitesse-max') && 'vitesse en accélérations seulement, un tiers de répétitions en moins',
     avant.some((it) => it.bloc === 'pliometrie') && 'moitié des sauts, rien de côté',
     avant.some((it) => it.bloc === 'force' && BAS_DU_CORPS.has(it.p.id)) && '1 série de moins en force du bas du corps (mêmes charges)',
-    ctx.seance.type === 'C' && 'pas d’intermittents ni de course',
+    (avant.some((it) => it.p.role === 'intermittent' && it.p.id !== 'E10') || (ctx.seance.type === 'C' && ctx.phase === 'force-vitesse' && ctx.lieu === 'gym')) && 'pas d’intermittents de course',
   ].filter((c): c is string => !!c);
   if (coupes.length) messages.push(`2 matchs ou plus cette semaine : ${coupes.join(' ; ')}.`);
   return resultat;
@@ -1380,6 +1421,7 @@ export function detaillerSemaine(cal: Calendrier, plan: PlanSemaine, etat: EtatC
         reste,
         messages: [],
         miniRetest: seance.date === cibleMini,
+        lieu: seance.lieu ?? (seance.type === 'A' || seance.test === 'sprint' || seance.test === 'cooper' ? 'piste' : 'gym'),
       };
       ctx.essai = candidatsEssai(ctx).find((id) => peutEssayer(id, ctx));
       const contenu = composerSeance(ctx);
@@ -1397,7 +1439,7 @@ export function detaillerSemaine(cal: Calendrier, plan: PlanSemaine, etat: EtatC
         essaisPrevus.push(id);
       }
       // 2 matchs ou plus : C devient force du haut du corps + tronc, sans course (section 4).
-      const sansIntermittents = seance.type === 'C' && !seance.test && nbMatchs >= 2 && semaine.phase !== 'fondation' && semaine.phase !== 'affutage';
+      const sansIntermittents = seance.type === 'C' && !seance.test && nbMatchs >= 2 && semaine.phase === 'force-vitesse' && ctx.lieu === 'gym';
       const libelle = sansIntermittents ? 'Force du haut du corps et tronc (sans course : 2 matchs cette semaine)' : seance.libelle;
       return { ...seance, libelle, contenu };
     });
@@ -1438,10 +1480,13 @@ export function texteDosage(p: Prescription): string {
  * - le gym n'a pas de piste : dans une séance de gym, la course facile et les intermittents se font sur le tapis ;
  * - sprints, changements de direction et tests de course : piste, ou dehors ;
  * - une séance de course seule : piste ou dehors.
- * Vitesse et force dans la même séance (phases 2 et 3) : « Piste, puis gym », en attendant des séances piste à part.
+ * Depuis le 18 novembre 2026, sprints et musculation ne sont plus jamais dans la même séance :
+ * « Piste ou dehors, puis gym » ne reste possible que pour une séance enregistrée avant.
  */
-export function lieuxSeance(contenu: ContenuSeance, lieux: ('gym' | 'piste' | 'tapis')[] = ['gym', 'piste', 'tapis']): string {
+export function lieuxSeance(contenu: ContenuSeance, lieux: ('gym' | 'piste' | 'tapis')[] = ['gym', 'piste', 'tapis'], lieu?: LieuSeance): string {
   const exterieur = lieux.includes('piste') ? 'piste ou dehors' : 'dehors';
+  // Séance piste (pompes et gainage au sol compris) : pas de passage au gym.
+  if (lieu === 'piste') return exterieur.charAt(0).toUpperCase() + exterieur.slice(1);
   let gym = false;
   let piste = false;
   let course = false;
@@ -1451,7 +1496,7 @@ export function lieuxSeance(contenu: ContenuSeance, lieux: ('gym' | 'piste' | 't
     else if (b.type === 'tests') {
       for (const p of b.exercices) {
         if (p.id.startsWith('T-sprint') || p.id === 'T-cooper') piste = true;
-        else gym = true;
+        else if (p.id.startsWith('T-F')) gym = true; // cheville, sauts et mollet se font partout
       }
     } else if (b.type === 'intermittents') {
       if (b.exercices.every((p) => p.id === 'E10')) gym = true;

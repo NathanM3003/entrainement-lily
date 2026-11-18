@@ -59,7 +59,7 @@ export function EcranAccueil() {
             <span className="seance-texte">
               <strong>{duJour.seance.libelle}</strong>
               <span className="petit">
-                {lieuxSeance(duJour.seance.contenu, cal.config.disponibilites?.lieux)} · environ {duJour.seance.contenu.minutes} min{duJour.etat === 'faite' ? ' · faite ✓' : duJour.etat === 'en-cours' ? ' · commencée' : ''}
+                {lieuxSeance(duJour.seance.contenu, cal.config.disponibilites?.lieux, duJour.seance.lieu)} · environ {duJour.seance.contenu.minutes} min{duJour.etat === 'faite' ? ' · faite ✓' : duJour.etat === 'en-cours' ? ' · commencée' : ''}
               </span>
             </span>
             <span aria-hidden="true">›</span>

@@ -4,7 +4,7 @@ import { lieuxSeance, ROUTINE_AVANT_MATCH } from '../moteur/contenu';
 import { iconeSeance } from '../moteur/semaine';
 import { BilanSemaine } from './BilanSemaine';
 import { ajouterJours, dateCourte, joursEntre, jourSemaine, type DateISO } from '../moteur/dates';
-import type { ChoixSemaine } from '../moteur/semaine';
+import type { ChoixSemaine, LieuSeance } from '../moteur/semaine';
 import { LIBELLES_PHASES, type Semaine } from '../moteur/types';
 import { douleursDemandees, LIBELLES_DOULEURS } from '../stockage/saisie';
 import { calculerSuivi } from '../stockage/suivi';
@@ -137,6 +137,25 @@ function ChoixDeLaSemaine({
   const [nb, setNb] = useState(Math.max(calc.choix?.nbSeances ?? precedent?.nbSeances ?? cal.config.disponibilites?.seancesParSemaine ?? 3, faites.length));
   const [dispo, setDispo] = useState<DateISO[]>(joursParDefaut);
   const basculer = (j: DateISO) => setDispo((d) => (d.includes(j) ? d.filter((x) => x !== j) : [...d, j].sort()));
+  // Lieu possible chaque jour : gym, piste, ou les deux (par défaut : comme le même jour de la semaine d'avant).
+  const [lieux, setLieux] = useState<Record<DateISO, LieuSeance>>(() => {
+    if (calc.choix) return calc.choix.lieux ?? {};
+    const avant = precedent?.lieux ?? {};
+    const parJour = new Map(Object.entries(avant).map(([d, l]) => [jourSemaine(d), l]));
+    return Object.fromEntries(jours.filter((j) => parJour.has(jourSemaine(j))).map((j) => [j, parJour.get(jourSemaine(j))!]));
+  });
+  const choisirLieu = (j: DateISO, l?: LieuSeance) =>
+    setLieux((x) => {
+      const suivant = { ...x };
+      if (l) suivant[j] = l;
+      else delete suivant[j];
+      return suivant;
+    });
+  // Conseil de la semaine : 1 séance sur la piste, les autres au gym (une seule séance : piste et gym en alternance).
+  const conseil =
+    nb === 1
+      ? `1 séance, ${calc.semaine.numero % 2 === 1 ? 'sur la piste' : 'au gym'} cette semaine (piste et gym en alternance)`
+      : `1 séance sur la piste et ${nb - 1} au gym`;
   const passe = (j: DateISO) => enCours && j < aujourdhui;
 
   // Matchs : les matchs réguliers sont cochés d'office ; Lily en ajoute (match imprévu) ou en annule.
@@ -157,6 +176,7 @@ function ChoixDeLaSemaine({
       // Semaine en cours : rien n'est placé avant aujourd'hui, et les séances faites restent.
       ...(enCours ? { depuis: aujourdhui } : {}),
       ...(calc.choix?.express?.length ? { express: calc.choix.express } : {}),
+      ...(Object.keys(lieux).some((j) => dispo.includes(j)) ? { lieux: Object.fromEntries(Object.entries(lieux).filter(([j]) => dispo.includes(j))) } : {}),
     });
 
   return (
@@ -185,6 +205,31 @@ function ChoixDeLaSemaine({
           ))}
         </div>
       </fieldset>
+      {dispo.some((j) => !passe(j) && !faites.includes(j)) && (
+        <fieldset className="choix">
+          <legend>Où peux-tu t'entraîner ces jours-là ?</legend>
+          <p className="aide">
+            Conseillé : {conseil}. Le gym n'a pas de piste : les sprints et la musculation ne se font jamais le même jour. Si un jour n'est possible
+            qu'à un seul endroit, indique-le : l'app s'adapte.
+          </p>
+          <ul className="lieux-jours">
+            {dispo
+              .filter((j) => !passe(j) && !faites.includes(j))
+              .map((j) => (
+                <li key={j}>
+                  <span>{jourCourt(j)}</span>
+                  <span className="segments petit-segments" role="group" aria-label={`Lieu possible le ${jourCourt(j)}`}>
+                    {([undefined, 'gym', 'piste'] as const).map((l) => (
+                      <button key={l ?? 'deux'} type="button" aria-pressed={lieux[j] === l} onClick={() => choisirLieu(j, l)}>
+                        {l === 'gym' ? 'Gym' : l === 'piste' ? 'Piste' : 'Les deux'}
+                      </button>
+                    ))}
+                  </span>
+                </li>
+              ))}
+          </ul>
+        </fieldset>
+      )}
       <fieldset className="choix">
         <legend>Matchs cette semaine</legend>
         <p className="aide">Coche un match imprévu, même déjà joué, ou décoche un match annulé. L'app ajuste la semaine.</p>
@@ -275,7 +320,7 @@ function PlanDeLaSemaine({ calc, aujourdhui, onModifier }: { calc: SemaineCalcul
                   <span className="seance-texte">
                     <strong>{seance.seance.libelle}</strong>
                     <span className="petit">
-                      {lieuxSeance(seance.seance.contenu, lieux)} · {donnees.resultats[j]?.duree ? `${donnees.resultats[j]!.duree} min` : `environ ${seance.seance.contenu.minutes} min`} · {ETATS[seance.etat]}
+                      {lieuxSeance(seance.seance.contenu, lieux, seance.seance.lieu)} · {donnees.resultats[j]?.duree ? `${donnees.resultats[j]!.duree} min` : `environ ${seance.seance.contenu.minutes} min`} · {ETATS[seance.etat]}
                       {seance.seance.contenu.essais.length > 0 && ' · à essayer'}
                     </span>
                   </span>

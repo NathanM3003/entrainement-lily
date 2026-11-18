@@ -90,7 +90,7 @@ export function EcranSeance({ date }: { date: string }) {
       </p>
       <h1>{seance.libelle}</h1>
       <p className="aide">
-        <strong>{lieuxSeance(seance.contenu, cal.config.disponibilites?.lieux)}</strong> · environ {seance.contenu.minutes} min ({seance.express ? 'version express' : `${texteDuree(seance.dureeMax)} au plus`})
+        <strong>{lieuxSeance(seance.contenu, cal.config.disponibilites?.lieux, seance.lieu)}</strong> · environ {seance.contenu.minutes} min ({seance.express ? 'version express' : `${texteDuree(seance.dureeMax)} au plus`})
         {seance.courte && ' · version courte, sans record'}
       </p>
       {!resultat && !seance.test && semaine.choix && (

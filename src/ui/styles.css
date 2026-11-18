@@ -359,3 +359,8 @@ input[type='date']::-webkit-date-and-time-value { text-align: left; }
 .seance.etat-faite .seance-type { background: var(--ok); color: var(--surface); }
 .champ-duree { margin: 12px 0; }
 .champ-duree .champ { max-width: 180px; }
+
+/* Lieu possible chaque jour (gym, piste, les deux). */
+.lieux-jours { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+.lieux-jours li { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.lieux-jours li > span:first-child { font-weight: 600; min-width: 56px; }

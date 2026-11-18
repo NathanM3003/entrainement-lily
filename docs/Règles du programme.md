@@ -101,26 +101,30 @@ Chaque tournoi compte 7 matchs de 4 contre 4 en 2 jours.
 
 ### Les séances types
 
-| Phase | A | B | C |
+*Corrigé le 18 novembre 2026 (réponses de Lily) : le gym n'a pas de piste. A se fait sur la piste (ou dehors) et ne contient plus de musculation ; B, C et D se font au gym. Sprints et musculation ne sont jamais le même jour.*
+
+| Phase | A (piste) | B (gym) | C (gym) |
 |---|---|---|---|
-| **Fondation** | Vitesse + course facile | Pliométrie + force du bas du corps | Force du haut du corps + course facile |
-| **Force et vitesse** | Vitesse + force du bas du corps lourde | Pliométrie + force sur une jambe et haut du corps | Intermittents + force du haut du corps et tronc |
-| **Puissance et répétition** | Vitesse maximale + force et puissance (F25, F26) | Pliométrie de côté + force sur une jambe et haut du corps | Répétition d'efforts (E11, E12, E7) + tronc |
+| **Fondation** | Vitesse + course facile | Pliométrie + force du bas du corps | Force du haut du corps + course facile (tapis) |
+| **Force et vitesse** | Vitesse + intermittents (E5, E6, E8) | Pliométrie + force du bas du corps lourde (F1, F7, F9, F10) | Force du haut du corps (F14, F16, F13 ou F17, F18) et tronc + 10 min de course facile sur tapis |
+| **Puissance et répétition** | Vitesse maximale + sauts de patineur (P14) + répétition d'efforts (E11, E12, E7) | Pliométrie (P15, P10 à P12) + force et puissance (F25, F1, F7, F9 ou F26, F10) | Force du haut du corps (F14, F16 ou F17, F18) et tronc + vélo ou rameur (E10) |
 | **Affûtage** | Voir plus bas | Voir plus bas | Voir plus bas |
+
+**Version piste de C :** quand Lily indique qu'un jour n'est possible que sur la piste, C devient « sa course (course facile), puis pompes (F13) et gainage au sol (F19, F20, F22) ». B a toujours besoin d'un jour de gym.
 
 **D (4e séance, toutes les phases) :** force du haut du corps et tronc + cardio sans impact (vélo ou rameur : E10, ou E3 s'il est adopté). **Jamais de course** dans cette séance.
 
-**Durées indicatives, phase Force et vitesse :**
-- **A :** échauffement 15 min, vitesse 25 min, force 40 min (F1 en 4 × 4 à 6, F10, F2 ou F11), prévention 10 min. **Total : 1 h 30.**
-- **B :** échauffement 15 min, pliométrie 15 min, force 45 min (F7, F9, F8, F14, F16), prévention 10 min. **Total : 1 h 25.**
-- **C :** échauffement 15 min, intermittents 20 min et 10 min de course facile, force 30 min (F13, F17 ou F16, F18, tronc), prévention 10 min. **Total : 1 h 25.**
+**Durées indicatives, phase Force et vitesse (corrigées le 18 novembre 2026) :**
+- **A (piste) :** échauffement 15 min, vitesse 25 min, intermittents 20 min, prévention 10 min, plus le bloc d'agilité de janvier (10 min au plus). **Total : environ 1 h 20.**
+- **B (gym) :** échauffement 15 min, pliométrie 15 min, force 45 min (F1 en 4 × 4 à 6, F7 en 4 × 4 à 6, F9, F10), prévention 10 min. **Total : 1 h 25.** F8, F2 et F11 ne sont plus programmés.
+- **C (gym) :** échauffement 15 min, force 40 min (F14 et F16 en 4 × 4 à 6, F13 ou F17, F18, tronc), 10 min de course facile sur tapis, prévention 10 min. **Total : environ 1 h 25.**
 
 ### Selon le nombre de séances choisi
 
 | Séances | Fondation | Phases 2 et 3 |
 |---|---|---|
-| **1** | Vitesse + force complète (squat, squat bulgare, tirage, développé), environ 1 h. La course reprend la semaine suivante. | Pareil |
-| **2** | 1. Vitesse + course facile<br>2. Pliométrie + force complète | 1. Vitesse + force du bas du corps<br>2. Pliométrie + force sur une jambe et haut du corps<br>Les matchs remplacent la séance C. |
+| **1** | Une semaine sur deux : piste (le contenu de A), puis gym (force complète : squat, squat bulgare, tirage, développé, ischios). *Corrigé le 18 novembre 2026.* | Pareil |
+| **2** | 1. Vitesse + course facile (piste)<br>2. Pliométrie + force complète (gym) | 1. Vitesse, sans intermittents (piste)<br>2. Pliométrie + force complète (gym)<br>Les matchs remplacent la séance C. |
 | **3** | A, B, C | A, B, C |
 | **4** (maximum) | A, B, C, D | A, B, C, D |
 
@@ -131,16 +135,18 @@ Chaque tournoi compte 7 matchs de 4 contre 4 en 2 jours.
 - pas de nouvel exercice, pas de record, pas de courbatures ;
 - aucune séance exigeante pour les jambes dans les 48 h avant un tournoi ou avant le début de la saison.
 
-**A, version affûtage (environ 1 h)**
+*Corrigé le 18 novembre 2026 : le squat et les ischios passent de A à B, les sauts de patineur de B à A.*
+
+**A, version affûtage (environ 40 min, piste)**
 - Échauffement : 15 min.
 - Vitesse : 3 ou 4 sprints d'accélération de 10 à 20 m à 100 % (V6), puis 2 sprints lancés (V9), avec récupération complète.
-- Force : squat arrière (F1), 2 ou 3 séries de 3 à sa charge lourde habituelle ; flexion des ischios (F10), 2 séries de 8.
+- Sauts de patineur (P14), 2 séries de 4 par côté.
 - Prévention : 10 min.
 
-**B, version affûtage (environ 55 min)**
+**B, version affûtage (environ 1 h 05, gym)**
 - Échauffement : 15 min.
-- Pliométrie : saut sur boîte (P4), 3 séries de 3 ; sauts de patineur (P14), 2 séries de 4 par côté.
-- Force : squat bulgare (F7), 2 séries de 5 par côté ; tirage horizontal (F16) et développé des épaules (F14), 2 séries de 8 chacun.
+- Pliométrie : saut sur boîte (P4), 3 séries de 3.
+- Force : squat arrière (F1), 2 ou 3 séries de 3 à sa charge lourde habituelle ; flexion des ischios (F10), 2 séries de 8 ; squat bulgare (F7), 2 séries de 5 par côté ; tirage horizontal (F16) et développé des épaules (F14), 2 séries de 8 chacun.
 - Prévention : 10 min.
 
 **C, version affûtage (environ 40 min)**
@@ -171,18 +177,19 @@ Chaque exercice a une date « Dès » dans la banque. L'app le débloque automat
 | Semaines | Où | Contenu |
 |---|---|---|
 | S6 et S7 (1er → 10 janv.) | Dans les 2 séances de la semaine (il n'y a pas encore de match) | Latéral contrôlé : fente latérale (A12), pas chassés lents (A4), sauts de patineur courts avec réception tenue (P14) |
-| S8 (11 → 17 janv.) | Séance B | Pas chassés rapides (A4), déplacement de marque (A9), sauts latéraux sur une ligne (P15), coupe de handler (A8) à 70 % |
-| S9 (18 → 22 janv.) | Séance B | Coupe de handler (A8) à 85-90 %, avec peu de répétitions |
+| S8 (11 → 17 janv.) | Séance piste (A) | Pas chassés rapides (A4), déplacement de marque (A9), sauts latéraux sur une ligne (P15), coupe de handler (A8) à 70 % |
+| S9 (18 → 22 janv.) | Séance piste (A) | Coupe de handler (A8) à 85-90 %, avec peu de répétitions |
 
 - À partir de février, ces blocs servent seulement d'appoint, les semaines sans match.
+- *Corrigé le 18 novembre 2026 :* le gym n'a pas de coin dégagé. Tous ces blocs se font dans la séance piste (A, ou la séance unique quand elle est sur la piste), jamais au gym.
 - **Routine d'avant-match de 10 min** à partir du 1er janvier (A12, A4, P14, M1), avec un rappel de mettre les chevillères.
 
 ### Placement des séances
 
 **Charge pour les jambes :**
 - **élevée** : A, B, match, tournoi, séance de tests ;
-- **moyenne** : C avec des intermittents de course ;
-- **faible** : D, ou C sans course (vélo ou rameur).
+- **moyenne** : C avec de la course (course facile sur tapis, ou version piste) ;
+- **faible** : D, C sans course (vélo ou rameur), et C de la phase 3 au gym.
 
 **Règles :**
 1. Jamais deux jours de charge élevée de suite.
@@ -193,6 +200,7 @@ Chaque exercice a une date « Dès » dans la banque. L'app le débloque automat
 6. A va sur le jour le plus frais, le plus loin des matchs. B passe ensuite, puis C et D.
 7. Si les jours choisis ne permettent pas de respecter les règles, l'app transforme une séance (par exemple C en version sans course) et l'explique à Lily.
 8. Si Lily donne moins de jours que de séances, l'app réduit le nombre de séances et le lui dit.
+9. *Ajouté le 18 novembre 2026 :* pour chaque jour, Lily peut indiquer « gym », « piste » ou « les deux » (par défaut). L'app conseille 1 séance sur la piste et les autres au gym. A et les tests de course vont sur un jour de piste ; B, D et la journée 1 sur un jour de gym ; C va au gym, ou en version piste si les jours l'imposent. Si les jours « piste seulement » empêchent B, C (version piste) la remplace.
 
 **Exemples :**
 - **1 match (mercredi), 3 séances :** lundi A, mercredi match, jeudi C sans course, samedi B.
@@ -238,7 +246,7 @@ Un match charge surtout les chevilles (changements de direction), les tibias (co
 
 | Élément | 0 match | 1 match | 2 matchs |
 |---|---|---|---|
-| Intermittents de course (C) | Normaux | Moitié, ou sur vélo le lendemain du match | Retirés : C devient force du haut du corps + tronc, sans course |
+| Intermittents de course (A depuis le 18 novembre 2026) | Normaux | Moitié | Retirés ; C devient force du haut du corps + tronc, sans course |
 | Blocs d'agilité | Appoint | Retirés (sauf en janvier) | Retirés |
 | Pliométrie (B) | Normale | Normale | Moitié des sauts, rien de côté |
 | Vitesse (A) | Normale | Normale | Un tiers de répétitions en moins, accélérations seulement |
@@ -383,6 +391,7 @@ Un match charge surtout les chevilles (changements de direction), les tibias (co
 - **Pas de test pendant l'affûtage.**
 - **Le test intermittent 30-15 IFT est retiré :** il demande des allers-retours avec demi-tours, et le test demi-Cooper suffit pour les allures.
 - Une séance de test de la journée 1 remplace la séance A. Le test demi-Cooper remplace la séance C. Les deux comptent comme une charge élevée dans les règles de placement.
+- *Corrigé le 18 novembre 2026 (le gym n'a pas de piste) :* la journée 1 se fait au gym. Sans sprint (S1), elle garde la place de A. Avec le sprint (S10, S14, ou reportée après le 1er décembre), elle remplace B, et le sprint de 10 et 20 m se fait au début de la séance piste de la semaine, à la place des accélérations. Le test demi-Cooper se fait sur la piste, suivi de pompes et de gainage au sol.
 - **Pour un autre programme :** un retest à la fin de chaque phase, sauf pendant l'affûtage. Le dernier retest a lieu à la fin de la phase 3.
 
 **Ce que les retests changent :**
@@ -443,23 +452,29 @@ Un match charge surtout les chevilles (changements de direction), les tibias (co
   - course facile selon l'étape ;
   - prévention : M1, M7, M8.
 
-**Force et vitesse**
-- Les modèles de la section 2 restent.
-- Rotation des accessoires : F2 ou F11 dans A ; F17 ou F16 dans C, après F13 (*corrigé le 18 novembre 2026 ; la version précédente disait « F13 ou F17 »*) ; tronc comme en Fondation.
+**Force et vitesse** (*réorganisé le 18 novembre 2026 : le gym n'a pas de piste*)
+- **A (piste) :** 2 éducatifs ; accélérations V5, V6 ou V7 (rotation) 6 à 8 ; V9 ou V11 3 à 5 ; intermittents E5, E6 ou E8 (rotation chaque semaine), sauf à 2 séances ; prévention M1, M7, M8.
+- **B (gym) :** pliométrie (niveau 3, plus P4, P5, P6, P9 ou P13, 50 à 70 sauts) ; F1 4 × 4 à 6, F7 4 × 4 à 6 par côté, F9 3 × 8 par côté, F10 3 × 10 à 12 ; à 2 séances, F14 et F16 4 × 4 à 6 en plus ; prévention M1, M10.
+- **C (gym) :** F14 4 × 4 à 6, F16 4 × 4 à 6, F13 ou F17 3 × 8 à 10, F18, 2 exercices de tronc, 10 min de course facile sur tapis (vélo ou rameur près d'un match) ; prévention M1, M7, M8.
+- F8, F2 et F11 ne sont plus programmés (pour garder B sous 1 h 30). Tronc comme en Fondation.
 
 **Puissance et répétition**
-- **A (vitesse maximale + force et puissance) :**
+(*Réorganisé le 18 novembre 2026 : le gym n'a pas de piste.*)
+- **A (piste : vitesse maximale + répétition d'efforts) :**
   - vitesse : V9 ou V11 (rotation) 3 à 5 répétitions, plus V6 3 ou 4 répétitions ;
-  - force : F25 4 × 4 à 5 (en premier), F1 3 × 3 à 5, F26 4 × 8 à 10, F10 3 × 8 à 10 ;
+  - sauts de patineur (P14), 3 × 5 par côté (ils demandent de la place) ;
+  - E11, E12 ou E7 (rotation chaque semaine), sauf à 2 séances ;
   - prévention : M1, M7, M8.
-- **B (pliométrie de côté + force sur une jambe et haut du corps) :**
-  - pliométrie : P14 ou P15, plus P10, P11 ou P12 (60 à 80 sauts au total) ;
-  - force : F7 3 × 4 à 6 par côté, F9 3 × 6 par côté, F14 3 × 6 à 8, F16 ou F17 3 × 6 à 8 ;
+- **B (gym : pliométrie + force et puissance du bas du corps) :**
+  - pliométrie : P15, plus P10, P11 ou P12 (60 à 80 sauts au total) ;
+  - force : F25 4 × 4 à 5 (en premier), F1 3 × 3 à 5, F7 3 × 4 à 6 par côté, F9 3 × 6 par côté ou F26 4 × 8 à 10 (en alternance toutes les 2 semaines), F10 3 × 8 à 10 ;
+  - à 2 séances, F14 et F16 3 × 6 à 8 en plus ;
   - prévention : M1, M10, M11.
-- **C (répétition d'efforts + tronc) :**
-  - E11, E12 ou E7 (rotation chaque semaine) ;
-  - tronc : 2 ou 3 exercices parmi F19 à F23, plus F18 ;
-  - prévention : M1, M20, M7, M8.
+- **C (gym : haut du corps et tronc + vélo) :**
+  - F14 3 × 6 à 8, F16 ou F17 3 × 6 à 8 ;
+  - tronc : 3 exercices parmi F19 à F23, plus F18 ;
+  - vélo ou rameur (E10) ;
+  - prévention : M1, M20.
 
 **D (toutes les phases)**
 - Force : F13, F16 ou F17, F18, plus 2 exercices de tronc.
@@ -785,6 +800,18 @@ Lily a relu tous les choix des sections ci-dessus. Ceux qui ne sont pas listés 
 - **Allures avant le premier test demi-Cooper :** elles viennent des allures connues de Lily. Course facile (60 à 70 % de la VMA) à l'allure facile ; efforts à 100 % de la VMA ou plus à l'allure très rapide ; entre les deux, de l'allure rapide à l'allure très rapide. Pour 2026-2027 : 6:00, 5:30 et 5:00/km.
 - **Ressenti et note sur chaque exercice :** trop dur, trop facile, j'aime, je n'aime pas, et un commentaire libre. Ils ne changent pas le plan. Ils se copient en texte (Réglages, « Tes commentaires sur les exercices ») pour adapter une prochaine version du programme avec Claude.
 
+### Séances piste et gym (18 novembre 2026, réponses de Lily)
+
+Le gym n'a pas de piste. Proposition faite à Lily, puis ses réponses :
+- **L'idée générale lui va** : une séance piste (sprints, intermittents, agilité), le reste au gym, jamais les deux le même jour.
+- **Pas de coin dégagé au gym** pour la fente latérale et les pas chassés ; les exercices de chevilles y sont possibles. Les blocs d'agilité et les sauts de patineur (P14) passent donc sur la piste ; P15 (sur place) reste au gym.
+- **Sprints sur tapis : non. Intervalles de plus d'1 min sur tapis : oui.** Les intermittents courts (E5, E6, E8, E7) vont dans la séance piste, après les sprints. Au gym, le tapis sert à la course facile continue.
+- **B devient la grosse séance de jambes**, C la séance du haut du corps (Lily fait confiance au programme).
+- **Phase 3 :** E11, E12 et E7 passent sur la piste (accord de Lily).
+- **Une seule séance dans la semaine :** une semaine piste, une semaine gym (Lily : « selon le mieux »).
+- **Lieu de chaque jour :** Lily indique pour chaque jour disponible « gym », « piste » ou « les deux ». L'app conseille 1 piste et le reste au gym, et s'adapte si elle force deux jours de piste (C en version piste ; B a besoin d'un jour de gym).
+- **Tests :** journée 1 au gym, sprint de 10 et 20 m dans la séance piste, demi-Cooper sur la piste suivi de pompes et gainage au sol.
+
 ### Ajouts du 18 novembre 2026 (demandes de Nathan, à faire valider avec Lily)
 
 - **Version express, quand Lily manque de temps** (bouton sur la séance, avant de commencer). L'app garde environ 40 min, échauffement raccourci et prévention minimale compris. Elle choisit dans l'ordre de priorité de la section 4 : vitesse, force du bas du corps, pliométrie et course facile en Fondation, haut du corps et tronc, intermittents. Pas de version express pour une séance de tests. La séance garde sa place dans la semaine.
@@ -794,7 +821,7 @@ Lily a relu tous les choix des sections ci-dessus. Ceux qui ne sont pas listés 
   - sauts, force et vélo : gym ;
   - dans une séance de gym, la course facile et les intermittents se font sur le tapis du gym ;
   - une séance de course seule (A en Fondation) : piste ou dehors ;
-  - en attendant une décision, A des phases 2 et 3 (vitesse + force) s'affiche « Piste ou dehors, puis gym ». Nathan demande de ne plus mettre de sprints les jours de gym, avec des séances piste à part : **la nouvelle organisation est à décider avec Lily.**
+  - depuis les réponses de Lily (voir « Séances piste et gym »), aucune séance ne mélange piste et gym.
 - **Note d'effort :** 7 correspond à une séance réussie (tu as forcé, c'était dur mais correct et tu te sentais bien) ; un bouton « Rien à signaler : 7 » la donne en un geste. 9 ou plus bloque la hausse des charges à la séance suivante (section 5).
 - **Repères le jour des tests :**
   - squat, squat bulgare, développé et tirage : environ le maximum estimé ÷ 1,2, la charge pour 5 répétitions avec 1 en réserve ;

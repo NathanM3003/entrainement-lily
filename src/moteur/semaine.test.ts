@@ -31,7 +31,7 @@ describe('exemples des Règles', () => {
     // S8 : premier 4 contre 4 le mercredi 13 janvier.
     const p = planifierSemaine(cal, 8, { nbSeances: 3, joursDisponibles: ['2027-01-11', '2027-01-14', '2027-01-16'] });
     expect(resume(p)).toEqual(['2027-01-11 A', '2027-01-14 C sans course', '2027-01-16 B']);
-    expect(p.messages).toContain('Séance « intermittents » en version sans course (vélo ou rameur) : elle tombe le lendemain du match.');
+    expect(p.messages).toContain('Séance « haut du corps et course » en version sans course (vélo ou rameur) : elle tombe le lendemain du match.');
   });
 
   it('2 matchs (mercredi et jeudi), 2 séances : lundi A, vendredi repos, samedi B', () => {
@@ -70,9 +70,34 @@ describe('placement des séances', () => {
     expect(p.seances.map((s) => s.libelle)).toEqual(['Vitesse + course facile', 'Pliométrie + force complète']);
   });
 
-  it('fait une séance unique « vitesse + force complète » quand Lily en choisit 1', () => {
-    const p = planifierSemaine(cal, 4, { nbSeances: 1, joursDisponibles: ['2026-12-16'] });
-    expect(p.seances).toMatchObject([{ type: 'U', libelle: 'Vitesse + force complète', date: '2026-12-16' }]);
+  it('séance unique : une semaine sur la piste, la suivante au gym', () => {
+    const s3 = planifierSemaine(cal, 3, { nbSeances: 1, joursDisponibles: ['2026-12-09'] });
+    expect(s3.seances).toMatchObject([{ type: 'U', lieu: 'piste', libelle: 'Vitesse + course facile', course: true }]);
+    const s4 = planifierSemaine(cal, 4, { nbSeances: 1, joursDisponibles: ['2026-12-16'] });
+    expect(s4.seances).toMatchObject([{ type: 'U', lieu: 'gym', libelle: 'Force complète', date: '2026-12-16', course: false }]);
+    expect(s4.messages).toEqual([]);
+  });
+
+  it('séance unique : un jour « piste seulement » passe avant l’alternance, et l’app le dit', () => {
+    const p = planifierSemaine(cal, 4, { nbSeances: 1, joursDisponibles: ['2026-12-16'], lieux: { '2026-12-16': 'piste' } });
+    expect(p.seances).toMatchObject([{ type: 'U', lieu: 'piste' }]);
+    expect(p.messages).toEqual(['Séance sur la piste cette semaine : c\'est le lieu indiqué pour ce jour-là.']);
+  });
+
+  it('jours gym ou piste : A va sur un jour de piste, B et C sur des jours de gym', () => {
+    const lieux = { '2026-12-14': 'gym', '2026-12-16': 'piste', '2026-12-18': 'gym' } as const;
+    const p = planifierSemaine(cal, 4, { nbSeances: 3, joursDisponibles: Object.keys(lieux), lieux });
+    expect(p.seances.find((s) => s.type === 'A')).toMatchObject({ date: '2026-12-16', lieu: 'piste' });
+    expect(p.seances.filter((s) => s.type !== 'A').map((s) => `${s.type} ${s.lieu}`).sort()).toEqual(['B gym', 'C gym']);
+  });
+
+  it('deux jours « piste seulement » : C passe en version piste ; sans jour de gym, B saute', () => {
+    const lieux = { '2026-12-14': 'piste', '2026-12-16': 'piste', '2026-12-18': 'gym' } as const;
+    const p = planifierSemaine(cal, 4, { nbSeances: 3, joursDisponibles: Object.keys(lieux), lieux });
+    expect(p.seances.map((s) => `${s.type} ${s.lieu}`).sort()).toEqual(['A piste', 'B gym', 'C piste']);
+    expect(p.messages.some((m) => m.includes('en version piste'))).toBe(true);
+    const sansGym = planifierSemaine(cal, 4, { nbSeances: 3, joursDisponibles: ['2026-12-14', '2026-12-16'], lieux: { '2026-12-14': 'piste', '2026-12-16': 'piste' } });
+    expect(sansGym.seances.map((s) => `${s.type} ${s.lieu}`).sort()).toEqual(['A piste', 'C piste']);
   });
 
   it('réduit le nombre de séances quand il y a moins de jours que de séances, et le dit', () => {
@@ -93,7 +118,7 @@ describe('placement des séances', () => {
     const p = planifierSemaine(cal, 3, { nbSeances: 2, joursDisponibles: ['2026-12-07', '2026-12-08'] });
     expect(p.seances).toMatchObject([{ type: 'U' }]);
     expect(p.messages).toEqual([
-      'Les jours choisis ne permettent que 1 séance en respectant les règles (matchs, repos, tibias) : une seule séance « vitesse + force complète » cette semaine.',
+      'Les jours choisis ne permettent que 1 séance en respectant les règles (matchs, repos, tibias) : une seule séance, sur la piste cette semaine.',
     ]);
   });
 
@@ -130,7 +155,7 @@ describe('placement des séances', () => {
 
   it('dit « lendemain du tournoi » le lundi qui suit un tournoi', () => {
     const p = planifierSemaine(cal, 10, { nbSeances: 3, joursDisponibles: ['2027-01-25', '2027-01-29', '2027-01-31'] });
-    expect(p.messages).toContain('Séance « intermittents » en version sans course (vélo ou rameur) : elle tombe le lendemain du tournoi.');
+    expect(p.messages).toContain('Séance « haut du corps et course » en version sans course (vélo ou rameur) : elle tombe le lendemain du tournoi.');
   });
 
   it('ignore un match régulier annulé', () => {
@@ -187,9 +212,12 @@ describe('semaines particulières de 2026-2027', () => {
   it('S10 : lundi et mardi en charge faible, tests de la journée 1 en fin de semaine', () => {
     const p = planifierSemaine(cal, 10, { nbSeances: 3, joursDisponibles: tousLesJours(10) }, [], [], true);
     for (const s of p.seances.filter((x) => x.date <= '2027-01-26')) expect(s.charge).toBe('faible');
+    // Après le match du mercredi, il reste vendredi et dimanche pour les deux séances chargées :
+    // la piste avec le test de sprint, et les tests de la journée 1 au gym, en fin de semaine.
     const test = p.seances.find((s) => s.test === 'journee1');
-    // Vendredi plutôt que dimanche : S11 commence par le test demi-Cooper le lundi.
-    expect(test?.date).toBe('2027-01-29');
+    expect(test).toMatchObject({ type: 'B', lieu: 'gym', course: false });
+    expect(test!.date >= '2027-01-29').toBe(true);
+    expect(p.seances.find((s) => s.test === 'sprint')).toMatchObject({ type: 'A', lieu: 'piste' });
   });
 
   it('S10 puis S11 : le test demi-Cooper ne suit pas un jour chargé ou de course', () => {
@@ -217,7 +245,7 @@ describe('semaines particulières de 2026-2027', () => {
     const p = planifierSemaine(cal, 16, { nbSeances: 1, joursDisponibles: tousLesJours(16) });
     expect(p.seances).toMatchObject([{ type: 'D', charge: 'faible' }]);
     expect(p.messages).toEqual([
-      'Les jours choisis ne permettent pas la séance « vitesse et force » en respectant les règles (matchs, repos, tibias). La séance « haut du corps et vélo » la remplace (moins de charge pour les jambes).',
+      'Les jours choisis ne permettent pas la séance « vitesse ou force » en respectant les règles (matchs, repos, tibias). La séance « haut du corps et vélo » la remplace (moins de charge pour les jambes).',
     ]);
   });
 
@@ -228,7 +256,7 @@ describe('semaines particulières de 2026-2027', () => {
     expect(p.seances.map((s) => s.type).sort()).toEqual(['C', 'D']);
     expect(p.seances.some((s) => s.charge === 'elevee')).toBe(false);
     expect(p.messages).toContain(
-      'Les jours choisis ne permettent pas les séances « vitesse » et « sauts et force » en respectant les règles (matchs, repos, tibias). Les séances « intermittents » et « haut du corps et vélo » les remplacent (moins de charge pour les jambes).',
+      'Les jours choisis ne permettent pas les séances « vitesse » et « sauts et force » en respectant les règles (matchs, repos, tibias). Les séances « haut du corps et course » et « haut du corps et vélo » les remplacent (moins de charge pour les jambes).',
     );
   });
 

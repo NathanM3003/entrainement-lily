@@ -28,7 +28,15 @@ export interface ChoixSemaine {
    * Les séances déjà faites restent, les autres sont placées à partir de ce jour.
    */
   depuis?: DateISO;
+  /**
+   * Lieu possible chaque jour (demande de Lily, 18 novembre 2026) : « gym » ou « piste » seulement.
+   * Un jour absent accepte les deux. Le gym n'a pas de piste : sprints et musculation ne se font jamais le même jour.
+   */
+  lieux?: Record<DateISO, LieuSeance>;
 }
+
+/** Où se fait une séance : au gym (musculation, sauts, tapis, vélo) ou sur la piste (sprints, intermittents, agilité). */
+export type LieuSeance = 'gym' | 'piste';
 
 /** Ce qu'il faut savoir de la semaine précédente : ses séances, pour ne pas enchaîner dimanche et lundi. */
 export type SeancesPrecedentes = Pick<SeancePlanifiee, 'date' | 'charge' | 'course'>[];
@@ -50,6 +58,8 @@ export interface SeancePlanifiee {
   courte: boolean;
   /** Lily manque de temps ce jour-là : version express d'environ 40 min. */
   express?: boolean;
+  /** Gym ou piste (absent dans les séances enregistrées avant le 18 novembre 2026). */
+  lieu?: LieuSeance;
 }
 
 export interface PlanSemaine {
@@ -73,13 +83,18 @@ const PHASES_2_ET_3: Phase[] = ['force-vitesse', 'puissance-repetition', 'develo
 function composer(phase: Phase, n: number): Modele[] {
   const m = (type: TypeSeance, deuxSeances = false): Modele => ({ type, deuxSeances });
   if (n <= 1) return [m('U')];
-  if (n === 2) return phase === 'fondation' ? [m('A', true), m('B', true)] : [m('A'), m('B')];
+  // 2 séances : la piste, puis le gym avec la force complète (pliométrie, jambes, développé, tirage).
+  if (n === 2) return [m('A', true), m('B', true)];
   if (n === 3) return [m('A'), m('B'), m('C')];
   return [m('A'), m('B'), m('C'), m('D')];
 }
 
 /**
- * Une séance de test de la journée 1 remplace A (ou la séance unique) ; le test demi-Cooper remplace C.
+ * Tests (section 6, « Retests », corrigé le 18 novembre 2026 : le gym n'a pas de piste) :
+ * - les tests de la journée 1 se font au gym et remplacent B (ou la séance unique) ;
+ *   sans sprint (S1, sprint encore limité), ils gardent la place de A ;
+ * - leur sprint de 10 et 20 m passe au début de la séance piste (A) de la semaine ;
+ * - le test de sprint seul va dans A, le test demi-Cooper remplace C.
  * Un test prévu n'est jamais retiré : s'il n'y a pas de séance C, le test demi-Cooper prend la place
  * de la séance la moins prioritaire.
  */
@@ -89,15 +104,18 @@ function ajouterTests(modeles: Modele[], semaine: Semaine): Modele[] {
     const derniere = modeles.length - 1;
     modeles = modeles.map((m, i) => (i === derniere ? { type: 'C', deuxSeances: false } : m));
   }
+  const journee1 = semaine.retests.find((r) => r.type === 'journee1');
+  const sprintSeul = semaine.retests.find((r) => r.type === 'sprint');
+  const sprint: RetestPrevu | undefined =
+    sprintSeul ?? (journee1 && !journee1.sansSprint ? { type: 'sprint', moment: 'semaine', semaine: journee1.semaine } : undefined);
+  // Journée 1 sans sprint (S1, sprint encore limité) : elle garde la place de A, comme avant.
+  const typeJournee1: TypeSeance = journee1?.sansSprint ? 'A' : modeles.some((m) => m.type === 'B') ? 'B' : 'U';
   return modeles.map((mod) => {
-    // La journée 1 passe avant le test de sprint : reportée après le 1er décembre, elle le contient.
-    const test =
-      semaine.retests.find((r) => r.type === 'journee1' && (mod.type === 'A' || mod.type === 'U')) ??
-      semaine.retests.find(
-        (r) =>
-          (r.type === 'sprint' && (mod.type === 'A' || mod.type === 'U')) ||
-          (r.type === 'cooper' && r.moment !== 'condition' && mod.type === 'C'),
-      );
+    let test: RetestPrevu | undefined;
+    if (journee1 && (mod.type === typeJournee1 || (mod.type === 'U' && typeJournee1 !== 'U' && !modeles.some((m) => m.type === typeJournee1)))) test = journee1;
+    else if (sprint && mod.type === 'A') test = sprint;
+    else if (sprint && mod.type === 'U' && !journee1) test = sprint;
+    else if (cooper && mod.type === 'C') test = cooper;
     return test ? { ...mod, test } : mod;
   });
 }
@@ -111,14 +129,14 @@ const LIBELLES: Record<'fondation' | 'phases23' | 'affutage', Record<TypeSeance,
     U: 'Vitesse + force complète',
   },
   phases23: {
-    A: 'Vitesse + force du bas du corps',
-    B: 'Pliométrie + force sur une jambe et haut du corps',
-    C: 'Intermittents + force du haut du corps et tronc',
+    A: 'Vitesse + intermittents',
+    B: 'Pliométrie + force du bas du corps',
+    C: 'Force du haut du corps + course facile',
     D: 'Force du haut du corps et tronc + cardio sans impact',
     U: 'Vitesse + force complète',
   },
   affutage: {
-    A: 'Vitesse + force (affûtage)',
+    A: 'Vitesse (affûtage)',
     B: 'Pliométrie + force (affûtage)',
     C: 'Simulation de points + mobilité (affûtage)',
     D: 'Force du haut du corps et tronc + cardio sans impact',
@@ -126,17 +144,24 @@ const LIBELLES: Record<'fondation' | 'phases23' | 'affutage', Record<TypeSeance,
   },
 };
 
-function libelle(phase: Phase, mod: Modele, variante: SeancePlanifiee['variante']): string {
+function libelle(phase: Phase, mod: Modele, variante: SeancePlanifiee['variante'], lieu: LieuSeance): string {
   if (mod.test?.type === 'journee1') return 'Tests de la journée 1';
   if (mod.test?.type === 'cooper') return 'Test demi-Cooper';
   let texte: string;
-  if (phase === 'fondation' && mod.deuxSeances) {
-    texte = mod.type === 'A' ? 'Vitesse + course facile' : 'Pliométrie + force complète';
+  if (mod.type === 'U' && phase !== 'affutage') {
+    // Une seule séance : une semaine sur la piste, la suivante au gym (décision du 18 novembre 2026).
+    texte = lieu === 'piste' ? (phase === 'fondation' ? 'Vitesse + course facile' : 'Vitesse') : 'Force complète';
+  } else if (mod.type === 'C' && lieu === 'piste' && phase !== 'affutage') {
+    texte = 'Course + pompes et gainage (version piste)';
+  } else if (mod.deuxSeances && mod.type === 'B' && phase !== 'affutage') {
+    texte = 'Pliométrie + force complète';
+  } else if (mod.deuxSeances && mod.type === 'A' && phase !== 'affutage') {
+    texte = phase === 'fondation' ? 'Vitesse + course facile' : phase === 'puissance-repetition' ? 'Vitesse maximale + sauts de patineur' : 'Vitesse';
   } else if (phase === 'puissance-repetition' && mod.type !== 'D' && mod.type !== 'U') {
     texte = {
-      A: 'Vitesse maximale + force et puissance',
-      B: 'Pliométrie de côté + force sur une jambe et haut du corps',
-      C: "Répétition d'efforts + tronc",
+      A: "Vitesse maximale + répétition d'efforts",
+      B: 'Pliométrie + force et puissance du bas du corps',
+      C: 'Force du haut du corps et tronc + vélo',
     }[mod.type];
   } else {
     const groupe = phase === 'fondation' ? 'fondation' : phase === 'affutage' ? 'affutage' : 'phases23';
@@ -148,24 +173,51 @@ function libelle(phase: Phase, mod: Modele, variante: SeancePlanifiee['variante'
 
 // ---------- Charge pour les jambes et course (section 3, « Placement des séances ») ----------
 
-function chargeEtCourse(mod: Modele, variante: SeancePlanifiee['variante']): { charge: Charge; course: boolean } {
-  if (mod.test?.type === 'journee1') return { charge: 'elevee', course: !mod.test.sansSprint };
+function chargeEtCourse(mod: Modele, variante: SeancePlanifiee['variante'], phase: Phase, lieu: LieuSeance): { charge: Charge; course: boolean } {
+  if (mod.test?.type === 'journee1') return { charge: 'elevee', course: false }; // au gym, sans le sprint
   if (mod.test?.type === 'cooper') return { charge: 'elevee', course: true };
   switch (mod.type) {
     case 'A':
-    case 'U':
       return { charge: 'elevee', course: true }; // les sprints comptent comme de la course
+    case 'U':
+      return { charge: 'elevee', course: lieu === 'piste' };
     case 'B':
       return { charge: 'elevee', course: false };
     case 'C':
-      // C avec course (course facile en Fondation, intermittents ensuite) : charge moyenne. Sans course : faible.
-      return variante === 'sans-course' ? { charge: 'faible', course: false } : { charge: 'moyenne', course: true };
+      // C avec course (course facile sur tapis, ou sur la piste) : charge moyenne. Sans course : faible.
+      // Phase 3 au gym : haut du corps, tronc et vélo, sans course (ses efforts répétés sont passés sur la piste).
+      if (variante === 'sans-course' || (phase === 'puissance-repetition' && lieu === 'gym')) return { charge: 'faible', course: false };
+      return { charge: 'moyenne', course: true };
     case 'D':
       return { charge: 'faible', course: false };
   }
 }
 
-const peutEtreSansCourse = (mod: Modele) => mod.type === 'C' && !mod.test;
+const peutEtreSansCourse = (mod: Modele, phase: Phase) => mod.type === 'C' && !mod.test && phase !== 'puissance-repetition';
+
+/**
+ * Lieux possibles d'une séance, le premier étant le lieu normal (section 2, corrigée le 18 novembre 2026) :
+ * piste pour A et les tests de course, gym pour B, D et la journée 1, gym pour C (version piste possible),
+ * et une semaine sur deux piste ou gym pour la séance unique.
+ */
+function lieuxPossibles(mod: Modele, phase: Phase, variante: SeancePlanifiee['variante'], numero: number): LieuSeance[] {
+  if (mod.test?.type === 'journee1') return ['gym'];
+  if (mod.test?.type === 'cooper' || mod.test?.type === 'sprint') return ['piste'];
+  switch (mod.type) {
+    case 'A':
+      return ['piste'];
+    case 'B':
+    case 'D':
+      return ['gym'];
+    case 'U':
+      if (phase === 'affutage') return ['piste', 'gym'];
+      return numero % 2 === 1 ? ['piste', 'gym'] : ['gym', 'piste'];
+    case 'C':
+      if (variante === 'sans-course') return ['gym']; // vélo ou rameur
+      if (phase === 'affutage') return ['piste']; // simulation de points
+      return ['gym', 'piste'];
+  }
+}
 
 // ---------- Placement ----------
 
@@ -175,6 +227,9 @@ interface Placement {
   variante: SeancePlanifiee['variante'];
   charge: Charge;
   course: boolean;
+  lieu: LieuSeance;
+  /** Le lieu n'est pas le lieu normal de la séance (C en version piste, séance unique hors alternance). */
+  lieuDeRechange: boolean;
 }
 
 interface Contexte {
@@ -190,6 +245,9 @@ interface Contexte {
   anterieures: SeancesPrecedentes;
   /** Lily a mis le lundi suivant dans ses jours disponibles : on évite alors de courir ou de se charger le dimanche. */
   lundiSuivantPrevu: boolean;
+  numero: number;
+  /** Lieu imposé par Lily pour certains jours. */
+  lieux: Record<DateISO, LieuSeance>;
 }
 
 const POIDS_CHARGE: Record<Charge, number> = { elevee: 3, moyenne: 2, faible: 1 };
@@ -288,6 +346,8 @@ function noter(placements: Placement[], ctx: Contexte): number[] {
   const note = [
     placements.filter((p) => ctx.joursMatch.has(p.date)).length,
     placements.filter((p) => p.variante === 'sans-course').length,
+    // Lieu de rechange (C sur la piste, séance unique hors alternance) : seulement si les jours l'imposent.
+    placements.filter((p) => p.lieuDeRechange).length,
     placements.filter((p) => ctx.joursAlleges.has(p.date)).length,
     // Éviter de finir la semaine par une course : la semaine suivante commence souvent par A (sprints).
     // Seulement quand Lily a prévu de s'entraîner le lundi suivant (décision du 18 novembre 2026).
@@ -324,16 +384,21 @@ function meilleurPlacement(modeles: Modele[], jours: DateISO[], ctx: Contexte, f
       return;
     }
     const mod = modeles[i]!;
-    const variantes: SeancePlanifiee['variante'][] = peutEtreSansCourse(mod) ? ['normale', 'sans-course'] : ['normale'];
+    const variantes: SeancePlanifiee['variante'][] = peutEtreSansCourse(mod, ctx.phase) ? ['normale', 'sans-course'] : ['normale'];
     for (const date of libres) {
       for (const variante of variantes) {
-        courant.push({ mod, date, variante, ...chargeEtCourse(mod, variante) });
-        essayer(
-          i + 1,
-          libres.filter((d) => d !== date),
-          courant,
-        );
-        courant.pop();
+        const lieux = lieuxPossibles(mod, ctx.phase, variante, ctx.numero);
+        for (const lieu of lieux) {
+          const impose = ctx.lieux[date];
+          if (impose && impose !== lieu) continue;
+          courant.push({ mod, date, variante, lieu, lieuDeRechange: lieu !== lieux[0], ...chargeEtCourse(mod, variante, ctx.phase, lieu) });
+          essayer(
+            i + 1,
+            libres.filter((d) => d !== date),
+            courant,
+          );
+          courant.pop();
+        }
       }
     }
   };
@@ -343,7 +408,7 @@ function meilleurPlacement(modeles: Modele[], jours: DateISO[], ctx: Contexte, f
 }
 
 /** Combinaisons de k séances parmi « base », dans l'ordre de priorité (A, B, C, D), tests toujours gardés. */
-function compositions(semaine: Semaine, base: Modele[], k: number): Modele[][] {
+function compositions(semaine: Semaine, base: Modele[], k: number, joursPiste: boolean): Modele[][] {
   const liste: Modele[][] = [ajouterTests(composer(semaine.phase, k), semaine)];
   const tests = base.filter((m) => m.test);
   const parcourir = (debut: number, courant: Modele[]) => {
@@ -354,6 +419,11 @@ function compositions(semaine: Semaine, base: Modele[], k: number): Modele[][] {
     for (let i = debut; i < base.length; i++) parcourir(i + 1, [...courant, base[i]!]);
   };
   parcourir(0, []);
+  // Jours « piste seulement » : si B ne peut pas être placée, C (en version piste) la remplace plutôt que rien.
+  for (const c of joursPiste ? [...liste] : []) {
+    const i = c.findIndex((m) => m.type === 'B' && !m.test);
+    if (i >= 0 && !c.some((m) => m.type === 'C')) liste.push(c.map((m, j) => (j === i ? { type: 'C' as const, deuxSeances: false } : m)));
+  }
   // Dernier recours pour 1 séance : D (haut du corps, tronc, cardio sans impact), possible même quand
   // aucun jour ne permet une séance chargée pour les jambes (règle 7 : transformer plutôt que tout retirer).
   if (k === 1 && tests.length === 0) liste.push([{ type: 'D', deuxSeances: false }]);
@@ -375,26 +445,22 @@ export function nomCourt(phase: Phase, type: TypeSeance): string {
     case 'A':
       return 'vitesse';
     case 'U':
-      return 'vitesse et force';
+      return 'vitesse ou force';
     case 'B':
       return 'sauts et force';
     case 'D':
       return 'haut du corps et vélo';
     case 'C':
-      return phase === 'fondation'
-        ? 'haut du corps et course'
-        : phase === 'puissance-repetition'
-          ? "répétition d'efforts"
-          : phase === 'affutage'
-            ? 'simulation de points'
-            : 'intermittents';
+      return phase === 'puissance-repetition' ? 'haut du corps et tronc' : phase === 'affutage' ? 'simulation de points' : 'haut du corps et course';
   }
 }
 
 /** Icône d'une séance, d'après son type : vitesse ⚡, sauts 🦘, course ou intermittents 🏃, haut du corps 💪, tests 📋. */
-export function iconeSeance(s: Pick<SeancePlanifiee, 'type' | 'test'>): string {
+export function iconeSeance(s: Pick<SeancePlanifiee, 'type' | 'test'> & Partial<Pick<SeancePlanifiee, 'lieu' | 'course'>>): string {
   if (s.test === 'journee1' || s.test === 'cooper') return '📋';
-  return { A: '⚡', U: '⚡', B: '🦘', C: '🏃', D: '💪' }[s.type];
+  if (s.type === 'U') return s.lieu === 'gym' ? '🏋️' : '⚡';
+  if (s.type === 'C' && s.course === false) return '💪';
+  return { A: '⚡', B: '🦘', C: '🏃', D: '💪' }[s.type];
 }
 
 /** Une séance de la composition par séance déjà faite (le même type, sinon la moins prioritaire). */
@@ -453,6 +519,8 @@ export function planifierSemaine(
       : undefined,
     anterieures: seancesPrecedentes.filter((s) => s.date < semaine.debut && ecartJours(s.date, semaine.debut) <= 3),
     lundiSuivantPrevu,
+    numero,
+    lieux: choix.lieux ?? {},
   };
 
   const faites = seancesFaites.filter((f) => joursSemaine.includes(f.date));
@@ -496,6 +564,8 @@ export function planifierSemaine(
     variante: f.variante,
     charge: f.charge,
     course: f.course,
+    lieu: f.lieu ?? (f.course ? 'piste' : 'gym'),
+    lieuDeRechange: false,
   }));
   const semaineRestante: Semaine = { ...semaine, retests: semaine.retests.filter((r) => !faites.some((f) => f.test === r.type)) };
 
@@ -505,7 +575,7 @@ export function planifierSemaine(
   if (semaine.phase === 'affutage' && semaine.tournoi) base = base.filter((m) => m.type !== 'C'); // C retirée la semaine d'un tournoi
   let trouve = false;
   for (let k = n; k >= Math.max(1, faites.length) && !trouve; k--) {
-    for (const modeles of compositions(semaineRestante, base, k)) {
+    for (const modeles of compositions(semaineRestante, base, k, Object.values(ctx.lieux).includes('piste'))) {
       const reste = retirerFaites(modeles, faites);
       if (reste.length === 0) {
         trouve = true;
@@ -532,7 +602,7 @@ export function planifierSemaine(
     : '';
   if (nDemande > 0 && placements.length < nDemande) {
     const liste = gardees.has('U')
-      ? 'une seule séance « vitesse + force complète »'
+      ? `une seule séance, ${placements.find((x) => x.mod.type === 'U')?.lieu === 'piste' ? 'sur la piste' : 'au gym'}`
       : retirees.length > 1
         ? `les séances ${retirees.slice(0, -1).join(', ')} et ${retirees.at(-1)} sont retirées`
         : `la séance ${retirees[0]} est retirée`;
@@ -554,7 +624,7 @@ export function planifierSemaine(
     .map((p) => faites.find((f) => f.date === p.date && fixes.includes(p)) ?? ({
       date: p.date,
       type: p.mod.type,
-      libelle: libelle(semaine.phase, p.mod, p.variante),
+      libelle: libelle(semaine.phase, p.mod, p.variante, p.lieu),
       variante: p.variante,
       deuxSeances: p.mod.deuxSeances,
       test: p.mod.test?.type,
@@ -563,11 +633,18 @@ export function planifierSemaine(
       // Durée maximale choisie à la création (1 h 30 pour 2026-2027) ; environ 1 h en période allégée.
       dureeMax: Math.min(semaineAllegee || ctx.joursAlleges.has(p.date) ? 60 : 90, calendrier.config.disponibilites?.dureeMax ?? 90),
       courte: semaine.tournoi,
+      lieu: p.lieu,
       ...(!p.mod.test && (choix.express ?? []).includes(p.date) ? { express: true } : {}),
     }))
     .sort((a, b) => (a.date < b.date ? -1 : 1));
 
   for (const s of seances.filter((x) => !datesFaites.has(x.date))) {
+    const p = placements.find((x) => x.date === s.date);
+    if (p?.lieuDeRechange && s.type === 'C') {
+      messages.push(`Séance ${nom(s.type)} en version piste (course, pompes et gainage) : ${ctx.lieux[s.date] === 'piste' ? 'tu as indiqué la piste ce jour-là' : 'les jours choisis le demandent'}.`);
+    } else if (p?.lieuDeRechange && s.type === 'U') {
+      messages.push(`Séance ${s.lieu === 'piste' ? 'sur la piste' : 'au gym'} cette semaine : ${ctx.lieux[s.date] ? 'c\'est le lieu indiqué pour ce jour-là' : 'les jours choisis le demandent'}.`);
+    }
     if (ctx.joursMatch.has(s.date)) {
       messages.push(`Séance ${nom(s.type)} le jour du match : seulement du haut du corps et du tronc, sans course ni sauts.`);
     } else if (s.variante === 'sans-course') {
