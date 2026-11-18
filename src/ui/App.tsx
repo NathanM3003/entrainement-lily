@@ -1,67 +1,60 @@
 import { useEffect, useState } from 'react';
-import { chargerIllustrations, exercicesRetenus, LIBELLES_TYPES } from '../donnees/banque';
-import type { TypeExercice } from '../donnees/types';
+import { semaineDuJour } from '../stockage/saison';
+import { useDonnees } from './donnees';
+import { EcranExercices } from './EcranExercices';
+import { EcranSauvegarde } from './EcranSauvegarde';
+import { EcranSeance } from './EcranSeance';
+import { EcranSemaine } from './EcranSemaine';
 
-const TYPES = Object.keys(LIBELLES_TYPES) as TypeExercice[];
-
-// Écran provisoire (étape 0) : la banque d'exercices avec ses illustrations,
-// pour vérifier l'extraction. Il sera remplacé par la semaine et la séance du jour.
-export function App() {
-  const [illustrations, setIllustrations] = useState<Record<string, string>>({});
-  const [type, setType] = useState<TypeExercice>('force');
-
+/** Navigation par l'adresse (#/semaine/3, #/seance/2026-11-23…) : le bouton retour du téléphone fonctionne. */
+function useAdresse(): string {
+  const [adresse, setAdresse] = useState(location.hash);
   useEffect(() => {
-    chargerIllustrations().then(setIllustrations);
+    const maj = () => {
+      setAdresse(location.hash);
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener('hashchange', maj);
+    return () => window.removeEventListener('hashchange', maj);
   }, []);
+  return adresse;
+}
 
-  const liste = exercicesRetenus.filter((e) => e.type === type);
+export function App() {
+  const { cal, aujourdhui, erreur } = useDonnees();
+  const adresse = useAdresse();
+  const [, ecran, param] = adresse.split('/');
+
+  let contenu;
+  let onglet: 'semaine' | 'exercices' | 'sauvegarde' = 'semaine';
+  if (ecran === 'seance' && param) contenu = <EcranSeance key={param} date={param} />;
+  else if (ecran === 'exercices') {
+    contenu = <EcranExercices />;
+    onglet = 'exercices';
+  } else if (ecran === 'sauvegarde') {
+    contenu = <EcranSauvegarde />;
+    onglet = 'sauvegarde';
+  } else {
+    const n = Number(param);
+    const numero = ecran === 'semaine' && n >= 1 && n <= cal.semaines.length ? n : semaineDuJour(cal, aujourdhui);
+    contenu = <EcranSemaine key={numero} numero={numero} />;
+  }
 
   return (
-    <main className="page">
-      <header className="entete">
-        <p className="surtitre">Saison 2026-2027</p>
-        <h1>Entraînement de Lily</h1>
-      </header>
-
-      <nav className="onglets" aria-label="Types d'exercices">
-        {TYPES.map((t) => (
-          <button key={t} type="button" aria-pressed={t === type} onClick={() => setType(t)}>
-            {LIBELLES_TYPES[t]}
-          </button>
-        ))}
+    <>
+      {erreur && <p className="bandeau erreur">{erreur}</p>}
+      {contenu}
+      <nav className="barre" aria-label="Navigation">
+        <a href="#/" aria-current={onglet === 'semaine' ? 'page' : undefined}>
+          Semaine
+        </a>
+        <a href="#/exercices" aria-current={onglet === 'exercices' ? 'page' : undefined}>
+          Exercices
+        </a>
+        <a href="#/sauvegarde" aria-current={onglet === 'sauvegarde' ? 'page' : undefined}>
+          Sauvegarde
+        </a>
       </nav>
-
-      <ul className="fiches">
-        {liste.map((e) => (
-          <li key={e.id} className="fiche">
-            <div
-              className="illu"
-              role="img"
-              aria-label={`Illustration : ${e.nom}`}
-              dangerouslySetInnerHTML={{ __html: illustrations[e.id] ?? '' }}
-            />
-            <div className="fiche-corps">
-              <p className="fiche-meta">
-                <span className="numero">{e.id}</span>
-                {e.statut === 'a-essayer' && <span className="etiquette">À essayer</span>}
-              </p>
-              <h2>{e.nom}</h2>
-              <p>{e.description}</p>
-              <dl>
-                <dt>Dosage</dt>
-                <dd>{e.dosage}</dd>
-                <dt>Matériel</dt>
-                <dd>{e.materiel}</dd>
-              </dl>
-              {e.video && (
-                <a href={e.video} target="_blank" rel="noopener noreferrer">
-                  Voir une démonstration vidéo
-                </a>
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
-    </main>
+    </>
   );
 }

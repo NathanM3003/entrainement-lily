@@ -395,7 +395,7 @@ Un match charge surtout les chevilles (changements de direction), les tibias (co
 - **écarts entre les côtés :** si l'écart dépasse 10 % (squat bulgare, mollet, flexion de cheville, saut sur une jambe), l'app ajoute 1 série du côté le plus faible sur F7, M1 ou P10, jusqu'au retest suivant.
 
 ### Exercices « à essayer »
-- **Au maximum 1 nouvel exercice à essayer par séance.** Son remplacement est affiché à côté.
+- **Au maximum 1 nouvel exercice à essayer par séance.** Son remplacement est affiché à côté. Seule exception : A8 et A9, essayés ensemble dans le bloc de S8 (section 3). Un exercice qui ne trouve pas de place dans sa période d'essai n'est pas essayé (M20, par exemple, avec 3 séances par semaine).
 - Après l'essai, Lily choisit **Je garde**, **Je ne garde pas** ou **Je réessaie une fois** :
   - gardé : il devient validé ;
   - refusé : il devient exclu, et son remplacement prend sa place pour de bon.
@@ -448,7 +448,7 @@ Un match charge surtout les chevilles (changements de direction), les tibias (co
 
 **Force et vitesse**
 - Les modèles de la section 2 restent.
-- Rotation des accessoires : F2 ou F11 dans A ; F13 ou F17 dans C ; tronc comme en Fondation.
+- Rotation des accessoires : F2 ou F11 dans A ; F17 ou F16 dans C, après F13 (*corrigé le 18 novembre 2026 ; la version précédente disait « F13 ou F17 »*) ; tronc comme en Fondation.
 
 **Puissance et répétition**
 - **A (vitesse maximale + force et puissance) :**
@@ -466,7 +466,7 @@ Un match charge surtout les chevilles (changements de direction), les tibias (co
 
 **D (toutes les phases)**
 - Force : F13, F16 ou F17, F18, plus 2 exercices de tronc.
-- Cardio sans impact : E3 continu en Fondation (E2 réduit si E3 est refusé) ; E10 dans les phases 2 et 3.
+- Cardio sans impact : E3 continu en Fondation s'il est adopté, sinon E10 (*corrigé le 18 novembre 2026 ; la version précédente disait « E2 réduit », mais E2 est de la course*) ; E10 dans les phases 2 et 3.
 - Prévention : M1.
 - Jamais de course.
 
@@ -582,12 +582,12 @@ L'app les place dans cet ordre : F17, F21, F23, M20, puis E3. Tant que Lily n'a 
 
 Pour 2026-2027, cela ne met pas de bloc en S10 (semaine légère avec un match).
 
-**Questions ouvertes :**
-1. **M20 avec 3 séances par semaine.** De S1 à S3, il n'y a que 3 séances C, et chacune ne peut avoir qu'un essai. F17, F21 et F23 passent, mais M20 n'est pas essayé. Faut-il le reporter en S4, ou permettre de l'essayer en même temps qu'un autre, puisque c'est un exercice de prévention léger ?
-2. **A8 et A9 dans la même séance en S8.** Le tableau de la section 3 les met tous les deux dans le bloc de la séance B, ce qui fait 2 essais dans une séance, alors que la section 6 en permet 1. L'app suit le tableau pour l'instant.
-3. **Cardio de la séance D en Fondation.** La section 7 dit « E2 réduit si E3 est refusé », mais E2 est de la course, et D n'en contient jamais. L'app utilise E10, comme le dit la section 2.
-4. **Séance C de la phase Force et vitesse.** La section 2 dit « F13, F17 ou F16, F18, tronc », la section 7 dit « F13 ou F17 ». L'app suit la section 2 : F13 toujours, plus F17 ou F16.
-5. **Charges de la phase Puissance (à régler à l'étape 5).** F14 et F16 sont en 3 × 6 à 8, mais 85 % du 1RM ne permet que 4 ou 5 répétitions environ. Il faudra peut-être un pourcentage plus bas pour ces deux exercices.
+**Décisions du 18 novembre 2026** (réponses aux questions de l'étape 3) :
+1. **M20 avec 3 séances par semaine :** pas de report. Si aucune séance ne lui laisse de place de S1 à S3, M20 n'est pas essayé, et F18 reste.
+2. **A8 et A9 en S8 :** les deux sont essayés dans le même bloc de la séance B, comme le dit le tableau de la section 3. C'est la seule exception à « 1 essai par séance ».
+3. **Cardio de la séance D en Fondation :** E3 s'il est adopté, sinon E10. Jamais E2, puisque D ne contient jamais de course.
+4. **Séance C de la phase Force et vitesse :** F13, puis F17 ou F16 en alternance, F18 et 2 exercices de tronc.
+5. **Charges de la phase Puissance :** F14 et F16 (3 × 6 à 8) auront un pourcentage du 1RM plus bas que 85 %, à fixer à l'étape 5.
 
 ### Séries et badges
 

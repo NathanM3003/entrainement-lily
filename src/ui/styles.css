@@ -7,6 +7,8 @@
   --accent: #d9482b;
   --accent-encre: #ffffff;
   --essai: #a86f00;
+  --ok: #2f7d4f;
+  --doux: #e8ebe4;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -19,6 +21,8 @@
     --accent: #ff7d57;
     --accent-encre: #1a0f0a;
     --essai: #e3ad3c;
+    --ok: #6fcf97;
+    --doux: #222b39;
     color-scheme: dark;
   }
 }
@@ -31,6 +35,8 @@
   --accent: #ff7d57;
   --accent-encre: #1a0f0a;
   --essai: #e3ad3c;
+  --ok: #6fcf97;
+  --doux: #222b39;
   color-scheme: dark;
 }
 
@@ -44,7 +50,7 @@ body {
 .page {
   max-width: 720px;
   margin: 0 auto;
-  padding: max(16px, env(safe-area-inset-top)) 16px 32px;
+  padding: max(16px, env(safe-area-inset-top)) 16px calc(88px + env(safe-area-inset-bottom));
 }
 .surtitre {
   margin: 8px 0 4px;
@@ -83,3 +89,131 @@ dt { color: var(--discret); }
 dd { margin: 0; font-weight: 600; }
 a { color: var(--encre); }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- Étape 4 : semaine, séance, sauvegarde ---------- */
+
+h3 { margin: 0 0 4px; font-size: 18px; line-height: 1.25; }
+button { font: inherit; color: inherit; }
+.chargement { padding: 32px 16px; text-align: center; color: var(--discret); }
+.petit { font-size: 13px; color: var(--discret); font-weight: 400; }
+.aide { font-size: 14px; color: var(--discret); margin: 8px 0; }
+.ok { color: var(--ok); font-weight: 600; margin: 4px 0 8px; }
+
+/* Boutons */
+.actions, .fiche-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
+.actions button, .fiche-actions button, .segments button, .jours button {
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--ligne);
+  background: var(--surface);
+  cursor: pointer;
+}
+button.principal { background: var(--accent); border-color: var(--accent); color: var(--accent-encre); font-weight: 600; }
+button.discret, .fiche-actions button { background: transparent; }
+button:disabled { opacity: 0.45; cursor: default; }
+button.lien { background: none; border: 0; padding: 4px 0; text-decoration: underline; cursor: pointer; color: var(--encre); }
+
+.segments { display: flex; flex-wrap: wrap; gap: 6px; }
+.segments button[aria-pressed='true'], .jours button[aria-pressed='true'], .echelle-boutons button[aria-pressed='true'] {
+  background: var(--encre); color: var(--fond); border-color: var(--encre);
+}
+.petit-segments button { min-height: 32px; padding: 2px 12px; font-size: 14px; }
+.raisons { margin-top: 12px; }
+.saisie .choix { margin-top: 16px; }
+
+/* Cartes et bandeaux */
+.carte > :first-child { margin-top: 0; }
+.carte { background: var(--surface); border: 1px solid var(--ligne); border-radius: 14px; padding: 16px; margin: 16px 0; }
+.bandeau { background: color-mix(in srgb, var(--essai) 18%, var(--surface)); border-radius: 10px; padding: 10px 14px; margin: 12px 0; font-size: 15px; }
+.bandeau.erreur { margin: 0; border-radius: 0; text-align: center; }
+.evenements, .messages { margin: 12px 0; padding-left: 20px; font-size: 15px; }
+.evenements li, .messages li { margin: 2px 0; }
+.messages { color: var(--discret); }
+
+/* En-tête de semaine */
+.semaines { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 8px; text-align: center; }
+.semaines h1 { margin: 0; font-size: 24px; }
+.bouton-icone {
+  display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+  border: 1px solid var(--ligne); background: var(--surface); text-decoration: none; font-size: 24px; line-height: 1;
+}
+.bouton-icone[aria-disabled='true'] { opacity: 0.3; pointer-events: none; }
+
+/* Choix de la semaine */
+fieldset { border: 0; margin: 0 0 12px; padding: 0; min-width: 0; }
+legend { padding: 0; margin-bottom: 8px; font-weight: 600; }
+.jours { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; }
+.jours button { display: flex; flex-direction: column; align-items: center; line-height: 1.2; }
+.jours button[aria-pressed='true'] .petit { color: inherit; opacity: 0.8; }
+.segments button { min-width: 48px; }
+
+/* Plan de la semaine */
+.jours-semaine { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 10px; }
+.jour { border-left: 3px solid var(--ligne); padding: 2px 0 2px 12px; }
+.jour.aujourdhui { border-left-color: var(--accent); }
+.jour-nom { margin: 0 0 6px; font-weight: 600; display: flex; gap: 8px; align-items: center; }
+.pastille { font-size: 12px; font-weight: 600; background: var(--accent); color: var(--accent-encre); border-radius: 999px; padding: 1px 8px; }
+.repos, .match { margin: 0; color: var(--discret); }
+.match { color: var(--encre); font-weight: 600; margin-bottom: 6px; }
+.seance {
+  display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center;
+  background: var(--surface); border: 1px solid var(--ligne); border-radius: 12px; padding: 12px; text-decoration: none; color: var(--encre);
+}
+.seance-texte { display: flex; flex-direction: column; }
+.seance-type {
+  display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px;
+  background: var(--encre); color: var(--fond); font-weight: 700; font-size: 18px;
+}
+.etat-faite .seance-type { background: var(--ok); color: var(--surface); }
+.etat-manquee { opacity: 0.6; }
+
+/* Séance */
+.retour { display: inline-block; margin-bottom: 8px; text-decoration: none; font-weight: 600; min-height: 44px; line-height: 44px; }
+.bloc { margin-top: 24px; }
+.bloc > h2 { display: flex; justify-content: space-between; align-items: baseline; }
+.liste-echauffement { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--ligne); border-radius: 14px; overflow: hidden; }
+.liste-echauffement li + li { border-top: 1px solid var(--ligne); }
+.liste-echauffement .ligne {
+  width: 100%; display: flex; justify-content: space-between; gap: 12px; text-align: left;
+  background: none; border: 0; padding: 12px 16px; cursor: pointer; min-height: 44px;
+}
+.liste-echauffement .illu { padding: 0 16px 12px; }
+.fiche .illu svg { max-height: 170px; }
+.fiche.essai { border-color: var(--essai); }
+.fiche.pas-fait .illu, .fiche.pas-fait h3, .fiche.pas-fait .dosage { opacity: 0.5; }
+.dosage { font-weight: 700; font-size: 17px; }
+.consigne { font-size: 14px; color: var(--discret); }
+.details { border-top: 1px solid var(--ligne); margin-top: 8px; padding-top: 10px; font-size: 15px; }
+.saisie { border-top: 1px solid var(--ligne); margin-top: 12px; padding-top: 12px; }
+.series { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+.series li { display: grid; grid-template-columns: 64px 1fr 1fr; gap: 8px; align-items: end; }
+.serie-num { font-size: 14px; font-weight: 600; padding-bottom: 12px; }
+.champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+.champ { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.champ-label { font-size: 13px; color: var(--discret); }
+.champ-saisie { display: flex; align-items: center; gap: 6px; }
+.champ input {
+  width: 100%; min-width: 0; min-height: 44px; font: inherit; font-size: 18px; padding: 6px 10px;
+  border: 1px solid var(--ligne); border-radius: 10px; background: var(--fond); color: var(--encre);
+}
+.champ-unite { font-size: 14px; color: var(--discret); }
+.case { display: flex; gap: 10px; align-items: flex-start; margin: 8px 0; font-size: 15px; }
+.case input { width: 22px; height: 22px; margin-top: 1px; }
+.echelle { margin: 12px 0; }
+.echelle .aide { font-weight: 400; }
+.echelle-boutons { display: grid; grid-template-columns: repeat(11, 1fr); gap: 4px; }
+.echelle-boutons button {
+  min-height: 44px; padding: 0; border-radius: 8px; border: 1px solid var(--ligne); background: var(--surface); cursor: pointer; font-variant-numeric: tabular-nums;
+}
+.fin { margin-top: 28px; }
+
+/* Barre de navigation */
+.barre {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  background: var(--surface); border-top: 1px solid var(--ligne);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.barre a { display: grid; place-items: center; min-height: 56px; text-decoration: none; color: var(--discret); font-weight: 600; font-size: 15px; }
+.barre a[aria-current='page'] { color: var(--accent); }
