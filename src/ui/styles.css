@@ -224,14 +224,15 @@ legend { padding: 0; margin-bottom: 8px; font-weight: 600; }
 /* Barre de navigation */
 .barre {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
-  display: grid; grid-template-columns: repeat(4, 1fr);
+  display: grid; grid-template-columns: repeat(5, 1fr);
   background: var(--surface); border-top: 1px solid var(--ligne);
   padding-bottom: env(safe-area-inset-bottom);
 }
-.barre a { display: grid; place-items: center; min-height: 56px; text-decoration: none; color: var(--discret); font-weight: 600; font-size: 15px; }
+.barre a { display: grid; place-items: center; min-height: 56px; text-decoration: none; color: var(--discret); font-weight: 600; font-size: 13px; }
 .barre a[aria-current='page'] { color: var(--accent); }
 
-.ligne-crans { display: grid; grid-template-columns: 1fr 96px 96px; gap: 8px; align-items: end; margin-top: 8px; }
+.ligne-crans { display: grid; grid-template-columns: 1fr 96px auto; gap: 4px 8px; align-items: end; margin-top: 10px; }
+.cran-autre { grid-column: 2 / -1; }
 .ligne-crans > span { padding-bottom: 12px; font-weight: 600; font-size: 15px; }
 .champs .choix, .champs .case, .champs .aide { grid-column: 1 / -1; }
 
@@ -290,3 +291,54 @@ a.bouton {
 .statut { margin-top: 12px; }
 .etapes { flex-wrap: nowrap; }
 .etapes button { flex: 1; min-width: 0; padding: 8px 0; }
+
+/* ---------- Programmes : calendrier à colorier ---------- */
+:root { --frisbee: #2a78d6; --tournoi: #6250d6; --indispo: #d63c3c; --mollo: #1baf7a; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) { --frisbee: #3987e5; --tournoi: #9085e9; --indispo: #e66767; --mollo: #199e70; } }
+:root[data-theme='dark'] { --frisbee: #3987e5; --tournoi: #9085e9; --indispo: #e66767; --mollo: #199e70; }
+.pinceaux { display: flex; flex-wrap: wrap; gap: 6px; }
+.pinceau { min-height: 40px; padding: 6px 12px; border-radius: 999px; border: 2px solid var(--ligne); background: var(--surface); cursor: pointer; font-size: 15px; }
+.pinceau[aria-checked='true'] { border-color: var(--encre); font-weight: 700; }
+.pinceau.marque-frisbee { border-left: 6px solid var(--frisbee); }
+.pinceau.marque-tournoi { border-left: 6px solid var(--tournoi); }
+.pinceau.marque-indispo { border-left: 6px solid var(--indispo); }
+.pinceau.marque-mollo { border-left: 6px solid var(--mollo); }
+.mois h3 { margin: 16px 0 6px; text-transform: capitalize; }
+.grille { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.grille .entete { text-align: center; font-size: 12px; color: var(--discret); font-weight: 600; }
+.jour-peint {
+  aspect-ratio: 1; min-height: 40px; border-radius: 8px; border: 1px solid var(--ligne); background: var(--surface);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0; cursor: pointer; font-size: 14px; line-height: 1.1;
+}
+.jour-peint:disabled { opacity: 0.25; cursor: default; }
+.jour-peint .icone { font-size: 12px; min-height: 14px; }
+.jour-peint.marque-frisbee { background: color-mix(in srgb, var(--frisbee) 22%, var(--surface)); border-color: var(--frisbee); }
+.jour-peint.marque-tournoi { background: color-mix(in srgb, var(--tournoi) 25%, var(--surface)); border-color: var(--tournoi); }
+.jour-peint.marque-indispo { background: color-mix(in srgb, var(--indispo) 25%, var(--surface)); border-color: var(--indispo); }
+.jour-peint.marque-mollo { background: color-mix(in srgb, var(--mollo) 22%, var(--surface)); border-color: var(--mollo); }
+.jour-peint.serie { border-style: dashed; }
+.zone { border-top: 1px solid var(--ligne); padding-top: 10px; }
+.ligne-charge { display: grid; grid-template-columns: 1fr 96px 84px; gap: 8px; align-items: end; margin-top: 8px; }
+.ligne-charge > span:first-child { padding-bottom: 10px; font-size: 15px; }
+.principal-lien { background: var(--accent) !important; border-color: var(--accent) !important; color: var(--accent-encre) !important; font-weight: 600; }
+.bande-semaine { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin: 12px 0; text-decoration: none; color: var(--encre); }
+.jour-mini { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; border-radius: 10px; background: var(--surface); border: 1px solid var(--ligne); }
+.jour-mini.aujourdhui { border-color: var(--accent); }
+.jour-mini.fait { background: color-mix(in srgb, var(--ok) 20%, var(--surface)); }
+.progression-plan { height: 8px; border-radius: 4px; background: var(--ligne); overflow: hidden; margin: 12px 0 4px; }
+.progression-plan span { display: block; height: 100%; background: var(--accent); }
+.etapes-bienvenue { padding-left: 20px; }
+.etapes-bienvenue li { margin: 8px 0; }
+.liste-programmes { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 8px; }
+.liste-programmes li { border: 1px solid var(--ligne); border-radius: 12px; padding: 10px 12px; display: grid; gap: 6px; }
+.liste-programmes li.actif { border-color: var(--accent); }
+.avis-exercice { margin-top: 10px; }
+
+button.danger { background: var(--surface); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+pre.commentaires { white-space: pre-wrap; font-size: 13px; background: var(--fond); padding: 10px; border-radius: 8px; max-height: 320px; overflow: auto; }
+
+.avis-exercice textarea { width: 100%; font: inherit; font-size: 16px; padding: 8px 10px; border: 1px solid var(--ligne); border-radius: 10px; background: var(--fond); color: var(--encre); }
+
+.tuiles-4 { grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 560px) { .tuiles-4 { grid-template-columns: repeat(4, 1fr); } }
+.tuiles-4 .tuile-valeur { font-size: 28px; }

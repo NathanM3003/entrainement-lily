@@ -44,6 +44,8 @@ export interface ResultatExercice {
   prevu?: { reps?: number; charge?: number };
   /** Sprints : tension derrière la cuisse ou le genou (section 5). */
   tension?: boolean;
+  /** Ressenti et commentaire de Lily sur l'exercice (pour adapter le programme plus tard). */
+  avis?: { ressenti?: 'trop-dur' | 'trop-facile' | 'aime' | 'aime-pas'; commentaire?: string };
   /** Intermittents : allure sur au moins la moitié des efforts (section 5). */
   rythme?: 'plus-vite' | 'prevu' | 'plus-lent';
 }
@@ -80,6 +82,13 @@ export interface Preferences {
   badgesVus?: string[];
   /** Date de la dernière sauvegarde exportée (AAAA-MM-JJ). */
   derniereSauvegarde?: DateISO;
+}
+
+/** Un programme enregistré (Lily peut en garder plusieurs, un seul est suivi). */
+export interface MetaProgramme {
+  id: string;
+  nom: string;
+  creeLe: string;
 }
 
 export interface Donnees {

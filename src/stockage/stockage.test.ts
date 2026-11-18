@@ -122,9 +122,39 @@ describe('sauvegarde', () => {
   it('exporte puis réimporte les mêmes données', () => {
     const d = donnees();
     terminer(d, 1, 'B');
-    const { nom, contenu } = creerSauvegarde(d, '2026-11-29');
+    const s = { programmes: [{ meta: { id: 'p1', nom: 'Saison', creeLe: '2026-11-18' }, donnees: d }], actif: 'p1', preferences: d.preferences, statuts: d.statuts };
+    const { nom, contenu } = creerSauvegarde(s, '2026-11-29');
     expect(nom).toBe('entrainement-lily-2026-11-29.json');
-    expect(lireSauvegarde(contenu)).toEqual(d);
+    expect(lireSauvegarde(contenu)).toEqual(s);
+  });
+
+  it('garde plusieurs programmes, chacun avec ses résultats', () => {
+    const a = donnees();
+    terminer(a, 1, 'B');
+    const b = donnees();
+    const s = {
+      programmes: [
+        { meta: { id: 'p1', nom: 'Hiver', creeLe: '2026-11-18' }, donnees: a },
+        { meta: { id: 'p2', nom: 'Été', creeLe: '2027-04-01' }, donnees: b },
+      ],
+      actif: 'p2',
+      preferences: a.preferences,
+      statuts: a.statuts,
+    };
+    const lu = lireSauvegarde(creerSauvegarde(s, '2027-04-02').contenu);
+    expect(lu.programmes.map((p) => p.meta.nom)).toEqual(['Hiver', 'Été']);
+    expect(Object.keys(lu.programmes[0]!.donnees.resultats)).toHaveLength(1);
+    expect(lu.actif).toBe('p2');
+  });
+
+  it('lit encore une sauvegarde de la version 1 (un seul programme)', () => {
+    const d = donnees();
+    terminer(d, 1, 'B');
+    const v1 = JSON.stringify({ format: 'entrainement-lily', version: 1, exporteLe: '2026-11-29', donnees: d });
+    const lu = lireSauvegarde(v1);
+    expect(lu.programmes).toHaveLength(1);
+    expect(lu.programmes[0]!.donnees.programme?.nom).toBe('Saison 2026-2027');
+    expect(Object.keys(lu.programmes[0]!.donnees.resultats)).toHaveLength(1);
   });
 
   it('refuse un fichier qui n’est pas une sauvegarde', () => {
@@ -174,6 +204,7 @@ describe('matchs, tournois et semaine changée en cours de route (section 4)', (
     const d = donnees();
     d.saison.matchsReguliers.push({ nom: 'Ligue du jeudi', jour: 4, debut: '2027-01-14' });
     d.notesMatchs['2027-01-13'] = 7;
-    expect(lireSauvegarde(creerSauvegarde(d, '2027-01-14').contenu)).toEqual(d);
+    const s = { programmes: [{ meta: { id: 'p1', nom: 'Saison', creeLe: '' }, donnees: d }], preferences: d.preferences, statuts: d.statuts };
+    expect(lireSauvegarde(creerSauvegarde(s, '2027-01-14').contenu).programmes[0]!.donnees).toEqual(d);
   });
 });

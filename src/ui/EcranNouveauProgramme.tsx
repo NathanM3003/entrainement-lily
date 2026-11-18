@@ -1,19 +1,27 @@
 import { useMemo, useState } from 'react';
+import { exercice } from '../donnees/banque';
+import { SAISON_2026_2027 } from '../donnees/saison-2026-2027';
 import { genererCalendrier } from '../moteur/calendrier';
-import { dateCourte, JOURS, type DateISO, type JourSemaine } from '../moteur/dates';
+import { ajouterJours, dateCourte, type DateISO } from '../moteur/dates';
 import {
+  appliquerMarques,
   creerProgramme,
+  EXERCICES_CHARGES_ACTUELLES,
   LIBELLES_ETATS,
-  LIBELLES_LIEUX,
   LIBELLES_ZONES,
+  marquesDe,
   reponsesDe,
+  restrictionsDeSante,
   verifierReponses,
+  type Marque,
   type ReponsesProgramme,
 } from '../moteur/programme';
-import { LIBELLES_PHASES, type EtatSante, type Lieu, type Periode, type ZoneSante } from '../moteur/types';
+import { LIBELLES_PHASES, type EtatSante, type ZoneSante } from '../moteur/types';
+import { ChampNombre } from './communs';
+import { CalendrierPeint } from './CalendrierPeint';
 import { useDonnees } from './donnees';
 
-const ETAPES = ['Dates', 'Événements', 'Santé', 'Disponibilités', 'Niveau', 'Exercices', 'Résumé'] as const;
+const ETAPES = ['Ton programme', 'Ton calendrier', 'Tes blessures', 'Ton niveau', 'Résumé'] as const;
 
 const COURSES = [
   '5 × (3 min de course + 1 min de marche), ou moins',
@@ -27,35 +35,53 @@ const COURSES = [
 
 const NOMS_TESTS = { journee1: 'Tests de la journée 1', sprint: 'Test de sprint', mini: 'Mini-retest', cooper: 'Test demi-Cooper' };
 
-/** Questionnaire de création d'un programme (Règles, section 0), prérempli avec le programme en cours. */
-export function EcranNouveauProgramme() {
-  const { cal, nouveauProgramme } = useDonnees();
-  const [r, setR] = useState<ReponsesProgramme>(() => reponsesDe(cal.config));
-  const [etape, setEtape] = useState(0);
-  const set = (c: Partial<ReponsesProgramme>) => setR((x) => ({ ...x, ...c }));
-  const erreurs = verifierReponses(r);
-  const config = useMemo(() => (erreurs.length ? null : creerProgramme(r, cal.config)), [r, erreurs.length, cal.config]);
-  const apercu = useMemo(() => (config ? genererCalendrier(config) : null), [config]);
+/** « 5:30 » ⇄ 330 secondes par km. */
+const versTexte = (s?: number) => (s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : '');
+const versSecondes = (t: string) => {
+  const m = /^(\d{1,2})[:h.,](\d{2})$/.exec(t.trim());
+  return m ? Number(m[1]) * 60 + Number(m[2]) : undefined;
+};
 
-  async function creer() {
+/**
+ * Questionnaire de création (Règles, section 0), en 5 étapes. Sert aussi à modifier le programme suivi :
+ * calendrier, blessures, niveau, sans toucher à ses résultats.
+ */
+export function EcranNouveauProgramme({ mode }: { mode: 'nouveau' | 'modifier' }) {
+  const { cal, donnees, programmes, nouveauProgramme, modifierProgramme } = useDonnees();
+  const premierProgramme = programmes.length === 0;
+  const base = mode === 'modifier' || !premierProgramme ? cal.config : SAISON_2026_2027;
+  const [r, setR] = useState<ReponsesProgramme>(() => reponsesDe(base));
+  const [marques, setMarques] = useState<Record<DateISO, Marque>>(() => marquesDe(reponsesDe(base)));
+  const [etape, setEtape] = useState(0);
+  const [unite, setUnite] = useState<'kg' | 'lb'>(() => Object.values(r.chargesActuelles)[0]?.unite ?? 'kg');
+  const datesBloquees = mode === 'modifier' && Object.keys(donnees.resultats).length > 0;
+  const set = (c: Partial<ReponsesProgramme>) => setR((x) => ({ ...x, ...c }));
+
+  const complet = useMemo(() => appliquerMarques(r, marques), [r, marques]);
+  const erreurs = verifierReponses(complet);
+  const config = useMemo(() => (erreurs.length ? null : creerProgramme(complet, mode === 'modifier' ? cal.config : base)), [complet, erreurs.length, mode, cal.config, base]);
+  const apercu = useMemo(() => (config ? genererCalendrier(config) : null), [config]);
+  const restrictions = restrictionsDeSante(r.sante, r.debut);
+
+  async function valider() {
     if (!config) return;
-    if (!confirm('Créer ce programme ? La saison en cours (semaines, séances, résultats) sera remplacée. Pense à créer une sauvegarde avant.')) return;
-    await nouveauProgramme(config);
+    if (mode === 'modifier') await modifierProgramme(config);
+    else await nouveauProgramme(config);
     location.hash = '#/';
   }
 
   return (
     <main className="page">
-      <a className="retour" href="#/reglages">
-        ‹ Réglages
+      <a className="retour" href={premierProgramme ? '#/' : '#/reglages'}>
+        ‹ {premierProgramme ? 'Accueil' : 'Réglages'}
       </a>
       <p className="surtitre">
-        Nouveau programme · {etape + 1} sur {ETAPES.length}
+        {mode === 'modifier' ? 'Modifier mon programme' : 'Nouveau programme'} · {etape + 1} sur {ETAPES.length}
       </p>
       <h1>{ETAPES[etape]}</h1>
-      <nav className="segments etapes" aria-label="Étapes du questionnaire">
+      <nav className="segments etapes" aria-label="Étapes">
         {ETAPES.map((e, i) => (
-          <button key={e} type="button" aria-pressed={i === etape} onClick={() => setEtape(i)}>
+          <button key={e} type="button" aria-pressed={i === etape} aria-label={e} onClick={() => setEtape(i)}>
             {i + 1}
           </button>
         ))}
@@ -65,79 +91,12 @@ export function EcranNouveauProgramme() {
         {etape === 0 && (
           <>
             <Texte label="Nom du programme" valeur={r.nom} onChange={(v) => set({ nom: v })} />
-            <DateChamp label="Début du programme" valeur={r.debut} onChange={(v) => set({ debut: v })} />
-            <DateChamp label="Échéance (début de saison ou tournoi visé)" valeur={r.echeance} onChange={(v) => set({ echeance: v })} />
+            {datesBloquees && <p className="aide">Le programme a déjà des séances notées : ses dates ne changent plus. Pour une autre saison, crée un nouveau programme.</p>}
+            <DateChamp label="Début du programme" valeur={r.debut} desactive={datesBloquees} onChange={(v) => set({ debut: v })} />
+            <DateChamp label="Échéance : début de saison ou tournoi visé" valeur={r.echeance} desactive={datesBloquees} onChange={(v) => set({ echeance: v })} />
             <Texte label="Nom de l'échéance" valeur={r.echeanceNom} onChange={(v) => set({ echeanceNom: v })} />
-            <p className="aide">Si le début n'est pas un lundi, les jours avant le premier lundi servent aux tests de la journée 1.</p>
-          </>
-        )}
-        {etape === 1 && (
-          <>
-            <ListePeriodes titre="Tournois" liste={r.tournois} onChange={(l) => set({ tournois: l })} exemple="Tournoi d'avril" />
-            <ListePeriodes titre="Périodes allégées (vacances, fêtes)" liste={r.periodesAllegees} onChange={(l) => set({ periodesAllegees: l })} exemple="Vacances" />
-            <h2>Matchs réguliers</h2>
-            <ul className="liste-reglages">
-              {r.matchsReguliers.map((m, i) => (
-                <li key={i}>
-                  {m.nom} : le {JOURS[m.jour - 1]}, à partir du {dateCourte(m.debut)}{' '}
-                  <button type="button" className="lien" onClick={() => set({ matchsReguliers: r.matchsReguliers.filter((_, j) => j !== i) })}>
-                    Retirer
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <AjoutMatch onAjouter={(m) => set({ matchsReguliers: [...r.matchsReguliers, m] })} />
-          </>
-        )}
-        {etape === 2 && (
-          <>
-            {(Object.keys(LIBELLES_ZONES) as ZoneSante[]).map((z) => (
-              <fieldset key={z} className="choix">
-                <legend>{LIBELLES_ZONES[z]}</legend>
-                <div className="segments">
-                  {(Object.keys(LIBELLES_ETATS) as EtatSante[]).map((e) => (
-                    <button key={e} type="button" aria-pressed={(r.sante[z]?.etat ?? 'ok') === e} onClick={() => set({ sante: { ...r.sante, [z]: { ...r.sante[z], etat: e } } })}>
-                      {LIBELLES_ETATS[e]}
-                    </button>
-                  ))}
-                </div>
-                {(r.sante[z]?.etat ?? 'ok') !== 'ok' && (
-                  <Texte label="Précisions" valeur={r.sante[z]?.note ?? ''} onChange={(v) => set({ sante: { ...r.sante, [z]: { etat: r.sante[z]!.etat, note: v } } })} />
-                )}
-              </fieldset>
-            ))}
-            <h2>Restrictions datées</h2>
-            <label className="case">
-              <input type="checkbox" checked={!!r.sprint} onChange={(e) => set({ sprint: e.target.checked ? { intensiteMax: 80, jusquau: r.debut } : undefined })} />
-              Sprint limité
-            </label>
-            {r.sprint && (
-              <div className="formulaire">
-                <label className="champ">
-                  <span className="champ-label">Intensité maximale (%)</span>
-                  <input type="number" min={50} max={100} step={5} value={r.sprint.intensiteMax} onChange={(e) => set({ sprint: { ...r.sprint!, intensiteMax: Number(e.target.value) } })} />
-                </label>
-                <DateChamp label="Jusqu'au (inclus)" valeur={r.sprint.jusquau} onChange={(v) => set({ sprint: { ...r.sprint!, jusquau: v } })} />
-              </div>
-            )}
-            <label className="case">
-              <input
-                type="checkbox"
-                checked={!!r.changementsDeDirectionJusquau}
-                onChange={(e) => set({ changementsDeDirectionJusquau: e.target.checked ? r.debut : undefined })}
-              />
-              Pas de changement de direction
-            </label>
-            {r.changementsDeDirectionJusquau && (
-              <DateChamp label="Jusqu'au (inclus)" valeur={r.changementsDeDirectionJusquau} onChange={(v) => set({ changementsDeDirectionJusquau: v })} />
-            )}
-            <p className="aide">Les exercices concernés sont débloqués automatiquement à ces dates (date « Dès » de la banque).</p>
-          </>
-        )}
-        {etape === 3 && (
-          <>
             <fieldset className="choix">
-              <legend>Nombre moyen de séances par semaine</legend>
+              <legend>Nombre de séances par semaine, de base</legend>
               <div className="segments">
                 {[1, 2, 3, 4].map((n) => (
                   <button key={n} type="button" aria-pressed={r.seancesParSemaine === n} onClick={() => set({ seancesParSemaine: n })}>
@@ -145,6 +104,7 @@ export function EcranNouveauProgramme() {
                   </button>
                 ))}
               </div>
+              <p className="aide">Tu pourras le changer chaque semaine.</p>
             </fieldset>
             <fieldset className="choix">
               <legend>Durée maximale d'une séance</legend>
@@ -156,42 +116,132 @@ export function EcranNouveauProgramme() {
                 ))}
               </div>
             </fieldset>
-            <fieldset className="choix">
-              <legend>Lieux</legend>
-              {(Object.keys(LIBELLES_LIEUX) as Lieu[]).map((l) => (
-                <label key={l} className="case">
-                  <input type="checkbox" checked={r.lieux.includes(l)} onChange={(e) => set({ lieux: e.target.checked ? [...r.lieux, l] : r.lieux.filter((x) => x !== l) })} />
-                  {LIBELLES_LIEUX[l]}
-                </label>
-              ))}
-            </fieldset>
           </>
         )}
-        {etape === 4 && (
+
+        {etape === 1 && (
+          <CalendrierPeint
+            debut={r.debut}
+            fin={ajouterJours(r.echeance, -1)}
+            marques={marques}
+            series={r.matchsReguliers}
+            onMarques={setMarques}
+            onSeries={(s) => set({ matchsReguliers: s })}
+          />
+        )}
+
+        {etape === 2 && (
+          <>
+            <p className="aide">Pour chaque zone, dis comment ça va et, si ce n'est pas encore le cas, quand tu penses être à 100 %.</p>
+            {(Object.keys(LIBELLES_ZONES) as ZoneSante[]).map((z) => {
+              const etat = r.sante[z]?.etat ?? 'ok';
+              const majZone = (c: Partial<{ etat: EtatSante; note?: string; centPourCentLe?: DateISO }>) =>
+                set({ sante: { ...r.sante, [z]: { etat, ...r.sante[z], ...c } } });
+              return (
+                <fieldset key={z} className="choix zone">
+                  <legend>{LIBELLES_ZONES[z]}</legend>
+                  <div className="segments">
+                    {(Object.keys(LIBELLES_ETATS) as EtatSante[]).map((e) => (
+                      <button key={e} type="button" aria-pressed={etat === e} onClick={() => majZone({ etat: e })}>
+                        {LIBELLES_ETATS[e]}
+                      </button>
+                    ))}
+                  </div>
+                  {etat !== 'ok' && (
+                    <>
+                      <DateChamp label="À 100 % le" valeur={r.sante[z]?.centPourCentLe ?? ''} onChange={(v) => majZone({ centPourCentLe: v || undefined })} />
+                      <Texte label="Précisions (facultatif)" valeur={r.sante[z]?.note ?? ''} onChange={(v) => majZone({ note: v })} />
+                    </>
+                  )}
+                </fieldset>
+              );
+            })}
+            <div className="bandeau">
+              <strong>Ce que l'app en tire :</strong>{' '}
+              {!restrictions.sprint && !restrictions.changementsDeDirectionJusquau
+                ? 'aucune restriction : sprint à 100 % et changements de direction dès le début.'
+                : [
+                    restrictions.sprint && `sprint à 80 % au plus jusqu'au ${dateCourte(restrictions.sprint.jusquau)}`,
+                    restrictions.changementsDeDirectionJusquau && `pas de changement de direction jusqu'au ${dateCourte(restrictions.changementsDeDirectionJusquau)}`,
+                  ]
+                    .filter(Boolean)
+                    .join(' ; ')
+                    .replace(/\.$/, '') + '. Les exercices concernés se débloquent tout seuls ensuite.'}
+            </div>
+            <p className="aide">Chevilles ou genoux pas à 100 % : pas de changement de direction jusqu'à la date. Ischios ou tibias : sprint à 80 % jusqu'à la date. Sans date, la zone est seulement notée.</p>
+          </>
+        )}
+
+        {etape === 3 && (
           <>
             <fieldset className="choix">
-              <legend>Dernière course faite sans douleur</legend>
+              <legend>Ta dernière course faite sans douleur</legend>
               {COURSES.map((c, i) => (
                 <label key={c} className="case">
                   <input type="radio" name="course" checked={r.etapeCourse === i + 1} onChange={() => set({ etapeCourse: i + 1 })} />
                   {c}
                 </label>
               ))}
-              <p className="aide">La course facile commence à l'étape correspondante ({r.etapeCourse} sur 7).</p>
             </fieldset>
-            <Texte label="Ta dernière course, en mots (facultatif)" valeur={r.derniereCourse ?? ''} onChange={(v) => set({ derniereCourse: v })} />
-            <Texte label="Allures connues (facultatif)" valeur={r.allures ?? ''} onChange={(v) => set({ allures: v })} />
-            <Texte label="Charges connues (facultatif)" valeur={r.charges ?? ''} onChange={(v) => set({ charges: v })} />
-            <p className="aide">Les charges de travail sont calculées à partir des tests de la journée 1, au début du programme.</p>
+            <fieldset className="choix">
+              <legend>Tes allures connues (min/km)</legend>
+              <p className="aide">Elles donnent tes objectifs de course jusqu'au premier test demi-Cooper. Exemple : 6:00.</p>
+              <div className="formulaire">
+                {(
+                  [
+                    ['facile', 'Facile'],
+                    ['rapide', 'Rapide'],
+                    ['tresRapide', 'Très rapide'],
+                  ] as const
+                ).map(([cle, libelle]) => (
+                  <AllureChamp key={cle} label={libelle} valeur={r.alluresConnues[cle]} onChange={(v) => set({ alluresConnues: { ...r.alluresConnues, [cle]: v } })} />
+                ))}
+              </div>
+            </fieldset>
+            <fieldset className="choix">
+              <legend>Tes charges actuelles (facultatif)</legend>
+              <p className="aide">
+                Une charge que tu soulèves déjà, et combien de fois. L'app en tire un objectif dès la 1re séance ; les tests de la journée 1 l'ajustent ensuite.
+              </p>
+              <div className="segments petit-segments" role="group" aria-label="Unité">
+                {(['kg', 'lb'] as const).map((u) => (
+                  <button
+                    key={u}
+                    type="button"
+                    aria-pressed={unite === u}
+                    onClick={() => {
+                      setUnite(u);
+                      set({ chargesActuelles: Object.fromEntries(Object.entries(r.chargesActuelles).map(([id, c]) => [id, { ...c, unite: u }])) });
+                    }}
+                  >
+                    {u}
+                  </button>
+                ))}
+              </div>
+              {EXERCICES_CHARGES_ACTUELLES.map((id) => {
+                const c = r.chargesActuelles[id];
+                const maj = (champ: { charge?: number; reps?: number }) => {
+                  const suivant = { ...r.chargesActuelles };
+                  const nouveau = { charge: c?.charge ?? 0, reps: c?.reps ?? 8, unite, ...champ };
+                  if (!nouveau.charge) delete suivant[id];
+                  else suivant[id] = nouveau;
+                  set({ chargesActuelles: suivant });
+                };
+                return (
+                  <div key={id} className="ligne-charge">
+                    <span>
+                      {exercice(id).nom} <span className="petit">({id})</span>
+                    </span>
+                    <ChampNombre label="Charge" unite={unite} decimal valeur={c?.charge} onChange={(v) => maj({ charge: v })} />
+                    <ChampNombre label="Répétitions" valeur={c?.reps} onChange={(v) => maj({ reps: v })} />
+                  </div>
+                );
+              })}
+            </fieldset>
           </>
         )}
-        {etape === 5 && (
-          <>
-            <p>Les statuts des exercices (validé, à essayer, exclu) sont repris tels quels. Tu peux les revoir à tout moment dans l'écran Exercices.</p>
-            <a href="#/exercices">Revoir les exercices</a>
-          </>
-        )}
-        {etape === 6 &&
+
+        {etape === 4 &&
           (erreurs.length ? (
             <ul className="messages">
               {erreurs.map((e) => (
@@ -199,10 +249,12 @@ export function EcranNouveauProgramme() {
               ))}
             </ul>
           ) : (
-            apercu && (
+            apercu &&
+            config && (
               <>
                 <p>
-                  <strong>{apercu.semaines.length} semaines</strong>, du {dateCourte(r.debut)} au {dateCourte(r.echeance)} ({r.echeanceNom}).
+                  <strong>{apercu.semaines.length} semaines</strong>, du {dateCourte(r.debut)} au {dateCourte(r.echeance)} ({r.echeanceNom}), {r.seancesParSemaine} séance
+                  {r.seancesParSemaine > 1 ? 's' : ''} par semaine de base.
                 </p>
                 {apercu.avertissements.map((a) => (
                   <p key={a} className="bandeau">
@@ -230,9 +282,20 @@ export function EcranNouveauProgramme() {
                     })}
                   </tbody>
                 </table>
+                <h2>Ton calendrier</h2>
+                <p className="aide">
+                  {config.tournois.length} tournoi{config.tournois.length > 1 ? 's' : ''}, {config.matchsReguliers.length} frisbee chaque semaine,{' '}
+                  {config.matchsPonctuels?.length ?? 0} jour{(config.matchsPonctuels?.length ?? 0) > 1 ? 's' : ''} de frisbee de plus, {config.indisponibles?.length ?? 0} jour
+                  {(config.indisponibles?.length ?? 0) > 1 ? 's' : ''} indisponible{(config.indisponibles?.length ?? 0) > 1 ? 's' : ''}, semaines légères :{' '}
+                  {apercu.semaines
+                    .filter((s) => s.legere?.etendue === 'complete')
+                    .map((s) => `S${s.numero}`)
+                    .join(', ') || 'aucune'}
+                  .
+                </p>
                 <h2>Tests prévus</h2>
                 <ul className="liste-reglages">
-                  {config!.retests.map((t, i) => (
+                  {config.retests.map((t, i) => (
                     <li key={i}>
                       S{t.semaine}
                       {t.jusquaSemaine ? ` à S${t.jusquaSemaine}` : ''} : {NOMS_TESTS[t.type]}
@@ -241,19 +304,17 @@ export function EcranNouveauProgramme() {
                     </li>
                   ))}
                 </ul>
-                <h2>Semaines légères</h2>
                 <p className="aide">
-                  {apercu.semaines
-                    .filter((s) => s.legere)
-                    .map((s) => `S${s.numero}`)
-                    .join(', ') || 'Aucune'}
-                  . L'app en ajoute si besoin (fatigue, douleurs, ou à ta demande).
+                  Les statuts des exercices (validé, à essayer, exclu) sont repris. Tu peux les revoir dans l'écran <a href="#/exercices">Exercices</a>.
                 </p>
                 <div className="actions">
-                  <button type="button" className="principal" onClick={creer}>
-                    Créer ce programme
+                  <button type="button" className="principal" onClick={valider}>
+                    {mode === 'modifier' ? 'Enregistrer les changements' : 'Créer ce programme'}
                   </button>
                 </div>
+                {mode === 'nouveau' && !premierProgramme && (
+                  <p className="aide">Ton programme actuel est gardé : tu pourras revenir dessus dans Réglages, « Mes programmes ».</p>
+                )}
               </>
             )
           ))}
@@ -284,100 +345,33 @@ function Texte({ label, valeur, onChange }: { label: string; valeur: string; onC
   );
 }
 
-function DateChamp({ label, valeur, onChange }: { label: string; valeur: DateISO; onChange: (v: DateISO) => void }) {
+function DateChamp({ label, valeur, onChange, desactive }: { label: string; valeur: DateISO; onChange: (v: DateISO) => void; desactive?: boolean }) {
   return (
     <label className="champ champ-texte">
       <span className="champ-label">{label}</span>
-      <input type="date" value={valeur} onChange={(e) => onChange(e.target.value)} />
+      <input type="date" value={valeur} disabled={desactive} onChange={(e) => onChange(e.target.value)} />
     </label>
   );
 }
 
-function ListePeriodes({ titre, liste, onChange, exemple }: { titre: string; liste: Periode[]; onChange: (l: Periode[]) => void; exemple: string }) {
-  const [p, setP] = useState<Periode>({ nom: '', debut: '', fin: '' });
+function AllureChamp({ label, valeur, onChange }: { label: string; valeur?: number; onChange: (v?: number) => void }) {
+  const [texte, setTexte] = useState(versTexte(valeur));
   return (
-    <>
-      <h2>{titre}</h2>
-      <ul className="liste-reglages">
-        {liste.map((x, i) => (
-          <li key={i}>
-            {x.nom} : {dateCourte(x.debut)}
-            {x.fin !== x.debut ? ` au ${dateCourte(x.fin)}` : ''}{' '}
-            <button type="button" className="lien" onClick={() => onChange(liste.filter((_, j) => j !== i))}>
-              Retirer
-            </button>
-          </li>
-        ))}
-      </ul>
-      <div className="formulaire">
-        <label className="champ">
-          <span className="champ-label">Nom</span>
-          <input type="text" value={p.nom} placeholder={exemple} onChange={(e) => setP({ ...p, nom: e.target.value })} />
-        </label>
-        <label className="champ">
-          <span className="champ-label">Premier jour</span>
-          <input type="date" value={p.debut} onChange={(e) => setP({ ...p, debut: e.target.value })} />
-        </label>
-        <label className="champ">
-          <span className="champ-label">Dernier jour</span>
-          <input type="date" value={p.fin} min={p.debut} onChange={(e) => setP({ ...p, fin: e.target.value })} />
-        </label>
-      </div>
-      <div className="actions">
-        <button
-          type="button"
-          disabled={!p.nom.trim() || !p.debut || !p.fin || p.fin < p.debut}
-          onClick={() => {
-            onChange([...liste, { ...p, nom: p.nom.trim() }]);
-            setP({ nom: '', debut: '', fin: '' });
+    <label className="champ">
+      <span className="champ-label">{label}</span>
+      <span className="champ-saisie">
+        <input
+          type="text"
+          inputMode="numeric"
+          placeholder="6:00"
+          value={texte}
+          onChange={(e) => {
+            setTexte(e.target.value);
+            onChange(versSecondes(e.target.value));
           }}
-        >
-          Ajouter
-        </button>
-      </div>
-    </>
-  );
-}
-
-function AjoutMatch({ onAjouter }: { onAjouter: (m: { nom: string; jour: JourSemaine; debut: DateISO }) => void }) {
-  const [nom, setNom] = useState('');
-  const [jour, setJour] = useState<JourSemaine>(3);
-  const [debut, setDebut] = useState('');
-  return (
-    <>
-      <div className="formulaire">
-        <label className="champ">
-          <span className="champ-label">Nom</span>
-          <input type="text" value={nom} placeholder="4 contre 4" onChange={(e) => setNom(e.target.value)} />
-        </label>
-        <label className="champ">
-          <span className="champ-label">Jour</span>
-          <select value={jour} onChange={(e) => setJour(Number(e.target.value) as JourSemaine)}>
-            {JOURS.map((j, i) => (
-              <option key={j} value={i + 1}>
-                {j}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="champ">
-          <span className="champ-label">À partir du</span>
-          <input type="date" value={debut} onChange={(e) => setDebut(e.target.value)} />
-        </label>
-      </div>
-      <div className="actions">
-        <button
-          type="button"
-          disabled={!nom.trim() || !debut}
-          onClick={() => {
-            onAjouter({ nom: nom.trim(), jour, debut });
-            setNom('');
-            setDebut('');
-          }}
-        >
-          Ajouter
-        </button>
-      </div>
-    </>
+        />
+        <span className="champ-unite">min/km</span>
+      </span>
+    </label>
   );
 }

@@ -64,10 +64,23 @@ export interface ProgrammeConfig {
   retests: RetestPrevu[];
   /** Semaines légères fixées en plus de celles que le moteur déduit (Règles, section 6). */
   semainesLegeres: SemaineLegerePrevue[];
+  /** Jours de frisbee ponctuels (en plus des matchs réguliers), marqués sur le calendrier. */
+  matchsPonctuels?: { date: DateISO; nom: string }[];
+  /** Jours où Lily n'est pas disponible : ils ne sont pas proposés pour une séance. */
+  indisponibles?: DateISO[];
   /** Questions de création (Règles, section 0) : santé, disponibilités, niveau. */
-  sante?: Partial<Record<ZoneSante, { etat: EtatSante; note?: string }>>;
+  sante?: Partial<Record<ZoneSante, { etat: EtatSante; note?: string; centPourCentLe?: DateISO }>>;
   disponibilites?: { seancesParSemaine: number; dureeMax: number; lieux: Lieu[] };
-  niveau?: { etapeCourse: number; derniereCourse?: string; allures?: string; charges?: string };
+  niveau?: {
+    etapeCourse: number;
+    derniereCourse?: string;
+    allures?: string;
+    charges?: string;
+    /** Allures connues, en secondes par km (objectifs avant le premier test demi-Cooper). */
+    alluresConnues?: { facile?: number; rapide?: number; tresRapide?: number };
+    /** Charges utilisées avant le programme : objectif de départ avant les tests. */
+    chargesActuelles?: Record<string, { charge: number; reps: number; unite: 'kg' | 'lb' }>;
+  };
 }
 
 export type ZoneSante = 'chevilles' | 'genoux' | 'ischios' | 'tibias' | 'autre';

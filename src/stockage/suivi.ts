@@ -347,3 +347,69 @@ export function bilan(donnees: Donnees): LigneBilan[] {
     return ligne;
   });
 }
+
+// ---------- Comment va le plan (accueil et écran Progrès) ----------
+
+export interface EtatDuPlan {
+  semaine: number;
+  totalSemaines: number;
+  phase: string;
+  joursAvantEcheance: number;
+  /** Séances faites, et séances prévues dont le jour est passé (ou aujourd'hui). */
+  seancesFaites: number;
+  seancesPassees: number;
+  /** % des séances prévues jusqu'ici qui ont été faites. */
+  regularite?: number;
+  prochainTest?: { date?: DateISO; semaine: number; nom: string };
+  minutes: number;
+  sauts: number;
+  sprints: number;
+  /** Total soulevé (charge × répétitions), en kg. */
+  tonnage: number;
+}
+
+const NOMS_TESTS = { journee1: 'Tests de la journée 1', sprint: 'Test de sprint', mini: 'Mini-retest', cooper: 'Test demi-Cooper' } as const;
+
+export function etatDuPlan(saison: SemaineCalculee[], donnees: Donnees, aujourdhui: DateISO, echeance: DateISO): EtatDuPlan {
+  const actuelle = saison.find((s) => aujourdhui >= s.semaine.debut && aujourdhui <= s.semaine.fin) ?? (aujourdhui < (saison[0]?.semaine.debut ?? '') ? saison[0] : saison.at(-1));
+  const resultats = terminees(donnees, '9999-12-31');
+  const passees = saison.flatMap((s) => s.seances).filter((x) => x.seance.date <= aujourdhui);
+  const faitesPassees = passees.filter((x) => x.etat === 'faite').length;
+  let prochainTest: EtatDuPlan['prochainTest'];
+  for (const s of saison) {
+    if (s.semaine.fin < aujourdhui) continue;
+    const seance = s.seances.find((x) => x.seance.test && x.seance.date >= aujourdhui && x.etat !== 'faite');
+    if (seance) {
+      prochainTest = { date: seance.seance.date, semaine: s.semaine.numero, nom: NOMS_TESTS[seance.seance.test!] };
+      break;
+    }
+    const r = s.semaine.retests.find((x) => x.moment !== 'condition' && !s.seances.some((y) => y.seance.test === x.type && y.etat === 'faite'));
+    if (r && !s.choix) {
+      prochainTest = { semaine: s.semaine.numero, nom: NOMS_TESTS[r.type] };
+      break;
+    }
+  }
+  let sauts = 0;
+  let sprints = 0;
+  let tonnage = 0;
+  for (const { p, x } of faits(resultats)) {
+    if (p.role === 'plio') sauts += x?.nombre ?? p.sauts ?? 0;
+    if (p.role === 'acceleration' || p.role === 'vitesse-max') sprints += x?.nombre ?? p.reps?.min ?? 0;
+    for (const serie of x?.series ?? []) if (serie.charge && serie.reps) tonnage += convertir(serie.charge, x?.unite ?? 'kg', 'kg') * serie.reps * (p.parCote ? 2 : 1);
+  }
+  const debut = saison[0]?.semaine.debut ?? aujourdhui;
+  return {
+    semaine: actuelle?.semaine.numero ?? 1,
+    totalSemaines: saison.length,
+    phase: actuelle ? LIBELLES_PHASES[actuelle.semaine.phase] : '',
+    joursAvantEcheance: Math.max(0, Math.round((Date.parse(echeance) - Date.parse(aujourdhui < debut ? aujourdhui : aujourdhui)) / 86_400_000)),
+    seancesFaites: resultats.length,
+    seancesPassees: passees.length,
+    regularite: passees.length ? Math.round((faitesPassees / passees.length) * 100) : undefined,
+    prochainTest,
+    minutes: resultats.reduce((t, r) => t + r.seance.contenu.minutes, 0),
+    sauts,
+    sprints,
+    tonnage: Math.round(tonnage),
+  };
+}

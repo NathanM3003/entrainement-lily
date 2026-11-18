@@ -2,7 +2,7 @@
 // Les réponses au questionnaire deviennent un ProgrammeConfig ; le reste (phases, semaines légères,
 // placement, contenu) est déduit par le moteur, comme pour la saison 2026-2027.
 
-import { ajouterJours, ecartJours, jourSemaine, lundiDe, type DateISO } from './dates';
+import { ajouterJours, dateCourte, ecartJours, jourSemaine, lundiDe, type DateISO } from './dates';
 import { decouperPhases } from './phases';
 import type { EtatSante, Lieu, MatchRegulier, Periode, ProgrammeConfig, RetestPrevu, ZoneSante } from './types';
 
@@ -25,10 +25,12 @@ export interface ReponsesProgramme {
   tournois: Periode[];
   periodesAllegees: Periode[];
   matchsReguliers: MatchRegulier[];
-  sante: Partial<Record<ZoneSante, { etat: EtatSante; note?: string }>>;
-  /** Sprint limité : intensité maximale et date de fin (incluse). */
+  /** Jours de frisbee ponctuels et jours indisponibles, marqués sur le calendrier. */
+  matchsPonctuels: { date: DateISO; nom: string }[];
+  indisponibles: DateISO[];
+  sante: Partial<Record<ZoneSante, { etat: EtatSante; note?: string; centPourCentLe?: DateISO }>>;
+  /** Restrictions datées : tirées de la santé (voir `restrictionsDeSante`). */
   sprint?: { intensiteMax: number; jusquau: DateISO };
-  /** Pas de changement de direction jusqu'à cette date (incluse). */
   changementsDeDirectionJusquau?: DateISO;
   seancesParSemaine: number;
   dureeMax: number;
@@ -38,6 +40,35 @@ export interface ReponsesProgramme {
   derniereCourse?: string;
   allures?: string;
   charges?: string;
+  /** Allures connues en secondes par km : objectifs avant le premier test demi-Cooper. */
+  alluresConnues: { facile?: number; rapide?: number; tresRapide?: number };
+  /** Charges utilisées avant le programme : objectif de départ avant les tests. */
+  chargesActuelles: Record<string, { charge: number; reps: number; unite: 'kg' | 'lb' }>;
+}
+
+/** Exercices dont Lily peut donner la charge actuelle à la création. */
+export const EXERCICES_CHARGES_ACTUELLES = ['F1', 'F7', 'F9', 'F10', 'F14', 'F16'];
+
+/**
+ * Restrictions datées tirées de la santé (règle ajoutée le 18 novembre 2026, décision de Nathan) :
+ * - chevilles ou genoux pas encore à 100 % : pas de changement de direction jusqu'à la veille de la date ;
+ * - ischios ou tibias pas encore à 100 % : sprint à 80 % au plus jusqu'à la veille de la date.
+ * Une zone sans date ne restreint rien (elle est notée). Si tout va bien, aucune restriction.
+ */
+export function restrictionsDeSante(sante: ReponsesProgramme['sante'], debut: DateISO): Pick<ReponsesProgramme, 'sprint' | 'changementsDeDirectionJusquau'> {
+  const dateDe = (zones: ZoneSante[]) =>
+    zones
+      .map((z) => sante[z])
+      .filter((x) => x && x.etat !== 'ok' && x.centPourCentLe && x.centPourCentLe > debut)
+      .map((x) => x!.centPourCentLe!)
+      .sort()
+      .at(-1);
+  const cd = dateDe(['chevilles', 'genoux']);
+  const sp = dateDe(['ischios', 'tibias']);
+  return {
+    ...(sp ? { sprint: { intensiteMax: 80, jusquau: ajouterJours(sp, -1) } } : {}),
+    ...(cd ? { changementsDeDirectionJusquau: ajouterJours(cd, -1) } : {}),
+  };
 }
 
 /** Les réponses tirées d'un programme existant (le questionnaire est prérempli avec lui). */
@@ -50,7 +81,9 @@ export function reponsesDe(config: ProgrammeConfig): ReponsesProgramme {
     tournois: config.tournois.map((t) => ({ ...t })),
     periodesAllegees: config.periodesAllegees.map((p) => ({ ...p })),
     matchsReguliers: config.matchsReguliers.map((m) => ({ ...m })),
-    sante: { ...config.sante },
+    matchsPonctuels: (config.matchsPonctuels ?? []).map((m) => ({ ...m })),
+    indisponibles: [...(config.indisponibles ?? [])],
+    sante: santeAvecDates(config),
     sprint: config.restrictions.sprint ? { ...config.restrictions.sprint } : undefined,
     changementsDeDirectionJusquau: config.restrictions.changementsDeDirection?.jusquau,
     seancesParSemaine: config.disponibilites?.seancesParSemaine ?? 3,
@@ -60,7 +93,23 @@ export function reponsesDe(config: ProgrammeConfig): ReponsesProgramme {
     derniereCourse: config.niveau?.derniereCourse,
     allures: config.niveau?.allures,
     charges: config.niveau?.charges,
+    alluresConnues: { ...config.niveau?.alluresConnues },
+    chargesActuelles: { ...config.niveau?.chargesActuelles },
   };
+}
+
+/** Santé d'un programme, avec les dates « à 100 % » retrouvées depuis ses restrictions si elles manquent. */
+function santeAvecDates(config: ProgrammeConfig): ReponsesProgramme['sante'] {
+  const sante: ReponsesProgramme['sante'] = {};
+  for (const [z, v] of Object.entries(config.sante ?? {})) sante[z as ZoneSante] = { ...v };
+  const { sprint, changementsDeDirection } = config.restrictions;
+  if (changementsDeDirection && !sante.chevilles?.centPourCentLe && !sante.genoux?.centPourCentLe) {
+    sante.chevilles = { etat: sante.chevilles?.etat && sante.chevilles.etat !== 'ok' ? sante.chevilles.etat : 'sensible', note: sante.chevilles?.note, centPourCentLe: ajouterJours(changementsDeDirection.jusquau, 1) };
+  }
+  if (sprint && !sante.tibias?.centPourCentLe && !sante.ischios?.centPourCentLe) {
+    sante.tibias = { etat: sante.tibias?.etat && sante.tibias.etat !== 'ok' ? sante.tibias.etat : 'sensible', note: sante.tibias?.note, centPourCentLe: ajouterJours(sprint.jusquau, 1) };
+  }
+  return sante;
 }
 
 /** Problèmes qui empêchent de créer le programme, en phrases claires. Vide si tout va bien. */
@@ -143,24 +192,88 @@ export function retestsParDefaut(r: Pick<ReponsesProgramme, 'debut' | 'echeance'
  * Programme tiré des réponses. Les retests et les semaines légères validés d'un programme existant sont gardés
  * tant que ses dates ne changent pas ; sinon, ils sont recalculés selon la règle générale de la section 6.
  */
-export function creerProgramme(r: ReponsesProgramme, base?: ProgrammeConfig): ProgrammeConfig {
-  const memesDates = base && base.debut === r.debut && base.echeance === r.echeance;
+export function creerProgramme(reponses: ReponsesProgramme, base?: ProgrammeConfig): ProgrammeConfig {
+  // Les restrictions viennent seulement de la santé (date « à 100 % » de chaque zone).
+  const derivees = restrictionsDeSante(reponses.sante, reponses.debut);
+  const r = { ...reponses, sprint: derivees.sprint, changementsDeDirectionJusquau: derivees.changementsDeDirectionJusquau };
+  if (!r.sprint) delete r.sprint;
+  if (!r.changementsDeDirectionJusquau) delete r.changementsDeDirectionJusquau;
+  const memesDates = base && base.debut === r.debut && base.echeance === r.echeance && JSON.stringify(base.restrictions) === JSON.stringify(restrictionsConfig(r));
   return {
     nom: r.nom.trim() || 'Nouveau programme',
     debut: r.debut,
     echeance: r.echeance,
     echeanceNom: r.echeanceNom.trim() || 'Échéance',
-    restrictions: {
-      ...(r.sprint ? { sprint: { intensiteMax: r.sprint.intensiteMax, jusquau: r.sprint.jusquau } } : {}),
-      ...(r.changementsDeDirectionJusquau ? { changementsDeDirection: { jusquau: r.changementsDeDirectionJusquau } } : {}),
-    },
+    restrictions: restrictionsConfig(r),
     periodesAllegees: r.periodesAllegees.map((p) => ({ ...p, nom: p.nom.trim() })),
     tournois: [...r.tournois].map((t) => ({ ...t, nom: t.nom.trim() })).sort((a, b) => (a.debut < b.debut ? -1 : 1)),
     matchsReguliers: r.matchsReguliers.map((m) => ({ ...m, nom: m.nom.trim() })),
+    matchsPonctuels: [...r.matchsPonctuels].sort((a, b) => (a.date < b.date ? -1 : 1)),
+    indisponibles: [...r.indisponibles].sort(),
     retests: memesDates ? base.retests : retestsParDefaut(r),
     semainesLegeres: memesDates ? base.semainesLegeres : [],
     sante: r.sante,
     disponibilites: { seancesParSemaine: r.seancesParSemaine, dureeMax: r.dureeMax, lieux: r.lieux },
-    niveau: { etapeCourse: r.etapeCourse, derniereCourse: r.derniereCourse, allures: r.allures, charges: r.charges },
+    niveau: {
+      etapeCourse: r.etapeCourse,
+      derniereCourse: r.derniereCourse,
+      allures: r.allures,
+      charges: r.charges,
+      alluresConnues: r.alluresConnues,
+      chargesActuelles: r.chargesActuelles,
+    },
+  };
+}
+
+function restrictionsConfig(r: Pick<ReponsesProgramme, 'sprint' | 'changementsDeDirectionJusquau'>): ProgrammeConfig['restrictions'] {
+  return {
+    ...(r.sprint ? { sprint: { intensiteMax: r.sprint.intensiteMax, jusquau: r.sprint.jusquau } } : {}),
+    ...(r.changementsDeDirectionJusquau ? { changementsDeDirection: { jusquau: r.changementsDeDirectionJusquau } } : {}),
+  };
+}
+
+// ---------- Calendrier à colorier (questionnaire de création) ----------
+
+export type Marque = 'frisbee' | 'tournoi' | 'indispo' | 'mollo';
+
+/** Un jour par date : ce que Lily a marqué sur le calendrier (les matchs réguliers sont à part). */
+export function marquesDe(r: Pick<ReponsesProgramme, 'tournois' | 'periodesAllegees' | 'matchsPonctuels' | 'indisponibles'>): Record<DateISO, Marque> {
+  const m: Record<DateISO, Marque> = {};
+  const jours = (p: Periode) => {
+    const liste: DateISO[] = [];
+    for (let d = p.debut; d <= p.fin; d = ajouterJours(d, 1)) liste.push(d);
+    return liste;
+  };
+  for (const p of r.periodesAllegees) for (const d of jours(p)) m[d] = 'mollo';
+  for (const d of r.indisponibles) m[d] = 'indispo';
+  for (const x of r.matchsPonctuels) m[x.date] = 'frisbee';
+  for (const t of r.tournois) for (const d of jours(t)) m[d] = 'tournoi';
+  return m;
+}
+
+/** Jours consécutifs regroupés en périodes. */
+function periodes(dates: DateISO[]): { debut: DateISO; fin: DateISO }[] {
+  const liste: { debut: DateISO; fin: DateISO }[] = [];
+  for (const d of [...dates].sort()) {
+    const derniere = liste.at(-1);
+    if (derniere && ajouterJours(derniere.fin, 1) === d) derniere.fin = d;
+    else liste.push({ debut: d, fin: d });
+  }
+  return liste;
+}
+
+/** Les marques du calendrier deviennent les événements du programme (tournois et périodes gardent leur nom). */
+export function appliquerMarques(r: ReponsesProgramme, marques: Record<DateISO, Marque>): ReponsesProgramme {
+  const dates = (marque: Marque) => Object.keys(marques).filter((d) => marques[d] === marque);
+  const nomDe = (anciennes: Periode[], p: { debut: DateISO; fin: DateISO }, defaut: string) =>
+    anciennes.find((a) => a.debut <= p.fin && a.fin >= p.debut)?.nom ?? defaut;
+  return {
+    ...r,
+    tournois: periodes(dates('tournoi')).map((p) => ({ ...p, nom: nomDe(r.tournois, p, `Tournoi du ${dateCourte(p.debut)}`) })),
+    periodesAllegees: periodes(dates('mollo')).map((p) => ({ ...p, nom: nomDe(r.periodesAllegees, p, 'Plus mollo') })),
+    matchsPonctuels: dates('frisbee')
+      .sort()
+      .map((date) => ({ date, nom: r.matchsPonctuels.find((m) => m.date === date)?.nom ?? 'Frisbee' })),
+    indisponibles: dates('indispo').sort(),
   };
 }

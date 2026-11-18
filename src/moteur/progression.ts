@@ -39,9 +39,17 @@ const MATERIEL: Record<string, Materiel> = {
 };
 export const materielDe = (id: string): Materiel => MATERIEL[id] ?? 'halteres';
 
+/** Un écart donné dans une unité, converti dans l'autre et arrondi au demi. */
+export const cranConverti = (valeur: number, de: Unite) => Math.max(0.5, Math.round(convertir(valeur, de, de === 'kg' ? 'lb' : 'kg') * 2) / 2);
+
+/** Écart entre deux poids : celui réglé par Lily (dans une seule unité, l'autre est calculée), sinon la valeur par défaut. */
 export function cran(id: string, unite: Unite, donnees: Donnees): number {
   const m = materielDe(id);
-  return donnees.preferences.crans?.[m]?.[unite] ?? CRANS_PAR_DEFAUT[m][unite];
+  const reglage = donnees.preferences.crans?.[m];
+  const autre: Unite = unite === 'kg' ? 'lb' : 'kg';
+  if (reglage?.[unite] !== undefined) return reglage[unite]!;
+  if (reglage?.[autre] !== undefined) return cranConverti(reglage[autre]!, autre);
+  return CRANS_PAR_DEFAUT[m][unite];
 }
 
 /** Exercices sans charge (poids du corps). */
@@ -99,6 +107,11 @@ const charges = (r: ResultatExercice) => (r.series ?? []).map((s) => s.charge).f
 /** Maximum estimé, en kg : tests de la journée 1 (charge pour 5 répétitions, 1 en réserve) et dernières séries « + ». */
 export function maximumEstime(cal: Calendrier, donnees: Donnees, id: string, avant: DateISO): number | undefined {
   let dernier: { date: DateISO; kg: number } | undefined;
+  // Charge actuelle donnée à la création (décision du 18 novembre 2026) : point de départ, avec 2 répétitions en réserve.
+  const actuelle = cal.config.niveau?.chargesActuelles?.[id];
+  if (actuelle && actuelle.charge > 0 && actuelle.reps > 0) {
+    dernier = { date: ajouterJours(cal.config.debut, -1), kg: estimation1RM(convertir(actuelle.charge, actuelle.unite, 'kg'), actuelle.reps, 2) };
+  }
   for (const res of terminees(donnees, avant)) {
     const test = res.exercices[`tests:T-${id}`];
     if (test?.mesure && !test.pasFait) {
@@ -183,6 +196,19 @@ export function chargePrevue(cal: Calendrier, donnees: Donnees, date: DateISO, p
       }
     }
     resultat ??= progresser(p, derniere, perfs.at(-2), base, unite, pas);
+  } else {
+    // Jamais fait : objectif de départ tiré de la charge actuelle donnée à la création.
+    const actuelle = cal.config.niveau?.chargesActuelles?.[p.id];
+    const max = actuelle ? maximumEstime(cal, donnees, p.id, date) : undefined;
+    if (actuelle && max !== undefined && p.reps) {
+      const u = donnees.preferences.unites[p.id] ?? actuelle.unite;
+      const kg = max / (1 + (p.reps.min + reserve(phase)) / 30);
+      resultat = {
+        charge: arrondiBas(convertir(kg, 'kg', u), cran(p.id, u, donnees)),
+        unite: u,
+        explication: `Objectif de départ, d'après ta charge actuelle (${nombre(actuelle.charge)} ${actuelle.unite} × ${actuelle.reps}).`,
+      };
+    }
   }
   if (!resultat) return undefined;
 

@@ -765,6 +765,26 @@ Lily a relu tous les choix des sections ci-dessus. Ceux qui ne sont pas listés 
 
 **Précisés, sans changement :** pas de rattrapage (le programme ne prend jamais de retard) ; routine d'avant-match proposée mais facultative.
 
+### Nouvelle version de l'app : précisions (18 novembre 2026, décisions de Nathan)
+
+- **Plusieurs programmes.** Lily peut en créer et en garder plusieurs (une saison, un été…), chacun avec ses résultats. Elle en suit un à la fois ; les règles de placement s'appliquent à ce programme seulement.
+- **Création d'un programme**, en 5 étapes :
+  - le programme : dates, échéance, nombre de séances de base par semaine, durée maximale ;
+  - le calendrier à colorier : frisbee (un jour ou chaque semaine), tournoi, indisponible, plus mollo ;
+  - les blessures ;
+  - le niveau : dernière course, allures connues, charges actuelles ;
+  - le résumé.
+
+  Le calendrier, les blessures et le niveau se modifient à tout moment ; les dates, seulement tant qu'aucune séance n'est notée.
+- **Calendrier :**
+  - un jour « frisbee » compte comme un match ;
+  - un jour « indisponible » est décoché d'office dans le choix de la semaine (Lily peut le recocher) ;
+  - les jours « plus mollo » sont une période allégée (section 3) : séances d'environ 1 h, et 2 séances au plus si toute la semaine est marquée.
+- **Blessures** (règle nouvelle) : pour chaque zone, un état et, si elle n'est pas à 100 %, la date prévue. Chevilles ou genoux : pas de changement de direction jusqu'à la veille de cette date. Ischios ou tibias : sprint à 80 % au plus jusqu'à la veille. Une zone sans date est seulement notée. Si tout va bien, aucune restriction : sprint à 100 % et changements de direction dès le début. La progression (course, sauts) ne change pas. Pour 2026-2027 : chevilles à 100 % le 1er janvier, tibias le 1er décembre, ce qui redonne les restrictions validées.
+- **Charges de départ :** Lily peut donner la charge qu'elle soulève déjà et le nombre de répétitions (squat, squat bulgare, soulevé de terre sur une jambe, flexion des ischios, développé, tirage). L'app en tire un maximum estimé, avec 2 répétitions en réserve. Ce maximum donne un objectif dès la 1re séance : % de la phase pour les mouvements testés, sinon la charge pour les répétitions prévues. Les tests de la journée 1 l'ajustent ensuite.
+- **Allures avant le premier test demi-Cooper :** elles viennent des allures connues de Lily. Course facile (60 à 70 % de la VMA) à l'allure facile ; efforts à 100 % de la VMA ou plus à l'allure très rapide ; entre les deux, de l'allure rapide à l'allure très rapide. Pour 2026-2027 : 6:00, 5:30 et 5:00/km.
+- **Ressenti et note sur chaque exercice :** trop dur, trop facile, j'aime, je n'aime pas, et un commentaire libre. Ils ne changent pas le plan. Ils se copient en texte (Réglages, « Tes commentaires sur les exercices ») pour adapter une prochaine version du programme avec Claude.
+
 ## Points à suivre
 
 - Faire confirmer par la physio la reprise des changements de direction au 1er janvier.

@@ -211,6 +211,40 @@ function Echauffement({ bloc, illustrations }: { bloc: Bloc; illustrations: Reco
   );
 }
 
+const RESSENTIS = { 'trop-dur': 'Trop dur', 'trop-facile': 'Trop facile', aime: "J'aime", 'aime-pas': "Je n'aime pas" } as const;
+type Ressenti = keyof typeof RESSENTIS;
+
+/** Ressenti et commentaire sur un exercice : ils servent à adapter le programme plus tard. */
+function Avis({ valeur, onChange }: { valeur: ResultatExercice; onChange: (r: ResultatExercice) => void }) {
+  const [ouvert, setOuvert] = useState(!!valeur.avis?.commentaire);
+  const avis = valeur.avis ?? {};
+  return (
+    <div className="avis-exercice">
+      <div className="segments petit-segments" role="group" aria-label="Ton ressenti">
+        {(Object.keys(RESSENTIS) as Ressenti[]).map((r) => (
+          <button key={r} type="button" aria-pressed={avis.ressenti === r} onClick={() => onChange({ ...valeur, avis: { ...avis, ressenti: avis.ressenti === r ? undefined : r } })}>
+            {RESSENTIS[r]}
+          </button>
+        ))}
+        <button type="button" className="discret" aria-expanded={ouvert} onClick={() => setOuvert(!ouvert)}>
+          Note
+        </button>
+      </div>
+      {ouvert && (
+        <label className="champ champ-texte">
+          <span className="champ-label">Ta note sur cet exercice</span>
+          <textarea
+            rows={2}
+            defaultValue={avis.commentaire ?? ''}
+            placeholder="Trop lourd, douleur, à changer…"
+            onBlur={(e) => e.target.value !== (avis.commentaire ?? '') && onChange({ ...valeur, avis: { ...avis, commentaire: e.target.value } })}
+          />
+        </label>
+      )}
+    </div>
+  );
+}
+
 const RAISONS: Record<RaisonPasFait, string> = { temps: 'Pas le temps', materiel: 'Matériel pris', douleur: 'Douleur', autre: 'Autre' };
 const DECISIONS: Record<Decision, string> = { garde: 'Je garde', refuse: 'Je ne garde pas', reessai: 'Je réessaie une fois' };
 
@@ -266,6 +300,7 @@ function Fiche({
     consignes.push(
       `Allure : ${texteVitesse(p.vitesseKmh, unite)}${effort ? `, soit environ ${distanceEffort(p.vitesseKmh.min, effort)} m en ${effort} s sur la piste` : ''}.${p.id === 'E7' ? ' 100 % sur les efforts de 15 et 30 s, 95 % sur ceux de 45 et 60 s.' : ''}${p.id === 'E8' ? ' Au moins cette allure.' : ''}`,
     );
+    if (p.allureEstimee) consignes.push("D'après tes allures connues, en attendant le test demi-Cooper.");
     if (p.recuperationKmh) consignes.push(`Récupération trottinée : ${texteVitesse(p.recuperationKmh, unite)} (la marche est permise).`);
   } else if (p.allure) {
     consignes.push(p.role === 'intermittent' && p.pctVMA ? 'Avant le test demi-Cooper : effort de 8 sur 10.' : `${p.allure}.`);
@@ -356,6 +391,7 @@ function Fiche({
                 </div>
               </fieldset>
             )}
+            <Avis valeur={valeur} onChange={onChange} />
             {raisons ? (
               <div className="segments raisons">
                 {(Object.keys(RAISONS) as RaisonPasFait[]).map((r) => (

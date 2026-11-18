@@ -7,11 +7,15 @@ import type { ChoixSemaine } from '../moteur/semaine';
 import type { Calendrier, ProgrammeConfig } from '../moteur/types';
 import * as idb from '../stockage/idb';
 import { calculerSaison, dateLocale, type SemaineCalculee } from '../stockage/saison';
-import { DONNEES_VIDES, type Donnees, type Preferences, type ResultatSeance } from '../stockage/types';
+import type { Sauvegarde } from '../stockage/sauvegarde';
+import { DONNEES_VIDES, type Donnees, type MetaProgramme, type Preferences, type ResultatSeance } from '../stockage/types';
 
 interface ContexteDonnees {
   cal: Calendrier;
   donnees: Donnees;
+  /** Programmes enregistrés ; `actif` est celui que Lily suit. */
+  programmes: MetaProgramme[];
+  actif?: string;
   saison: SemaineCalculee[];
   aujourdhui: DateISO;
   /** Message si les données ne peuvent pas être enregistrées sur ce téléphone. */
@@ -25,9 +29,15 @@ interface ContexteDonnees {
   noterMatch: (date: DateISO, effort: number) => void;
   basculerRoutine: (date: DateISO) => void;
   changerStatut: (id: string, statut: Statut | null) => void;
-  /** Nouveau programme : remplace la saison en cours (choix, résultats, matchs) et garde les réglages. */
+  /** Crée un programme (les autres sont gardés) et le rend actif. */
   nouveauProgramme: (config: ProgrammeConfig) => Promise<void>;
-  importer: (d: Donnees) => Promise<void>;
+  /** Change le calendrier ou les réglages du programme suivi, sans toucher à ses résultats. */
+  modifierProgramme: (config: ProgrammeConfig) => Promise<void>;
+  activerProgramme: (id: string) => Promise<void>;
+  supprimerProgramme: (id: string) => Promise<void>;
+  /** Tout ce qu'il faut pour une sauvegarde complète. */
+  lireSauvegarde: () => Promise<Sauvegarde>;
+  importer: (s: Sauvegarde) => Promise<void>;
 }
 
 const Contexte = createContext<ContexteDonnees | null>(null);
@@ -35,14 +45,20 @@ const Contexte = createContext<ContexteDonnees | null>(null);
 
 export function FournisseurDonnees({ children }: { children: ReactNode }) {
   const [donnees, setDonnees] = useState<Donnees | null>(null);
+  const [programmes, setProgrammes] = useState<MetaProgramme[]>([]);
+  const [actif, setActif] = useState<string>();
+
+  const recharger = useCallback(async () => {
+    const etat = await idb.chargerTout();
+    setProgrammes(etat.programmes);
+    setActif(etat.actif);
+    setDonnees(etat.donnees);
+  }, []);
   const [erreur, setErreur] = useState<string>();
   const [aujourdhui, setAujourdhui] = useState(dateLocale());
 
   useEffect(() => {
-    idb
-      .chargerDonnees()
-      .then(setDonnees)
-      .catch(() => {
+    recharger().catch(() => {
         setErreur("Ce navigateur ne permet pas d'enregistrer les données (navigation privée ?). Rien ne sera gardé en fermant l'app.");
         setDonnees(structuredClone(DONNEES_VIDES));
       });
@@ -165,19 +181,49 @@ export function FournisseurDonnees({ children }: { children: ReactNode }) {
   );
 
   const nouveauProgramme = useCallback(
-    async (programme: ProgrammeConfig) => {
-      if (!donnees) return;
-      const nouvelles: Donnees = { ...structuredClone(DONNEES_VIDES), programme, statuts: donnees.statuts, preferences: donnees.preferences };
-      await idb.remplacerDonnees(nouvelles);
-      setDonnees(nouvelles);
+    async (config: ProgrammeConfig) => {
+      await idb.creerProgramme(config, programmes);
+      await recharger();
     },
-    [donnees],
+    [programmes, recharger],
   );
 
-  const importer = useCallback(async (d: Donnees) => {
-    await idb.remplacerDonnees(d);
-    setDonnees(d);
-  }, []);
+  const modifierProgramme = useCallback(
+    async (config: ProgrammeConfig) => {
+      setProgrammes(await idb.enregistrerConfig(config, programmes));
+      setDonnees((d) => (d ? { ...d, programme: config } : d));
+    },
+    [programmes],
+  );
+
+  const activerProgramme = useCallback(
+    async (id: string) => {
+      await idb.activerProgramme(id);
+      await recharger();
+    },
+    [recharger],
+  );
+
+  const supprimerProgramme = useCallback(
+    async (id: string) => {
+      await idb.supprimerProgramme(id, programmes);
+      await recharger();
+    },
+    [programmes, recharger],
+  );
+
+  const lireSauvegarde = useCallback(async (): Promise<Sauvegarde> => {
+    const tous = await idb.lireTousLesProgrammes(programmes);
+    return { programmes: tous, actif, preferences: donnees!.preferences, statuts: donnees!.statuts };
+  }, [programmes, actif, donnees]);
+
+  const importer = useCallback(
+    async (s: Sauvegarde) => {
+      await idb.remplacerTout(s);
+      await recharger();
+    },
+    [recharger],
+  );
 
   const programme = donnees?.programme;
   const cal = useMemo(() => genererCalendrier(programme ?? SAISON_2026_2027), [programme]);
@@ -186,7 +232,30 @@ export function FournisseurDonnees({ children }: { children: ReactNode }) {
   if (!donnees) return <p className="chargement">Chargement…</p>;
   return (
     <Contexte.Provider
-      value={{ cal, donnees, saison, aujourdhui, erreur, choisirSemaine, enregistrerResultat, supprimerResultat, modifierPreferences, demanderSemaineLegere, modifierSaison, noterMatch, basculerRoutine, changerStatut, nouveauProgramme, importer }}
+      value={{
+        cal,
+        donnees,
+        programmes,
+        actif,
+        saison,
+        aujourdhui,
+        erreur,
+        choisirSemaine,
+        enregistrerResultat,
+        supprimerResultat,
+        modifierPreferences,
+        demanderSemaineLegere,
+        modifierSaison,
+        noterMatch,
+        basculerRoutine,
+        changerStatut,
+        nouveauProgramme,
+        modifierProgramme,
+        activerProgramme,
+        supprimerProgramme,
+        lireSauvegarde,
+        importer,
+      }}
     >
       {children}
     </Contexte.Provider>

@@ -70,8 +70,10 @@ export interface Prescription {
   /** Allure en % de la VMA (section 7). */
   pctVMA?: Fourchette;
   allure?: string;
-  /** Vitesse visée en km/h, tirée de la VMA (section 7). */
+  /** Vitesse visée en km/h, tirée de la VMA (section 7), ou des allures connues avant le premier test. */
   vitesseKmh?: Fourchette;
+  /** La vitesse visée vient des allures connues de Lily (pas encore de test demi-Cooper). */
+  allureEstimee?: boolean;
   /** Récupération trottinée (40 à 50 % de la VMA), pour 15/15 et 30/30. */
   recuperationKmh?: Fourchette;
   /** Écart de plus de 10 % entre les côtés au dernier test : 1 série de plus du côté le plus faible. */
@@ -154,6 +156,8 @@ export interface EtatContenu {
   courseEnCardioApres?: DateISO;
   /** VMA en km/h (test demi-Cooper), pour traduire les allures. */
   vma?: number;
+  /** Allures connues (secondes par km) : objectifs tant qu'il n'y a pas de VMA. */
+  alluresConnues?: { facile?: number; rapide?: number; tresRapide?: number };
   /** Répétitions en plus par série, par format d'intermittent. */
   intermittentsEnPlus?: Record<string, number>;
   /** Séries en plus du côté le plus faible (F7, M1, P10). */
@@ -1226,12 +1230,24 @@ function composerSeance(ctx: Ctx): ContenuSeance {
   }
 
   // Allures tirées de la VMA, et série en plus du côté le plus faible.
-  const { vma, seriesEnPlus } = ctx.etat;
+  const { vma, seriesEnPlus, alluresConnues } = ctx.etat;
+  const kmh = (secParKm?: number) => (secParKm ? 3600 / secParKm : undefined);
   items = items.map((it) => {
     let p = it.p;
     if (vma && p.pctVMA && it.bloc !== 'echauffement') {
       p = { ...p, vitesseKmh: { min: (vma * p.pctVMA.min) / 100, max: (vma * p.pctVMA.max) / 100 } };
       if (p.id === 'E5' || p.id === 'E6') p.recuperationKmh = { min: vma * 0.4, max: vma * 0.5 };
+    } else if (!vma && alluresConnues && p.pctVMA && it.bloc !== 'echauffement') {
+      // Avant le premier test demi-Cooper : objectifs tirés des allures connues (décision du 18 novembre 2026).
+      const facile = kmh(alluresConnues.facile);
+      const rapide = kmh(alluresConnues.rapide);
+      const tresRapide = kmh(alluresConnues.tresRapide);
+      const v =
+        p.pctVMA.max <= 75 ? (facile ? { min: facile, max: facile } : undefined)
+        : p.pctVMA.min >= 100 ? (tresRapide ? { min: tresRapide, max: tresRapide } : undefined)
+        : rapide && tresRapide ? { min: rapide, max: tresRapide }
+        : undefined;
+      if (v) p = { ...p, vitesseKmh: v, allureEstimee: true };
     }
     const cote = seriesEnPlus?.[p.id];
     if (cote && it.bloc !== 'echauffement' && it.bloc !== 'agilite') p = { ...p, serieEnPlus: cote };

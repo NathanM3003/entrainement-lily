@@ -37,11 +37,12 @@ export const SAISON_2026_2027: ProgrammeConfig = {
   // le début de S13 (après un tournoi) et S15-S16 (affûtage). S10 est fixée ici.
   semainesLegeres: [{ semaine: 10, raison: 'Après le tournoi, semaine de retest' }],
   // Profil, « Blessures et zones fragiles », « Disponibilités » et « Course ».
+  // La date « à 100 % » fixe les restrictions : chevilles → changements de direction, tibias → sprint à 80 %.
   sante: {
-    chevilles: { etat: 'reeducation', note: 'Entorse de grade 2 à gauche, en fin de rééducation ; même entorse à droite l’an dernier.' },
+    chevilles: { etat: 'reeducation', note: 'Entorse de grade 2 à gauche, en fin de rééducation ; même entorse à droite l’an dernier.', centPourCentLe: '2027-01-01' },
     genoux: { etat: 'sensible', note: 'Tendinite à l’arrière du genou gauche, sensible quand le volume de course augmente.' },
     ischios: { etat: 'ok' },
-    tibias: { etat: 'sensible', note: 'Périostite presque disparue.' },
+    tibias: { etat: 'sensible', note: 'Périostite presque disparue.', centPourCentLe: '2026-12-01' },
   },
   disponibilites: { seancesParSemaine: 3, dureeMax: 90, lieux: ['gym', 'piste', 'tapis'] },
   niveau: {
@@ -49,5 +50,6 @@ export const SAISON_2026_2027: ProgrammeConfig = {
     derniereCourse: '4 × (3 min de course + 1 min de marche), sans douleur',
     allures: '6:00/km facile, 5:45/km sur 5 à 10 km, 5:30/km rapide, 5:00/km très rapide',
     charges: 'Inconnues : elles se mesurent aux tests de la journée 1.',
+    alluresConnues: { facile: 360, rapide: 330, tresRapide: 300 },
   },
 };

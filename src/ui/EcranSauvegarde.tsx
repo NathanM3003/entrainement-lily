@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
-import { dateCourte, JOURS, type JourSemaine } from '../moteur/dates';
-import type { MatchRegulier, Periode } from '../moteur/types';
-import { CRANS_PAR_DEFAUT, LIBELLES_MATERIEL, type Materiel } from '../moteur/progression';
+import { dateCourte } from '../moteur/dates';
+import { CRANS_PAR_DEFAUT, cranConverti, LIBELLES_MATERIEL, type Materiel } from '../moteur/progression';
+import { texteCommentaires } from '../stockage/commentaires';
 import { ChampNombre } from './communs';
 import { creerSauvegarde, lireSauvegarde } from '../stockage/sauvegarde';
 import type { Unite, UniteAllure } from '../stockage/types';
@@ -9,14 +9,14 @@ import { useDonnees } from './donnees';
 
 /** Export et import du fichier de sauvegarde, réglage des unités. */
 export function EcranSauvegarde() {
-  const { donnees, aujourdhui, modifierPreferences, importer, cal, modifierSaison } = useDonnees();
+  const { donnees, aujourdhui, modifierPreferences, importer, lireSauvegarde: toutLire } = useDonnees();
   const [message, setMessage] = useState<string>();
   const fichier = useRef<HTMLInputElement>(null);
   const nbSeances = Object.values(donnees.resultats).filter((r) => r.terminee).length;
   const derniere = donnees.preferences.derniereSauvegarde;
 
   async function exporter() {
-    const { nom, contenu } = creerSauvegarde(donnees, aujourdhui);
+    const { nom, contenu } = creerSauvegarde(await toutLire(), aujourdhui);
     const f = new File([contenu], nom, { type: 'application/json' });
     try {
       if (navigator.canShare?.({ files: [f] })) {
@@ -40,8 +40,9 @@ export function EcranSauvegarde() {
   async function importerFichier(f: File) {
     try {
       const nouvelles = lireSauvegarde(await f.text());
-      const n = Object.values(nouvelles.resultats).filter((r) => r.terminee).length;
-      if (!confirm(`Remplacer toutes les données de l'app par cette sauvegarde (${n} séance${n > 1 ? 's' : ''} faite${n > 1 ? 's' : ''}) ?`)) return;
+      const n = nouvelles.programmes.reduce((t, p) => t + Object.values(p.donnees.resultats).filter((r) => r.terminee).length, 0);
+      const np = nouvelles.programmes.length;
+      if (!confirm(`Remplacer toutes les données de l'app par cette sauvegarde (${np} programme${np > 1 ? 's' : ''}, ${n} séance${n > 1 ? 's' : ''} faite${n > 1 ? 's' : ''}) ?`)) return;
       await importer(nouvelles);
       setMessage('Sauvegarde importée.');
     } catch (e) {
@@ -52,23 +53,18 @@ export function EcranSauvegarde() {
   return (
     <main className="page">
       <p className="surtitre">Réglages</p>
-      <h1>Saison et sauvegarde</h1>
-      <MatchsEtTournois
-        reguliersSaison={cal.config.matchsReguliers}
-        tournoisSaison={cal.config.tournois}
-        ajouts={donnees.saison ?? { matchsReguliers: [], tournois: [] }}
-        debut={cal.config.debut}
-        fin={cal.config.echeance}
-        onChange={modifierSaison}
-      />
+      <h1>Programmes et sauvegarde</h1>
+
+      <MesProgrammes />
+
       <h2 className="titre-section">Sauvegarde</h2>
       <section className="carte">
         <p>
           Tes données restent sur ce téléphone, sans compte ni serveur. Une fois par semaine, crée une sauvegarde et garde-la
-          ailleurs (Fichiers, courriel, nuage) : si le téléphone est perdu ou changé, tu pourras tout récupérer.
+          ailleurs (Fichiers, courriel, nuage) : si le téléphone est perdu ou changé, tu pourras tout récupérer. Elle contient tous tes programmes.
         </p>
         <p className="aide">
-          {nbSeances} séance{nbSeances > 1 ? 's' : ''} faite{nbSeances > 1 ? 's' : ''} enregistrée{nbSeances > 1 ? 's' : ''}.{' '}
+          {nbSeances} séance{nbSeances > 1 ? 's' : ''} faite{nbSeances > 1 ? 's' : ''} dans ce programme.{' '}
           {derniere ? `Dernière sauvegarde : ${dateCourte(derniere)}.` : 'Aucune sauvegarde pour le moment.'}
         </p>
         <div className="actions">
@@ -93,17 +89,48 @@ export function EcranSauvegarde() {
         {message && <p className="ok" role="status">{message}</p>}
       </section>
 
+      <CommentairesPourClaude />
+
       <section className="carte">
-        <h2>Programme</h2>
-        <p>
-          {cal.config.nom} : du {dateCourte(cal.config.debut)} au {dateCourte(cal.config.echeance)} ({cal.config.echeanceNom}), {cal.semaines.length} semaines.
+        <h2>Poids disponibles au gym</h2>
+        <p className="aide">
+          L'écart entre deux poids, pour monter d'un cran. Entre-le dans l'unité de ton gym : l'autre unité est calculée toute seule. L'app arrondit
+          toujours au poids disponible en dessous.
         </p>
-        <p className="aide">Pour une autre saison : réponds aux questions de création. Le questionnaire est prérempli avec le programme en cours.</p>
-        <div className="actions">
-          <a className="bouton" href="#/nouveau">
-            Créer un nouveau programme
-          </a>
-        </div>
+        {(Object.keys(CRANS_PAR_DEFAUT) as Materiel[]).map((m) => {
+          const reglage = donnees.preferences.crans?.[m];
+          const u: Unite = reglage?.lb !== undefined && reglage.kg === undefined ? 'lb' : 'kg';
+          const valeur = reglage?.[u] ?? CRANS_PAR_DEFAUT[m][u];
+          const autre: Unite = u === 'kg' ? 'lb' : 'kg';
+          const crans = donnees.preferences.crans ?? {};
+          return (
+            <div key={m} className="ligne-crans">
+              <span>{LIBELLES_MATERIEL[m]}</span>
+              <ChampNombre
+                label="Écart"
+                unite={u}
+                decimal
+                valeur={valeur}
+                onChange={(v) => {
+                  if (!v || v <= 0) return;
+                  modifierPreferences({ crans: { ...crans, [m]: { [u]: v } } });
+                }}
+              />
+              <div className="segments petit-segments" role="group" aria-label={`Unité, ${LIBELLES_MATERIEL[m]}`}>
+                {(['kg', 'lb'] as Unite[]).map((x) => (
+                  <button key={x} type="button" aria-pressed={u === x} onClick={() => x !== u && modifierPreferences({ crans: { ...crans, [m]: { [x]: CRANS_PAR_DEFAUT[m][x] } } })}>
+                    {x}
+                  </button>
+                ))}
+              </div>
+              <span className="petit cran-autre">
+                {reglage
+                  ? `≈ ${cranConverti(valeur, u).toLocaleString('fr-CA')} ${autre}, calculé tout seul`
+                  : `Par défaut : ${CRANS_PAR_DEFAUT[m].kg.toLocaleString('fr-CA')} kg ou ${CRANS_PAR_DEFAUT[m].lb} lb`}
+              </span>
+            </div>
+          );
+        })}
       </section>
 
       <section className="carte">
@@ -120,160 +147,103 @@ export function EcranSauvegarde() {
           </div>
         </fieldset>
       </section>
-
-      <section className="carte">
-        <h2>Poids disponibles au gym</h2>
-        <p className="aide">
-          L'écart entre deux poids, pour monter d'un cran. Par exemple, si les haltères vont de 2 en 2 kg, mets 2. L'app arrondit toujours au poids
-          disponible en dessous.
-        </p>
-        {(Object.keys(CRANS_PAR_DEFAUT) as Materiel[]).map((m) => (
-          <div key={m} className="ligne-crans">
-            <span>{LIBELLES_MATERIEL[m]}</span>
-            {(['kg', 'lb'] as Unite[]).map((u) => (
-              <ChampNombre
-                key={u}
-                label={`En ${u}`}
-                unite={u}
-                decimal
-                valeur={donnees.preferences.crans?.[m]?.[u] ?? CRANS_PAR_DEFAUT[m][u]}
-                onChange={(v) => {
-                  if (!v || v <= 0) return;
-                  const crans = donnees.preferences.crans ?? {};
-                  modifierPreferences({ crans: { ...crans, [m]: { ...crans[m], [u]: v } } });
-                }}
-              />
-            ))}
-          </div>
-        ))}
-      </section>
     </main>
   );
 }
 
-/** Matchs réguliers (ligue du jeudi…) et tournois ajoutés en cours de saison (section 4). */
-function MatchsEtTournois({
-  reguliersSaison,
-  tournoisSaison,
-  ajouts,
-  debut,
-  fin,
-  onChange,
-}: {
-  reguliersSaison: MatchRegulier[];
-  tournoisSaison: Periode[];
-  ajouts: { matchsReguliers: MatchRegulier[]; tournois: Periode[] };
-  debut: string;
-  fin: string;
-  onChange: (a: { matchsReguliers: MatchRegulier[]; tournois: Periode[] }) => void;
-}) {
-  const [nomMatch, setNomMatch] = useState('Ligue du jeudi');
-  const [jour, setJour] = useState<JourSemaine>(4);
-  const [desLe, setDesLe] = useState('');
-  const [nomTournoi, setNomTournoi] = useState('');
-  const [debutTournoi, setDebutTournoi] = useState('');
-  const [finTournoi, setFinTournoi] = useState('');
-  const texteMatch = (m: MatchRegulier) => `${m.nom} : le ${JOURS[m.jour - 1]}, à partir du ${dateCourte(m.debut)}`;
-  const texteTournoi = (t: Periode) => `${t.nom} : ${dateCourte(t.debut)}${t.fin !== t.debut ? ` au ${dateCourte(t.fin)}` : ''}`;
-  const tournoiValide = nomTournoi.trim() && debutTournoi && finTournoi >= debutTournoi && debutTournoi >= debut && finTournoi < fin;
-
+/** Les programmes enregistrés : suivre, modifier le calendrier, créer, supprimer. */
+function MesProgrammes() {
+  const { programmes, actif, cal, activerProgramme, supprimerProgramme } = useDonnees();
+  const [aSupprimer, setASupprimer] = useState<string>();
   return (
-    <>
-      <section className="carte">
-        <h2>Matchs réguliers</h2>
-        <p className="aide">Ils reviennent chaque semaine. Un match imprévu ou annulé se déclare dans l'écran de la semaine.</p>
-        <ul className="liste-reglages">
-          {reguliersSaison.map((m) => (
-            <li key={m.nom}>{texteMatch(m)}</li>
-          ))}
-          {ajouts.matchsReguliers.map((m, i) => (
-            <li key={m.nom + i}>
-              {texteMatch(m)}{' '}
-              <button type="button" className="lien" onClick={() => onChange({ ...ajouts, matchsReguliers: ajouts.matchsReguliers.filter((_, j) => j !== i) })}>
-                Retirer
-              </button>
-            </li>
-          ))}
-        </ul>
-        <div className="formulaire">
-          <label className="champ">
-            <span className="champ-label">Nom</span>
-            <input type="text" value={nomMatch} onChange={(e) => setNomMatch(e.target.value)} />
-          </label>
-          <label className="champ">
-            <span className="champ-label">Jour</span>
-            <select value={jour} onChange={(e) => setJour(Number(e.target.value) as JourSemaine)}>
-              {JOURS.map((j, i) => (
-                <option key={j} value={i + 1}>
-                  {j}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="champ">
-            <span className="champ-label">À partir du</span>
-            <input type="date" value={desLe} min={debut} max={fin} onChange={(e) => setDesLe(e.target.value)} />
-          </label>
-        </div>
-        <div className="actions">
-          <button
-            type="button"
-            disabled={!nomMatch.trim() || !desLe}
-            onClick={() => {
-              onChange({ ...ajouts, matchsReguliers: [...ajouts.matchsReguliers, { nom: nomMatch.trim(), jour, debut: desLe }] });
-              setDesLe('');
-            }}
-          >
-            Ajouter ce match régulier
-          </button>
-        </div>
-      </section>
+    <section className="carte">
+      <h2>Mes programmes</h2>
+      <ul className="liste-programmes">
+        {programmes.map((p) => (
+          <li key={p.id} className={p.id === actif ? 'actif' : ''}>
+            <strong>
+              {p.nom}
+              {p.id === actif ? ' · suivi' : ''}
+            </strong>
+            {p.id === actif && (
+              <span className="petit">
+                Du {dateCourte(cal.config.debut)} au {dateCourte(cal.config.echeance)}, {cal.semaines.length} semaines.
+              </span>
+            )}
+            <div className="actions">
+              {p.id === actif ? (
+                <a className="bouton" href="#/modifier">
+                  Modifier le calendrier et les blessures
+                </a>
+              ) : (
+                <button type="button" onClick={() => activerProgramme(p.id)}>
+                  Suivre ce programme
+                </button>
+              )}
+              {aSupprimer === p.id ? (
+                <>
+                  <button type="button" className="danger" onClick={() => supprimerProgramme(p.id).then(() => setASupprimer(undefined))}>
+                    Oui, supprimer avec ses résultats
+                  </button>
+                  <button type="button" onClick={() => setASupprimer(undefined)}>
+                    Annuler
+                  </button>
+                </>
+              ) : (
+                <button type="button" className="discret" onClick={() => setASupprimer(p.id)}>
+                  Supprimer
+                </button>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+      <div className="actions">
+        <a className="bouton principal-lien" href="#/nouveau">
+          Nouveau programme
+        </a>
+      </div>
+      <p className="aide">Tu peux garder plusieurs programmes (une saison, un été…) : chacun garde ses résultats. Tu en suis un à la fois.</p>
+    </section>
+  );
+}
 
-      <section className="carte">
-        <h2>Tournois</h2>
-        <p className="aide">La semaine d'un tournoi : 2 séances courtes au plus, rien de chargé dans les 48 h avant, récupération le lundi et le mardi suivants.</p>
-        <ul className="liste-reglages">
-          {tournoisSaison.map((t) => (
-            <li key={t.nom}>{texteTournoi(t)}</li>
-          ))}
-          {ajouts.tournois.map((t, i) => (
-            <li key={t.nom + i}>
-              {texteTournoi(t)}{' '}
-              <button type="button" className="lien" onClick={() => onChange({ ...ajouts, tournois: ajouts.tournois.filter((_, j) => j !== i) })}>
-                Retirer
-              </button>
-            </li>
-          ))}
-        </ul>
-        <div className="formulaire">
-          <label className="champ">
-            <span className="champ-label">Nom</span>
-            <input type="text" value={nomTournoi} placeholder="Tournoi d'avril" onChange={(e) => setNomTournoi(e.target.value)} />
-          </label>
-          <label className="champ">
-            <span className="champ-label">Premier jour</span>
-            <input type="date" value={debutTournoi} min={debut} max={fin} onChange={(e) => setDebutTournoi(e.target.value)} />
-          </label>
-          <label className="champ">
-            <span className="champ-label">Dernier jour</span>
-            <input type="date" value={finTournoi} min={debutTournoi || debut} max={fin} onChange={(e) => setFinTournoi(e.target.value)} />
-          </label>
-        </div>
-        <div className="actions">
-          <button
-            type="button"
-            disabled={!tournoiValide}
-            onClick={() => {
-              onChange({ ...ajouts, tournois: [...ajouts.tournois, { nom: nomTournoi.trim(), debut: debutTournoi, fin: finTournoi }] });
-              setNomTournoi('');
-              setDebutTournoi('');
-              setFinTournoi('');
-            }}
-          >
-            Ajouter ce tournoi
-          </button>
-        </div>
-      </section>
-    </>
+/** Tes commentaires et ressentis sur les exercices, à copier pour les donner à Claude et adapter le programme. */
+function CommentairesPourClaude() {
+  const { donnees, cal } = useDonnees();
+  const [etat, setEtat] = useState<string>();
+  const texte = texteCommentaires(cal.config.nom, donnees);
+  const nb = (texte.match(/^- /gm) ?? []).length;
+  return (
+    <section className="carte">
+      <h2>Tes commentaires sur les exercices</h2>
+      <p className="aide">
+        {nb ? `${nb} commentaire${nb > 1 ? 's' : ''} ou ressenti${nb > 1 ? 's' : ''} noté${nb > 1 ? 's' : ''}.` : 'Aucun commentaire pour le moment.'} Copie-les pour les
+        donner à Claude : il pourra adapter le programme.
+      </p>
+      <div className="actions">
+        <button
+          type="button"
+          disabled={!nb}
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(texte);
+              setEtat('Copié.');
+            } catch {
+              setEtat('La copie a échoué : sélectionne le texte ci-dessous.');
+            }
+          }}
+        >
+          Copier mes commentaires
+        </button>
+      </div>
+      {etat && <p className="ok" role="status">{etat}</p>}
+      {nb > 0 && (
+        <details>
+          <summary>Voir le texte</summary>
+          <pre className="commentaires">{texte}</pre>
+        </details>
+      )}
+    </section>
   );
 }

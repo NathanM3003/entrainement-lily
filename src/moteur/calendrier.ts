@@ -114,6 +114,9 @@ function evenementsDe(config: ProgrammeConfig, jours: DateISO[]): Evenement[] {
         evenements.push({ date, type: 'match', nom: m.nom });
       }
     }
+    for (const m of config.matchsPonctuels ?? []) {
+      if (m.date === date && !evenements.some((e) => e.type === 'match' && e.date === date)) evenements.push({ date, type: 'match', nom: m.nom });
+    }
   }
   return evenements;
 }

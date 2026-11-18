@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { semaineDuJour } from '../stockage/saison';
 import { useDonnees } from './donnees';
+import { EcranAccueil } from './EcranAccueil';
+import { EcranBienvenue } from './EcranBienvenue';
 import { EcranBilan } from './EcranBilan';
 import { EcranExercices } from './EcranExercices';
 import { EcranNouveauProgramme } from './EcranNouveauProgramme';
@@ -24,13 +26,25 @@ function useAdresse(): string {
 }
 
 export function App() {
-  const { cal, aujourdhui, erreur } = useDonnees();
+  const { cal, aujourdhui, erreur, programmes } = useDonnees();
   const adresse = useAdresse();
   const [, ecran, param] = adresse.split('/');
 
   let contenu;
-  let onglet: 'semaine' | 'progres' | 'exercices' | 'sauvegarde' = 'semaine';
-  if (ecran === 'seance' && param) contenu = <EcranSeance key={param} date={param} />;
+  let onglet: 'accueil' | 'semaine' | 'progres' | 'exercices' | 'sauvegarde' = 'accueil';
+  if (programmes.length === 0 && ecran !== 'nouveau') {
+    // Première ouverture : pas encore de programme.
+    return (
+      <>
+        {erreur && <p className="bandeau erreur">{erreur}</p>}
+        <EcranBienvenue />
+      </>
+    );
+  }
+  if (ecran === 'seance' && param) {
+    contenu = <EcranSeance key={param} date={param} />;
+    onglet = 'semaine';
+  }
   else if (ecran === 'progres' || ecran === 'bilan') {
     contenu = ecran === 'bilan' ? <EcranBilan /> : <EcranProgres />;
     onglet = 'progres';
@@ -38,16 +52,19 @@ export function App() {
   else if (ecran === 'exercices') {
     contenu = <EcranExercices />;
     onglet = 'exercices';
-  } else if (ecran === 'nouveau') {
-    contenu = <EcranNouveauProgramme />;
+  } else if (ecran === 'nouveau' || ecran === 'modifier') {
+    contenu = <EcranNouveauProgramme key={ecran} mode={ecran} />;
     onglet = 'sauvegarde';
   } else if (ecran === 'sauvegarde' || ecran === 'reglages') {
     contenu = <EcranSauvegarde />;
     onglet = 'sauvegarde';
-  } else {
+  } else if (ecran === 'semaine') {
     const n = Number(param);
-    const numero = ecran === 'semaine' && n >= 1 && n <= cal.semaines.length ? n : semaineDuJour(cal, aujourdhui);
+    const numero = n >= 1 && n <= cal.semaines.length ? n : semaineDuJour(cal, aujourdhui);
     contenu = <EcranSemaine key={numero} numero={numero} />;
+    onglet = 'semaine';
+  } else {
+    contenu = <EcranAccueil />;
   }
 
   return (
@@ -55,7 +72,10 @@ export function App() {
       {erreur && <p className="bandeau erreur">{erreur}</p>}
       {contenu}
       <nav className="barre" aria-label="Navigation">
-        <a href="#/" aria-current={onglet === 'semaine' ? 'page' : undefined}>
+        <a href="#/" aria-current={onglet === 'accueil' ? 'page' : undefined}>
+          Accueil
+        </a>
+        <a href="#/semaine" aria-current={onglet === 'semaine' ? 'page' : undefined}>
           Semaine
         </a>
         <a href="#/progres" aria-current={onglet === 'progres' ? 'page' : undefined}>

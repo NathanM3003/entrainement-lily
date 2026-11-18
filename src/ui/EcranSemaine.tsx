@@ -125,16 +125,19 @@ function ChoixDeLaSemaine({
   const enCours = calc.semaine.debut <= aujourdhui && aujourdhui <= calc.semaine.fin;
   const faites = calc.seances.filter((s) => s.resultat).map((s) => s.seance.date);
   // Par défaut : le choix déjà fait, sinon les mêmes jours de la semaine que la semaine d'avant, sinon tous les jours.
+  const { cal } = useDonnees();
+  const indispos = new Set(cal.config.indisponibles ?? []);
   const joursParDefaut = (): DateISO[] => {
     if (calc.choix) return calc.choix.joursDisponibles;
+    // Jours marqués « indisponible » sur le calendrier du programme : décochés d'office.
+    const libres = jours.filter((j) => !indispos.has(j));
     if (precedent) {
       const jds = new Set(precedent.joursDisponibles.map(jourSemaine));
-      const memes = jours.filter((j) => jds.has(jourSemaine(j)));
+      const memes = libres.filter((j) => jds.has(jourSemaine(j)));
       if (memes.length) return memes;
     }
-    return jours;
+    return libres;
   };
-  const { cal } = useDonnees();
   const [nb, setNb] = useState(Math.max(calc.choix?.nbSeances ?? precedent?.nbSeances ?? cal.config.disponibilites?.seancesParSemaine ?? 3, faites.length));
   const [dispo, setDispo] = useState<DateISO[]>(joursParDefaut);
   const basculer = (j: DateISO) => setDispo((d) => (d.includes(j) ? d.filter((x) => x !== j) : [...d, j].sort()));
@@ -180,6 +183,7 @@ function ChoixDeLaSemaine({
             <button key={j} type="button" aria-pressed={dispo.includes(j) && !passe(j)} disabled={passe(j) || faites.includes(j)} onClick={() => basculer(j)}>
               {jourCourt(j)}
               {(matchs.includes(j) || tournoi.has(j)) && <span className="petit">{tournoi.has(j) ? 'tournoi' : 'match'}</span>}
+              {indispos.has(j) && !matchs.includes(j) && !tournoi.has(j) && <span className="petit">indispo</span>}
             </button>
           ))}
         </div>

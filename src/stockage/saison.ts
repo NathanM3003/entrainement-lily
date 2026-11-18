@@ -175,6 +175,7 @@ export function calculerSaison(calBase: Calendrier, donnees: Donnees, aujourdhui
       pausePlio: aVenir && douleurs.pausePlio,
       courseEnCardioApres,
       vma: vitesses.vma,
+      alluresConnues: calBase.config.niveau?.alluresConnues,
       intermittentsEnPlus: intermittentsEnPlus(cal, donnees, semaine.debut),
       seriesEnPlus: cotes,
     });

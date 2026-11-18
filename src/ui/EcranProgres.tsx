@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { dateCourte } from '../moteur/dates';
-import { calculerSuivi, type Badge, type Point } from '../stockage/suivi';
+import { calculerSuivi, etatDuPlan, type Badge, type Point } from '../stockage/suivi';
 import { useDonnees } from './donnees';
 import { Graphique, type SerieGraphique } from './Graphique';
 
@@ -28,8 +28,9 @@ const CATEGORIES: Record<Badge['categorie'], string> = {
 };
 
 export function EcranProgres() {
-  const { saison, donnees, aujourdhui, modifierPreferences } = useDonnees();
+  const { saison, donnees, aujourdhui, modifierPreferences, cal } = useDonnees();
   const suivi = useMemo(() => calculerSuivi(saison, donnees, aujourdhui), [saison, donnees, aujourdhui]);
+  const plan = useMemo(() => etatDuPlan(saison, donnees, aujourdhui, cal.config.echeance), [saison, donnees, aujourdhui, cal.config.echeance]);
   // Badges vus avant d'ouvrir l'écran : figés à l'ouverture, pour que les nouveaux restent signalés.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const vus = useMemo(() => new Set(donnees.preferences.badgesVus ?? []), []);
@@ -87,6 +88,28 @@ export function EcranProgres() {
         </div>
       </section>
       <p className="aide">Une série compte les semaines où toutes les séances que tu as choisies sont faites. Une semaine légère ou à 1 séance compte aussi.</p>
+
+      <section className="tuiles tuiles-4">
+        <div className="tuile">
+          <span className="tuile-valeur">{plan.regularite === undefined ? '—' : `${plan.regularite} %`}</span>
+          <span className="tuile-texte">régularité</span>
+        </div>
+        <div className="tuile">
+          <span className="tuile-valeur">{NOMBRE(plan.minutes / 60)} h</span>
+          <span className="tuile-texte">d'entraînement</span>
+        </div>
+        <div className="tuile">
+          <span className="tuile-valeur">{NOMBRE(plan.sprints)}</span>
+          <span className="tuile-texte">sprints</span>
+        </div>
+        <div className="tuile">
+          <span className="tuile-valeur">{NOMBRE(plan.tonnage)}</span>
+          <span className="tuile-texte">kg soulevés</span>
+        </div>
+      </section>
+      <p className="aide">
+        Semaine {plan.semaine} sur {plan.totalSemaines} ({plan.phase}) · {plan.joursAvantEcheance} jours avant {cal.config.echeanceNom.toLowerCase()} · {NOMBRE(plan.sauts)} sauts.
+      </p>
 
       <a className="seance lien-bilan" href="#/bilan">
         <span className="seance-type">✓</span>
