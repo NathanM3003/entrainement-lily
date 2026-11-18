@@ -74,6 +74,7 @@ Node 26 (LTS) est installé dans `~/.local/node`, pas avec Homebrew : `brew inst
 - `npm test` : lance tous les tests (Vitest). Un seul fichier : `npx vitest run src/donnees/banque.test.ts`. Un seul test : ajouter `-t "nom du test"`.
 - `npm run typecheck` : vérifie les types TypeScript.
 - `npm run build` : construit l'app hors ligne dans `dist/`.
+- `npm run publier` : lance les tests, construit l'app et l'envoie sur la branche `gh-pages`, publiée par GitHub Pages à l'adresse https://nathanm3003.github.io/entrainement-lea/. Seul `dist/` est publié. À relancer après chaque changement que Lily doit recevoir : l'app installée se met à jour toute seule à la réouverture suivante. (Le jeton GitHub de ce Mac n'a pas le droit de créer des workflows : pas de GitHub Actions.)
 - `npm run banque` : régénère la banque et les illustrations à partir de `docs/`. Il faut le relancer après toute modification de `docs/Banque d'exercices.md` ou de `docs/banque-illustree.html`.
 
 ## Structure du code
