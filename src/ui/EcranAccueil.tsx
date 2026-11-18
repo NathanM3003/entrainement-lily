@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
+import { lieuxSeance } from '../moteur/contenu';
 import { ajouterJours, dateCourte, joursEntre } from '../moteur/dates';
 import { rappelSauvegarde } from '../stockage/sauvegarde';
 import { calculerSuivi, etatDuPlan } from '../stockage/suivi';
+import { BilanSemaine } from './BilanSemaine';
 import { jourCourt, jourEtDate, majuscule } from './communs';
 import { useDonnees } from './donnees';
 
@@ -60,7 +62,7 @@ export function EcranAccueil() {
             <span className="seance-texte">
               <strong>{duJour.seance.libelle}</strong>
               <span className="petit">
-                environ {duJour.seance.contenu.minutes} min{duJour.etat === 'faite' ? ' · faite ✓' : duJour.etat === 'en-cours' ? ' · commencée' : ''}
+                {lieuxSeance(duJour.seance.contenu, cal.config.disponibilites?.lieux)} · environ {duJour.seance.contenu.minutes} min{duJour.etat === 'faite' ? ' · faite ✓' : duJour.etat === 'en-cours' ? ' · commencée' : ''}
               </span>
             </span>
             <span aria-hidden="true">›</span>
@@ -96,6 +98,17 @@ export function EcranAccueil() {
             );
           })}
         </a>
+      )}
+
+      {/* Bilan : le dimanche ou dès que la semaine est complète ; le lundi et le mardi, celui de la semaine d'avant. */}
+      {semaine?.choix && semaine.seances.length > 0 && (semaine.semaine.fin === aujourdhui || semaine.seances.every((s) => s.etat === 'faite')) ? (
+        <BilanSemaine calc={semaine} />
+      ) : (
+        (() => {
+          const avant = saison[plan.semaine - 2];
+          const jourDeSemaine = new Date(`${aujourdhui}T12:00:00Z`).getUTCDay();
+          return avant?.choix && (jourDeSemaine === 1 || jourDeSemaine === 2) ? <BilanSemaine calc={avant} titre="Bilan de la semaine dernière" /> : null;
+        })()
       )}
 
       <h2 className="titre-section">Ton plan</h2>

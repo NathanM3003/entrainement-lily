@@ -785,6 +785,29 @@ Lily a relu tous les choix des sections ci-dessus. Ceux qui ne sont pas listés 
 - **Allures avant le premier test demi-Cooper :** elles viennent des allures connues de Lily. Course facile (60 à 70 % de la VMA) à l'allure facile ; efforts à 100 % de la VMA ou plus à l'allure très rapide ; entre les deux, de l'allure rapide à l'allure très rapide. Pour 2026-2027 : 6:00, 5:30 et 5:00/km.
 - **Ressenti et note sur chaque exercice :** trop dur, trop facile, j'aime, je n'aime pas, et un commentaire libre. Ils ne changent pas le plan. Ils se copient en texte (Réglages, « Tes commentaires sur les exercices ») pour adapter une prochaine version du programme avec Claude.
 
+### Ajouts du 18 novembre 2026 (demandes de Nathan, à faire valider avec Lily)
+
+- **Version express, quand Lily manque de temps** (bouton sur la séance, avant de commencer). L'app garde environ 40 min, échauffement raccourci et prévention minimale compris. Elle choisit dans l'ordre de priorité de la section 4 : vitesse, force du bas du corps, pliométrie et course facile en Fondation, haut du corps et tronc, intermittents. Pas de version express pour une séance de tests. La séance garde sa place dans la semaine.
+- **Pas de course en plus.** Le profil prévoit des exercices à la maison, mais pas de course supplémentaire, à cause des tibias. Une course dehors ajoutée un jour de repos augmenterait le volume de course sans contrôle. Quand Lily n'a que 30 à 40 min, la version express d'une séance avec course facile (C en Fondation) revient à aller courir dehors, en gardant la progression.
+- **Lieu de chaque séance**, affiché dès le début, d'après son contenu :
+  - sprints, changements de direction, tests de sprint et demi-Cooper : piste (dehors s'il n'y a pas de piste) ;
+  - course facile : piste, tapis ou dehors ;
+  - intermittents : piste ou tapis ;
+  - sauts, force et vélo : gym.
+- **Note d'effort :** 7 correspond à une séance réussie (tu as forcé, c'était dur mais correct et tu te sentais bien) ; un bouton « Rien à signaler : 7 » la donne en un geste. 9 ou plus bloque la hausse des charges à la séance suivante (section 5).
+- **Repères le jour des tests :**
+  - squat, squat bulgare, développé et tirage : environ le maximum estimé ÷ 1,2, la charge pour 5 répétitions avec 1 en réserve ;
+  - test demi-Cooper : la distance de 6 min à l'allure « très rapide » donnée à la création, ou le dernier résultat.
+
+  Ce ne sont que des repères : on monte par paliers.
+- **Bilan de la semaine.** Il apparaît le dimanche, ou dès que la semaine est complète, puis le lundi et le mardi pour la semaine d'avant. Il donne :
+  - les séances faites ;
+  - l'effort moyen ;
+  - les records et badges de la semaine ;
+  - les douleurs de 3 ou plus ;
+  - un message, et le lien pour prévoir la semaine suivante.
+- **Frisbee chaque semaine :** une série peut s'arrêter à partir d'aujourd'hui, sans effacer les semaines passées. Les tournois et les jours de frisbee se retirent sur le calendrier (Réglages, « Modifier le calendrier et les blessures »), même après le début du programme.
+
 ## Points à suivre
 
 - Faire confirmer par la physio la reprise des changements de direction au 1er janvier.

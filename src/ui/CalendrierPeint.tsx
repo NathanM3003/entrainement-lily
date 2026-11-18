@@ -27,7 +27,9 @@ export function CalendrierPeint({
   series,
   onMarques,
   onSeries,
+  aujourdhui,
 }: {
+  aujourdhui: DateISO;
   debut: DateISO;
   fin: DateISO;
   marques: Record<DateISO, Marque>;
@@ -146,10 +148,17 @@ export function CalendrierPeint({
           <ul className="liste-reglages">
             {series.map((s, i) => (
               <li key={i}>
-                {s.nom} : le {JOURS[s.jour - 1]}, à partir du {Number(s.debut.slice(8))} {MOIS[Number(s.debut.slice(5, 7)) - 1]}{' '}
-                <button type="button" className="lien" onClick={() => onSeries(series.filter((_, j) => j !== i))}>
-                  Retirer
-                </button>
+                {s.nom} : le {JOURS[s.jour - 1]}, à partir du {Number(s.debut.slice(8))} {MOIS[Number(s.debut.slice(5, 7)) - 1]}
+                {s.fin ? `, jusqu'au ${Number(s.fin.slice(8))} ${MOIS[Number(s.fin.slice(5, 7)) - 1]}` : ''}{' '}
+                {s.debut < aujourdhui && !s.fin ? (
+                  <button type="button" className="lien" onClick={() => onSeries(series.map((x, j) => (j === i ? { ...x, fin: ajouterJours(aujourdhui, -1) } : x)))}>
+                    Arrêter à partir d'aujourd'hui
+                  </button>
+                ) : (
+                  <button type="button" className="lien" onClick={() => onSeries(series.filter((_, j) => j !== i))}>
+                    Retirer
+                  </button>
+                )}
               </li>
             ))}
           </ul>

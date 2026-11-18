@@ -1121,6 +1121,44 @@ function jourDeMatch(items: Item[]): Item[] {
   return items.filter((it) => ['force', 'prevention', 'echauffement'].includes(it.bloc) && !BAS_DU_CORPS.has(it.p.id));
 }
 
+/** Durée visée d'une séance express (manque de temps), échauffement et prévention compris. */
+export const DUREE_EXPRESS = 40;
+
+/**
+ * Version express (ajoutée le 18 novembre 2026, à faire valider) : quand Lily manque de temps, on garde
+ * ce qui compte le plus selon l'ordre de priorité de la section 4 (vitesse, force du bas du corps, pliométrie
+ * et course facile en Fondation, haut du corps et tronc, intermittents), jusqu'à environ 40 min.
+ * La prévention minimale reste toujours.
+ */
+function versionExpress(items: Item[], ctx: Ctx, messages: string[]): Item[] {
+  const priorite = (it: Item) => {
+    const r = it.p.role;
+    if (r === 'acceleration' || r === 'vitesse-max' || r === 'test') return 1;
+    if (r === 'force-bas' || r === 'puissance') return 2;
+    if (r === 'plio' || (r === 'course' && ctx.phase === 'fondation')) return 3;
+    if (r === 'force-haut' || r === 'tronc') return 4;
+    if (r === 'intermittent' || r === 'course' || r === 'cardio') return 5;
+    return 6;
+  };
+  const prevention = items.filter((it) => it.bloc === 'prevention' && it.p.retrait === 0);
+  const autres = items.filter((it) => it.bloc !== 'prevention');
+  const minutes = (it: Item) => estimer(it.p);
+  let reste = DUREE_EXPRESS - 8 - prevention.reduce((t, it) => t + minutes(it), 0); // 8 min d'échauffement
+  const gardes = new Set<Item>();
+  for (const it of [...autres].sort((a, b) => priorite(a) - priorite(b))) {
+    if (priorite(it) === 6) continue;
+    const m = minutes(it);
+    if (m <= reste) {
+      gardes.add(it);
+      reste -= m;
+    }
+  }
+  const resultat = [...autres.filter((it) => gardes.has(it)), ...prevention];
+  const noms = autres.filter((it) => gardes.has(it)).map((it) => it.p.nom.toLowerCase() || it.p.id);
+  messages.push(`Version express (environ ${DUREE_EXPRESS} min) : on garde le plus important${noms.length ? ` (${noms.join(', ')})` : ''}, plus la prévention.`);
+  return resultat;
+}
+
 /** Progression et douleurs (section 5) : volume de sprints, tension, pauses. */
 function ajusterProgression(items: Item[], ctx: Ctx): Item[] {
   const { etat } = ctx;
@@ -1213,10 +1251,14 @@ function composerSeance(ctx: Ctx): ContenuSeance {
     });
   }
 
+  if (seance.express && !seance.test) corps = versionExpress(corps, ctx, messages);
+
   const course = corps.some((it) => ['acceleration', 'vitesse-max', 'course', 'intermittent'].includes(it.p.role) && it.p.id !== 'E10') || corps.some((it) => it.p.id.startsWith('T-sprint') || it.p.id === 'T-cooper');
+  const echauffementComplet = avecEchauffement ? echauffement(ctx, course, !ctx.jourDeMatch) : [];
   let items: Item[] = [
-    ...(avecEchauffement ? echauffement(ctx, course, !ctx.jourDeMatch) : []),
-    ...(seance.test === 'journee1' || ctx.etat.pausePlio ? [] : blocAgilite(ctx)),
+    // Version express : échauffement raccourci (cardio, 2 mobilités, accélérations progressives s'il y a de la course).
+    ...(seance.express ? echauffementComplet.filter((it) => ['E2', 'E10', 'M14', 'M18', 'V8'].includes(it.p.id)) : echauffementComplet),
+    ...(seance.test === 'journee1' || ctx.etat.pausePlio || seance.express ? [] : blocAgilite(ctx)),
     ...corps,
   ];
 
@@ -1256,7 +1298,7 @@ function composerSeance(ctx: Ctx): ContenuSeance {
 
   // Durée estimée et respect de la durée maximale (1 h 30, ou environ 1 h en période allégée).
   items = items.map((it) => ({ ...it, p: { ...it.p, minutesEstimees: Math.round(estimer(it.p) * 10) / 10, sauts: sauts(it.p) || undefined } }));
-  const limite = seance.dureeMax < 90 ? seance.dureeMax + 5 : seance.dureeMax;
+  const limite = seance.express ? DUREE_EXPRESS + 5 : seance.dureeMax < 90 ? seance.dureeMax + 5 : seance.dureeMax;
   const total = () => items.reduce((t, it) => t + it.p.minutesEstimees, 0);
   const retires: string[] = [];
   while (total() > limite) {
@@ -1387,4 +1429,34 @@ export function texteDosage(p: Prescription): string {
   if (p.reps) return `${fourchette(p.reps)} répétitions${cote}`;
   if (p.minutes) return `${p.minutes} min`;
   return '';
+}
+
+// ---------- Lieu de la séance ----------
+
+/**
+ * Où se fait la séance, d'après son contenu : « Piste, puis gym », « Gym »…
+ * Sprints, changements de direction et tests de course : piste ; course facile : piste, tapis ou dehors ;
+ * intermittents : piste ou tapis (vélo ou rameur : gym) ; sauts, force et cardio : gym.
+ */
+export function lieuxSeance(contenu: ContenuSeance, lieux: ('gym' | 'piste' | 'tapis')[] = ['gym', 'piste', 'tapis']): string {
+  const piste = lieux.includes('piste');
+  const tapis = lieux.includes('tapis');
+  const ordre: string[] = [];
+  const ajouter = (l: string) => {
+    if (!ordre.includes(l)) ordre.push(l);
+  };
+  for (const b of contenu.blocs) {
+    if (b.type === 'echauffement' || b.type === 'prevention' || b.type === 'mobilite') continue;
+    if (b.type === 'vitesse' || b.type === 'agilite') ajouter(piste ? 'piste' : 'dehors');
+    else if (b.type === 'tests') {
+      for (const p of b.exercices) ajouter(p.id.startsWith('T-sprint') || p.id === 'T-cooper' ? (piste ? 'piste' : 'dehors') : 'gym');
+    } else if (b.type === 'intermittents') {
+      ajouter(b.exercices.every((p) => p.id === 'E10') ? 'gym' : piste && tapis ? 'piste ou tapis' : piste ? 'piste' : tapis ? 'tapis' : 'dehors');
+    } else if (b.type === 'course') ajouter([piste && 'piste', tapis && 'tapis', 'dehors'].filter(Boolean).join(', ').replace(/, ([^,]+)$/, ' ou $1'));
+    else ajouter('gym');
+  }
+  // « Piste » couvre déjà la course : on ne répète pas « piste ou tapis » après.
+  const liste = ordre.includes('piste') ? ordre.filter((l) => l === 'piste' || !l.startsWith('piste')) : ordre;
+  const texte = liste.join(', puis ');
+  return texte.charAt(0).toUpperCase() + texte.slice(1);
 }

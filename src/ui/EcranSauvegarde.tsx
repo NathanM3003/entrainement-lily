@@ -213,7 +213,7 @@ function CommentairesPourClaude() {
   const { donnees, cal } = useDonnees();
   const [etat, setEtat] = useState<string>();
   const texte = texteCommentaires(cal.config.nom, donnees);
-  const nb = (texte.match(/^- /gm) ?? []).length;
+  const nb = (texte.split('## Santé')[1] ? texte.replace(/## Santé[\s\S]*?\n\n/, '') : texte).match(/^- /gm)?.length ?? 0;
   return (
     <section className="carte">
       <h2>Tes commentaires sur les exercices</h2>
@@ -224,7 +224,7 @@ function CommentairesPourClaude() {
       <div className="actions">
         <button
           type="button"
-          disabled={!nb}
+          disabled={!texte.includes('- ')}
           onClick={async () => {
             try {
               await navigator.clipboard.writeText(texte);

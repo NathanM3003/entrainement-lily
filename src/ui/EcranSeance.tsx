@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { exercice } from '../donnees/banque';
-import { texteDosage, texteDuree, type Bloc, type Prescription } from '../moteur/contenu';
-import { chargePrevue, maximumEstime } from '../moteur/progression';
+import { lieuxSeance, texteDosage, texteDuree, type Bloc, type Prescription } from '../moteur/contenu';
+import { allures, chargePrevue, convertir, maximumEstime } from '../moteur/progression';
 import type { Phase } from '../moteur/types';
 import {
   avecCharge,
@@ -26,7 +26,7 @@ import { useDonnees } from './donnees';
 const NOMS_TYPES = { A: 'Séance A', B: 'Séance B', C: 'Séance C', D: 'Séance D', U: 'Séance unique' };
 
 export function EcranSeance({ date }: { date: string }) {
-  const { saison, donnees, cal, enregistrerResultat, supprimerResultat } = useDonnees();
+  const { saison, donnees, cal, enregistrerResultat, supprimerResultat, choisirSemaine } = useDonnees();
   const illustrations = useIllustrations();
   const semaine = saison.find((s) => s.seances.some((x) => x.seance.date === date));
   const affichee = semaine?.seances.find((x) => x.seance.date === date);
@@ -91,9 +91,24 @@ export function EcranSeance({ date }: { date: string }) {
       </p>
       <h1>{seance.libelle}</h1>
       <p className="aide">
-        Environ {seance.contenu.minutes} min ({texteDuree(seance.dureeMax)} au plus)
+        <strong>{lieuxSeance(seance.contenu, cal.config.disponibilites?.lieux)}</strong> · environ {seance.contenu.minutes} min ({seance.express ? 'version express' : `${texteDuree(seance.dureeMax)} au plus`})
         {seance.courte && ' · version courte, sans record'}
       </p>
+      {!resultat && !seance.test && semaine.choix && (
+        <div className="actions">
+          <button
+            type="button"
+            className={seance.express ? '' : 'discret'}
+            onClick={() => {
+              const avant = semaine.choix!.express ?? [];
+              const express = seance.express ? avant.filter((d) => d !== date) : [...avant, date];
+              choisirSemaine(semaine.semaine.numero, { ...semaine.choix!, express });
+            }}
+          >
+            {seance.express ? 'Revenir à la séance complète' : "Je manque de temps : version express (environ 40 min)"}
+          </button>
+        </div>
+      )}
       {(seance.contenu.messages.length > 0 || affichee.etat === 'manquee') && (
         <ul className="messages">
           {affichee.etat === 'manquee' && <li>Cette séance est passée. Pas de rattrapage : tu peux quand même la noter si tu l'as faite.</li>}
@@ -141,6 +156,15 @@ export function EcranSeance({ date }: { date: string }) {
           valeur={resultat?.effort}
           onChange={(v) => modifier((r) => ({ ...r, effort: v }))}
         />
+        <p className="aide">
+          Repères : 3 facile · 5 moyen · <strong>7 séance réussie</strong> : tu as forcé, c'était dur mais correct et tu te sentais bien · 9 très dur, à la limite ·
+          10 maximal. À 9 ou plus, les charges ne montent pas à la séance suivante.
+        </p>
+        {resultat?.effort === undefined && (
+          <button type="button" className="discret" onClick={() => modifier((r) => ({ ...r, effort: 7 }))}>
+            Rien à signaler : 7
+          </button>
+        )}
         {zones.map((z) => (
           <Echelle
             key={z}
@@ -273,7 +297,7 @@ function Fiche({
   enregistre: boolean;
   onChange: (r: ResultatExercice) => void;
 }) {
-  const { modifierPreferences } = useDonnees();
+  const { modifierPreferences, cal } = useDonnees();
   const [details, setDetails] = useState(false);
   const [raisons, setRaisons] = useState(false);
   const banque = p.id.startsWith('T-') ? null : exercice(p.id);
@@ -304,6 +328,20 @@ function Fiche({
     if (p.recuperationKmh) consignes.push(`Récupération trottinée : ${texteVitesse(p.recuperationKmh, unite)} (la marche est permise).`);
   } else if (p.allure) {
     consignes.push(p.role === 'intermittent' && p.pctVMA ? 'Avant le test demi-Cooper : effort de 8 sur 10.' : `${p.allure}.`);
+  }
+  // Repère le jour des tests, d'après ce que Lily pense faire (charges et allures données à la création) ou ses derniers résultats.
+  if (p.id.startsWith('T-F')) {
+    const max = maximumEstime(cal, donnees, p.id.slice(2), date);
+    if (max !== undefined) {
+      const u = donnees.preferences.unites[p.id.slice(2)] ?? 'kg';
+      consignes.push(`Repère : environ ${Math.round(convertir(max / 1.2, 'kg', u))} ${u} pour 5 répétitions. C'est une estimation : monte par paliers et fie-toi à tes sensations.`);
+    }
+  }
+  if (p.id === 'T-cooper') {
+    const vma = allures(donnees).vma;
+    const tresRapide = cal.config.niveau?.alluresConnues?.tresRapide;
+    const metres = vma ? vma * 100 : tresRapide ? 360000 / tresRapide : undefined;
+    if (metres) consignes.push(`Repère : environ ${Math.round(metres / 10) * 10} m${vma ? ' (ton dernier test)' : " (d'après ton allure très rapide)"}.`);
   }
   if (p.serieEnPlus) {
     consignes.push(`1 série de plus du côté ${p.serieEnPlus.cote} (écart de ${p.serieEnPlus.ecart} % au dernier test).`);

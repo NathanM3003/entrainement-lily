@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { exercice } from '../donnees/banque';
-import { ROUTINE_AVANT_MATCH } from '../moteur/contenu';
+import { lieuxSeance, ROUTINE_AVANT_MATCH } from '../moteur/contenu';
+import { BilanSemaine } from './BilanSemaine';
 import { ajouterJours, dateCourte, joursEntre, jourSemaine, type DateISO } from '../moteur/dates';
 import type { ChoixSemaine } from '../moteur/semaine';
 import { LIBELLES_PHASES, type Semaine } from '../moteur/types';
@@ -160,6 +161,7 @@ function ChoixDeLaSemaine({
       matchsAnnules: reguliers.filter((d) => !matchs.includes(d)),
       // Semaine en cours : rien n'est placé avant aujourd'hui, et les séances faites restent.
       ...(enCours ? { depuis: aujourdhui } : {}),
+      ...(calc.choix?.express?.length ? { express: calc.choix.express } : {}),
     });
 
   return (
@@ -221,6 +223,7 @@ function PlanDeLaSemaine({ calc, aujourdhui, onModifier }: { calc: SemaineCalcul
   const matchs = calc.plan?.matchs ?? [];
   const cod = cal.config.restrictions.changementsDeDirection;
   const routineDes = cod ? ajouterJours(cod.jusquau, 1) : cal.config.debut;
+  const lieux = cal.config.disponibilites?.lieux;
   return (
     <>
       {calc.messages.length > 0 && (
@@ -275,7 +278,7 @@ function PlanDeLaSemaine({ calc, aujourdhui, onModifier }: { calc: SemaineCalcul
                   <span className="seance-texte">
                     <strong>{seance.seance.libelle}</strong>
                     <span className="petit">
-                      environ {seance.seance.contenu.minutes} min · {ETATS[seance.etat]}
+                      {lieuxSeance(seance.seance.contenu, lieux)} · environ {seance.seance.contenu.minutes} min · {ETATS[seance.etat]}
                       {seance.seance.contenu.essais.length > 0 && ' · à essayer'}
                     </span>
                   </span>
@@ -295,6 +298,7 @@ function PlanDeLaSemaine({ calc, aujourdhui, onModifier }: { calc: SemaineCalcul
         })}
       </ol>
       <p className="aide">Les jours de repos, une routine facultative de 10 min à la maison : M1, M7 et M3 (sans course).</p>
+      {calc.seances.length > 0 && (calc.semaine.fin <= aujourdhui || calc.seances.every((s) => s.etat === 'faite')) && <BilanSemaine calc={calc} />}
       {calc.semaine.fin >= aujourdhui && (
         <div className="actions">
           <button type="button" onClick={onModifier}>
@@ -315,7 +319,10 @@ function PlanDeLaSemaine({ calc, aujourdhui, onModifier }: { calc: SemaineCalcul
           )}
         </div>
       )}
-      <p className="aide">Changer ma semaine : ajouter ou retirer une séance, changer de jours, déclarer un match imprévu ou annulé.</p>
+      <p className="aide">
+        Changer ma semaine : ajouter ou retirer une séance, changer de jours, déclarer un match imprévu ou annulé. Pour retirer un tournoi ou un frisbee
+        régulier : <a href="#/modifier">modifier mon calendrier</a>.
+      </p>
     </>
   );
 }

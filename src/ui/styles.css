@@ -342,3 +342,7 @@ pre.commentaires { white-space: pre-wrap; font-size: 13px; background: var(--fon
 .tuiles-4 { grid-template-columns: repeat(2, 1fr); }
 @media (min-width: 560px) { .tuiles-4 { grid-template-columns: repeat(4, 1fr); } }
 .tuiles-4 .tuile-valeur { font-size: 28px; }
+
+.bilan-message { font-weight: 600; font-size: 17px; }
+.bilan-liste { margin: 8px 0 12px; padding-left: 20px; }
+.bilan-liste li { margin: 4px 0; }

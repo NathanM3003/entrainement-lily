@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { exercice } from '../donnees/banque';
 import { SAISON_2026_2027 } from '../donnees/saison-2026-2027';
 import { genererCalendrier } from '../moteur/calendrier';
@@ -47,12 +47,36 @@ const versSecondes = (t: string) => {
  * calendrier, blessures, niveau, sans toucher à ses résultats.
  */
 export function EcranNouveauProgramme({ mode }: { mode: 'nouveau' | 'modifier' }) {
-  const { cal, donnees, programmes, nouveauProgramme, modifierProgramme } = useDonnees();
+  const { cal, donnees, programmes, nouveauProgramme, modifierProgramme, aujourdhui } = useDonnees();
   const premierProgramme = programmes.length === 0;
   const base = mode === 'modifier' || !premierProgramme ? cal.config : SAISON_2026_2027;
-  const [r, setR] = useState<ReponsesProgramme>(() => reponsesDe(base));
-  const [marques, setMarques] = useState<Record<DateISO, Marque>>(() => marquesDe(reponsesDe(base)));
-  const [etape, setEtape] = useState(0);
+  // Brouillon gardé sur le téléphone : quitter le questionnaire (pour revoir les exercices, par exemple) ne perd rien.
+  const cleBrouillon = `brouillon-programme-${mode}`;
+  const brouillon = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem(cleBrouillon) ?? 'null') as { r: ReponsesProgramme; marques: Record<DateISO, Marque>; etape: number } | null;
+    } catch {
+      return null;
+    }
+  }, [cleBrouillon]);
+  const [r, setR] = useState<ReponsesProgramme>(() => brouillon?.r ?? reponsesDe(base));
+  const [marques, setMarques] = useState<Record<DateISO, Marque>>(() => brouillon?.marques ?? marquesDe(reponsesDe(base)));
+  const [etape, setEtape] = useState(brouillon?.etape ?? 0);
+  useEffect(() => {
+    try {
+      localStorage.setItem(cleBrouillon, JSON.stringify({ r, marques, etape }));
+    } catch {
+      // Sans stockage, le questionnaire marche quand même : seul le brouillon n'est pas gardé.
+    }
+  }, [cleBrouillon, r, marques, etape]);
+  const recommencer = () => {
+    try {
+      localStorage.removeItem(cleBrouillon);
+    } catch {}
+    setR(reponsesDe(base));
+    setMarques(marquesDe(reponsesDe(base)));
+    setEtape(0);
+  };
   const [unite, setUnite] = useState<'kg' | 'lb'>(() => Object.values(r.chargesActuelles)[0]?.unite ?? 'kg');
   const datesBloquees = mode === 'modifier' && Object.keys(donnees.resultats).length > 0;
   const set = (c: Partial<ReponsesProgramme>) => setR((x) => ({ ...x, ...c }));
@@ -67,6 +91,9 @@ export function EcranNouveauProgramme({ mode }: { mode: 'nouveau' | 'modifier' }
     if (!config) return;
     if (mode === 'modifier') await modifierProgramme(config);
     else await nouveauProgramme(config);
+    try {
+      localStorage.removeItem(cleBrouillon);
+    } catch {}
     location.hash = '#/';
   }
 
@@ -79,6 +106,14 @@ export function EcranNouveauProgramme({ mode }: { mode: 'nouveau' | 'modifier' }
         {mode === 'modifier' ? 'Modifier mon programme' : 'Nouveau programme'} · {etape + 1} sur {ETAPES.length}
       </p>
       <h1>{ETAPES[etape]}</h1>
+      {brouillon && (
+        <p className="aide">
+          Tes réponses ont été gardées.{' '}
+          <button type="button" className="lien" onClick={recommencer}>
+            Repartir de zéro
+          </button>
+        </p>
+      )}
       <nav className="segments etapes" aria-label="Étapes">
         {ETAPES.map((e, i) => (
           <button key={e} type="button" aria-pressed={i === etape} aria-label={e} onClick={() => setEtape(i)}>
@@ -127,6 +162,7 @@ export function EcranNouveauProgramme({ mode }: { mode: 'nouveau' | 'modifier' }
             series={r.matchsReguliers}
             onMarques={setMarques}
             onSeries={(s) => set({ matchsReguliers: s })}
+            aujourdhui={aujourdhui}
           />
         )}
 
@@ -151,6 +187,10 @@ export function EcranNouveauProgramme({ mode }: { mode: 'nouveau' | 'modifier' }
                     <>
                       <DateChamp label="À 100 % le" valeur={r.sante[z]?.centPourCentLe ?? ''} onChange={(v) => majZone({ centPourCentLe: v || undefined })} />
                       <Texte label="Précisions (facultatif)" valeur={r.sante[z]?.note ?? ''} onChange={(v) => majZone({ note: v })} />
+                      <p className="aide">
+                        Seuls l'état et la date changent le plan. Les précisions servent de mémo, pour toi, ta physio, et pour adapter le programme avec Claude
+                        (elles sont dans « Copier mes commentaires »).
+                      </p>
                     </>
                   )}
                 </fieldset>
@@ -184,8 +224,11 @@ export function EcranNouveauProgramme({ mode }: { mode: 'nouveau' | 'modifier' }
               ))}
             </fieldset>
             <fieldset className="choix">
-              <legend>Tes allures connues (min/km)</legend>
-              <p className="aide">Elles donnent tes objectifs de course jusqu'au premier test demi-Cooper. Exemple : 6:00.</p>
+              <legend>Les allures que tu penses tenir maintenant (min/km)</legend>
+              <p className="aide">
+                Elles fixent tes objectifs jusqu'au premier test demi-Cooper : la course facile à l'allure facile, les intermittents entre l'allure rapide et
+                très rapide, et un repère de distance le jour du test. Si tu les changes, les séances à venir changent avec elles. Exemple : 6:00.
+              </p>
               <div className="formulaire">
                 {(
                   [
@@ -199,9 +242,10 @@ export function EcranNouveauProgramme({ mode }: { mode: 'nouveau' | 'modifier' }
               </div>
             </fieldset>
             <fieldset className="choix">
-              <legend>Tes charges actuelles (facultatif)</legend>
+              <legend>Les charges que tu penses faire maintenant (facultatif)</legend>
               <p className="aide">
-                Une charge que tu soulèves déjà, et combien de fois. L'app en tire un objectif dès la 1re séance ; les tests de la journée 1 l'ajustent ensuite.
+                Une charge que tu soulèves déjà, et combien de fois. L'app en tire un objectif dès la 1re séance et un repère le jour des tests ; les tests de la
+                journée 1 remplacent ensuite ces estimations.
               </p>
               <div className="segments petit-segments" role="group" aria-label="Unité">
                 {(['kg', 'lb'] as const).map((u) => (
@@ -305,7 +349,7 @@ export function EcranNouveauProgramme({ mode }: { mode: 'nouveau' | 'modifier' }
                   ))}
                 </ul>
                 <p className="aide">
-                  Les statuts des exercices (validé, à essayer, exclu) sont repris. Tu peux les revoir dans l'écran <a href="#/exercices">Exercices</a>.
+                  Les statuts des exercices (validé, à essayer, exclu) sont repris. Tu peux les revoir dans l'écran <a href="#/exercices">Exercices</a> : tes réponses ici sont gardées, reviens ensuite par Réglages.
                 </p>
                 <div className="actions">
                   <button type="button" className="principal" onClick={valider}>

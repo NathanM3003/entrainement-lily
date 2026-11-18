@@ -413,3 +413,57 @@ export function etatDuPlan(saison: SemaineCalculee[], donnees: Donnees, aujourdh
     tonnage: Math.round(tonnage),
   };
 }
+
+// ---------- Bilan de la semaine ----------
+
+export interface BilanSemaine {
+  numero: number;
+  faites: number;
+  prevues: number;
+  minutes: number;
+  effortMoyen?: number;
+  records: string[];
+  badges: string[];
+  /** Douleurs de 3 ou plus notées cette semaine, par zone (la plus forte). */
+  douleurs: { zone: string; note: number }[];
+  matchs: number;
+  message: string;
+}
+
+const NOMS_ZONES = { tibias: 'tibias', genou: 'arrière du genou', chevilles: 'chevilles' } as const;
+
+/** Résumé d'une semaine, avec un message pour la suite. */
+export function bilanSemaine(s: SemaineCalculee, suivi: Suivi, donnees: Donnees): BilanSemaine {
+  const resultats = s.seances.map((x) => x.resultat).filter((r): r is ResultatSeance => !!r?.terminee);
+  const dansSemaine = (d?: DateISO) => !!d && d >= s.semaine.debut && d <= s.semaine.fin;
+  const efforts = resultats.map((r) => r.effort).filter((e): e is number => e !== undefined);
+  const douleurs: BilanSemaine['douleurs'] = [];
+  for (const zone of Object.keys(NOMS_ZONES) as (keyof typeof NOMS_ZONES)[]) {
+    const max = Math.max(0, ...resultats.map((r) => r.douleurs?.[zone] ?? 0));
+    if (max >= 3) douleurs.push({ zone: NOMS_ZONES[zone], note: max });
+  }
+  const records = [...new Set(suivi.badges.filter((b) => b.categorie === 'record' && dansSemaine(b.date)).map((b) => b.nom.replace(/^Record : /, '')))];
+  const badges = suivi.badges.filter((b) => b.categorie !== 'record' && dansSemaine(b.date)).map((b) => b.nom);
+  const prevues = s.seances.length;
+  const faites = resultats.length;
+  const message =
+    prevues === 0
+      ? 'Pas de séance prévue cette semaine. On repart la semaine prochaine.'
+      : faites === prevues
+        ? `Semaine complète, bravo ! ${suivi.serie.actuelle > 1 ? `${suivi.serie.actuelle} semaines de suite.` : 'Ta série commence.'}`
+        : faites === 0
+          ? "Semaine sans séance : ça arrive. Pas de rattrapage, on reprend la semaine prochaine."
+          : `${faites} séance${faites > 1 ? 's' : ''} sur ${prevues} : chaque séance compte, continue comme ça.`;
+  return {
+    numero: s.semaine.numero,
+    faites,
+    prevues,
+    minutes: resultats.reduce((t, r) => t + r.seance.contenu.minutes, 0),
+    effortMoyen: efforts.length ? Math.round((efforts.reduce((a, b) => a + b, 0) / efforts.length) * 10) / 10 : undefined,
+    records,
+    badges,
+    douleurs,
+    matchs: (s.plan?.matchs ?? []).filter((m) => (donnees.notesMatchs ?? {})[m.date] !== undefined || m.date <= s.semaine.fin).length,
+    message,
+  };
+}

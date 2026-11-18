@@ -21,6 +21,8 @@ export interface ChoixSemaine {
   matchsSupplementaires?: DateISO[];
   /** Matchs réguliers qui n'auront pas lieu. */
   matchsAnnules?: DateISO[];
+  /** Jours où Lily manque de temps : la séance de ce jour-là est en version express. */
+  express?: DateISO[];
   /**
    * Semaine changée en cours de route (section 4, « Retirer ou ajouter une séance ») : jour du changement.
    * Les séances déjà faites restent, les autres sont placées à partir de ce jour.
@@ -46,6 +48,8 @@ export interface SeancePlanifiee {
   dureeMax: number;
   /** Semaine de tournoi : version courte, sans record. */
   courte: boolean;
+  /** Lily manque de temps ce jour-là : version express d'environ 40 min. */
+  express?: boolean;
 }
 
 export interface PlanSemaine {
@@ -529,6 +533,7 @@ export function planifierSemaine(
       // Durée maximale choisie à la création (1 h 30 pour 2026-2027) ; environ 1 h en période allégée.
       dureeMax: Math.min(semaineAllegee || ctx.joursAlleges.has(p.date) ? 60 : 90, calendrier.config.disponibilites?.dureeMax ?? 90),
       courte: semaine.tournoi,
+      ...(!p.mod.test && (choix.express ?? []).includes(p.date) ? { express: true } : {}),
     }))
     .sort((a, b) => (a.date < b.date ? -1 : 1));
 

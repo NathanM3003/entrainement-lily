@@ -7,8 +7,20 @@ import type { Donnees } from './types';
 const RESSENTIS = { 'trop-dur': 'trop dur', 'trop-facile': 'trop facile', aime: "j'aime", 'aime-pas': "je n'aime pas" } as const;
 const RAISONS = { temps: 'pas le temps', materiel: 'matériel pris', douleur: 'douleur', autre: 'autre' } as const;
 
+const ZONES = { chevilles: 'Chevilles', genoux: 'Genoux', ischios: 'Ischios', tibias: 'Tibias', autre: 'Autre' } as const;
+const ETATS = { ok: 'ça va', sensible: 'sensible', reeducation: 'en rééducation' } as const;
+
 export function texteCommentaires(programme: string, donnees: Donnees): string {
   const lignes: string[] = [`Commentaires de Lily sur son programme « ${programme} »`, ''];
+  // Santé déclarée à la création, avec ses précisions (l'app ne s'en sert que pour les dates).
+  const sante = Object.entries(donnees.programme?.sante ?? {}).filter(([, v]) => v && (v.etat !== 'ok' || v.note));
+  if (sante.length) {
+    lignes.push('## Santé');
+    for (const [z, v] of sante) {
+      lignes.push(`- ${ZONES[z as keyof typeof ZONES]} : ${ETATS[v!.etat]}${v!.centPourCentLe ? `, à 100 % le ${v!.centPourCentLe}` : ''}${v!.note ? ` (« ${v!.note} »)` : ''}`);
+    }
+    lignes.push('');
+  }
   for (const r of terminees(donnees, '9999-12-31')) {
     const notes: string[] = [];
     for (const b of r.seance.contenu.blocs) {
