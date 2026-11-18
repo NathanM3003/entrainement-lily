@@ -123,7 +123,12 @@ export function EcranSeance({ date }: { date: string }) {
             {bloc.titre} <span className="petit">{bloc.minutes} min</span>
           </h2>
           {bloc.type === 'echauffement' ? (
-            <Echauffement bloc={bloc} illustrations={illustrations} />
+            <Echauffement
+              bloc={bloc}
+              illustrations={illustrations}
+              faits={resultat?.echauffementFait ?? []}
+              onChange={(faits) => modifier((r) => ({ ...r, echauffementFait: faits }))}
+            />
           ) : (
             <ul className="fiches">
               {bloc.exercices.map((p) => (
@@ -223,23 +228,59 @@ export function EcranSeance({ date }: { date: string }) {
   );
 }
 
-function Echauffement({ bloc, illustrations }: { bloc: Bloc; illustrations: Record<string, string> }) {
+/** Échauffement : chaque exercice se coche, pour donner envie de le faire en entier. */
+function Echauffement({
+  bloc,
+  illustrations,
+  faits,
+  onChange,
+}: {
+  bloc: Bloc;
+  illustrations: Record<string, string>;
+  faits: string[];
+  onChange: (faits: string[]) => void;
+}) {
   const [ouvert, setOuvert] = useState<string | null>(null);
+  const ids = bloc.exercices.map((p) => p.id);
+  const nbFaits = ids.filter((id) => faits.includes(id)).length;
+  const complet = nbFaits === ids.length;
+  const basculer = (id: string) => onChange(faits.includes(id) ? faits.filter((x) => x !== id) : [...faits, id]);
   return (
-    <ul className="liste-echauffement">
-      {bloc.exercices.map((p) => (
-        <li key={p.id + p.nom}>
-          <button type="button" className="ligne" aria-expanded={ouvert === p.id} onClick={() => setOuvert(ouvert === p.id ? null : p.id)}>
-            <span>{nomExercice(p)}</span>
+    <>
+      <ul className={`liste-echauffement${complet ? ' complet' : ''}`}>
+        {bloc.exercices.map((p) => (
+          <li key={p.id + p.nom} className={faits.includes(p.id) ? 'coche' : undefined}>
+            <div className="ligne-echauffement">
+              <label className="coche-echauffement">
+                <input type="checkbox" checked={faits.includes(p.id)} onChange={() => basculer(p.id)} aria-label={`${nomExercice(p)} fait`} />
+              </label>
+              <button type="button" className="ligne" aria-expanded={ouvert === p.id} onClick={() => setOuvert(ouvert === p.id ? null : p.id)}>
+                <span>{nomExercice(p)}</span>
+                <span className="petit">
+                  {texteDosage(p)}
+                  {p.intensite ? ` · ${p.intensite} %` : ''}
+                </span>
+              </button>
+            </div>
+            {ouvert === p.id && <Illustration id={p.illustration} nom={nomExercice(p)} illustrations={illustrations} />}
+          </li>
+        ))}
+      </ul>
+      <div className="actions">
+        {complet ? (
+          <p className="ok">Échauffement fait ✓ Tu es prête.</p>
+        ) : (
+          <>
             <span className="petit">
-              {texteDosage(p)}
-              {p.intensite ? ` · ${p.intensite} %` : ''}
+              {nbFaits} sur {ids.length} fait{nbFaits > 1 ? 's' : ''}
             </span>
-          </button>
-          {ouvert === p.id && <Illustration id={p.illustration} nom={nomExercice(p)} illustrations={illustrations} />}
-        </li>
-      ))}
-    </ul>
+            <button type="button" className="discret" onClick={() => onChange([...new Set([...faits, ...ids])])}>
+              Tout fait
+            </button>
+          </>
+        )}
+      </div>
+    </>
   );
 }
 

@@ -241,6 +241,11 @@ export function calculerSuivi(saison: SemaineCalculee[], donnees: Donnees, aujou
   badge('cheville', "Cheville d'acier", '20 séances avec M1, l’exercice de la physio.', 'prevention', avecM1[19]?.date);
   const routines = [...(donnees.routinesMaison ?? [])].sort();
   badge('routine', 'Routine maison', '10 routines de 10 min faites à la maison.', 'prevention', routines[9]);
+  const echauffements = resultats.filter((r) => {
+    const ids = r.seance.contenu.blocs.find((b) => b.type === 'echauffement')?.exercices.map((p) => p.id) ?? [];
+    return ids.length > 0 && ids.every((id) => r.echauffementFait?.includes(id));
+  });
+  badge('bien-chaud', 'Bien chaud', '10 séances avec l’échauffement fait en entier.', 'prevention', echauffements[9]?.date);
   const intermittents = resultats.filter((r) =>
     r.seance.contenu.blocs.some((b) => b.type === 'intermittents' && b.exercices.some((p) => !r.exercices[`intermittents:${p.id}`]?.pasFait)),
   );

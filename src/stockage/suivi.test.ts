@@ -94,6 +94,23 @@ describe('records et badges', () => {
     expect(s.badges.find((b) => b.id === 'sprint-100')?.date).toBe('2026-12-01');
   });
 
+  it('« Bien chaud » : 10 séances avec l’échauffement coché en entier', () => {
+    const d = donnees([1, 2, 3, 4]);
+    for (const n of [1, 2, 3, 4]) faireSemaine(d, n);
+    const toutCocher = (limite: number) => {
+      const liste = Object.values(d.resultats).sort((a, b) => (a.date < b.date ? -1 : 1));
+      liste.forEach((r, i) => {
+        const ids = r.seance.contenu.blocs.find((b) => b.type === 'echauffement')?.exercices.map((p) => p.id) ?? [];
+        r.echauffementFait = i < limite ? ids : ids.slice(1);
+      });
+      return liste;
+    };
+    toutCocher(9);
+    expect(suivi(d, '2026-12-21').badges.find((b) => b.id === 'bien-chaud')?.date).toBeUndefined();
+    const liste = toutCocher(10);
+    expect(suivi(d, '2026-12-21').badges.find((b) => b.id === 'bien-chaud')?.date).toBe(liste[9]!.date);
+  });
+
   it('aucun badge ni record lié au poids', () => {
     const s = suivi(donnees([1]), '2026-11-20');
     expect(JSON.stringify(s).toLowerCase()).not.toMatch(/poids corporel|masse|kilos perdus/);

@@ -364,3 +364,11 @@ input[type='date']::-webkit-date-and-time-value { text-align: left; }
 .lieux-jours { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
 .lieux-jours li { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .lieux-jours li > span:first-child { font-weight: 600; min-width: 56px; }
+
+/* Échauffement à cocher. */
+.ligne-echauffement { display: flex; align-items: stretch; }
+.ligne-echauffement .ligne { flex: 1; padding-left: 4px; }
+.coche-echauffement { display: grid; place-items: center; padding: 0 4px 0 14px; cursor: pointer; }
+.coche-echauffement input { width: 24px; height: 24px; accent-color: var(--ok); }
+.liste-echauffement li.coche .ligne > span:first-child { color: var(--discret); text-decoration: line-through; }
+.liste-echauffement.complet { border-color: var(--ok); }

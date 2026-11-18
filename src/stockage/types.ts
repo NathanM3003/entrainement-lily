@@ -65,6 +65,8 @@ export interface ResultatSeance {
   /** Par clé « bloc:numéro » (un même exercice peut être dans l'échauffement et dans la séance). */
   exercices: Record<string, ResultatExercice>;
   effort?: number;
+  /** Exercices d'échauffement cochés (par numéro d'exercice). */
+  echauffementFait?: string[];
   /** Durée réelle en minutes, si elle diffère de la durée prévue. */
   duree?: number;
   douleurs?: Douleurs;
