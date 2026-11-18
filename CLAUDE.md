@@ -80,7 +80,8 @@ Node 26 (LTS) est installé dans `~/.local/node`, pas avec Homebrew : `brew inst
 
 - `scripts/extraire-banque.mjs` : lit `docs/Banque d'exercices.md`, qui fait foi pour les statuts, dosages et dates « Dès », et `docs/banque-illustree.html` pour les dessins, « Pour le frisbee », les liens vidéo et les exclus. Il produit les fichiers `src/donnees/*.generated.*`. Ne modifie jamais ces fichiers à la main.
 - `src/donnees/` : la banque d'exercices typée (`banque.ts`, `types.ts`). Les dessins sont chargés à part pour alléger le premier affichage. Leurs couleurs passent par les variables `--il-*` de `illustrations.generated.css`, ce qui gère aussi le mode sombre.
-- `src/moteur/` (à venir) : toute la logique d'entraînement, sans interface.
+- `src/moteur/` : toute la logique d'entraînement, sans interface et sans état. Les dates sont des chaînes `AAAA-MM-JJ` calculées en UTC (`dates.ts`). `calendrier.ts` transforme un `ProgrammeConfig` en semaines (phases, semaines légères, jours allégés, récupération après tournoi, matchs, retests). `phases.ts` calcule les durées de phases. `restrictions.ts` applique le sprint limité, les changements de direction et les dates « Dès ».
+- `src/donnees/saison-2026-2027.ts` : les paramètres de la saison. Les retests et la semaine légère S10 y sont fixés tels que validés. Le reste est déduit par le moteur.
 - `src/ui/` : l'interface React.
 
 ## Plan de développement
