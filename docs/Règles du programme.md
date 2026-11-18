@@ -196,7 +196,7 @@ Chaque exercice a une date « Dès » dans la banque. L'app le débloque automat
 
 **Exemples :**
 - **1 match (mercredi), 3 séances :** lundi A, mercredi match, jeudi C sans course, samedi B.
-- **2 matchs (mercredi et jeudi), 2 séances :** samedi A, lundi B, mercredi et jeudi matchs, vendredi repos.
+- **2 matchs (mercredi et jeudi), 2 séances :** lundi A, mercredi et jeudi matchs, vendredi repos, samedi B. A va le lundi, le jour le plus frais : le samedi suit deux jours de match (voir la section 7, « Placement des séances : précisions »). *Corrigé le 17 novembre 2026 ; la version précédente mettait A le samedi.*
 
 ### Tournois et périodes allégées
 - **Semaine d'un tournoi :**
@@ -514,6 +514,15 @@ Avant le test de Cooper : effort de 8 sur 10, comme prévu à la section 5.
 - Les séances se placent de préférence du lundi au jeudi (28 au 31 décembre).
 - Du 1er au 3 janvier, ce sont des jours de période allégée : séance de 1 h au maximum si Lily en met un disponible.
 - Les blocs de changements de direction ne sont possibles que dans les séances faites à partir du 1er janvier.
+
+### Placement des séances : précisions
+
+*Ajouté le 17 novembre 2026, à l'étape 4. Complète la section 3, « Placement des séances ».*
+
+- **Le jour le plus frais** est celui qui a le moins de charge dans les 3 jours précédents, en comptant les matchs, les tournois et les séances déjà placées, y compris celles de la fin de la semaine précédente. A y va en premier. En cas d'égalité, A va sur le jour le plus loin des matchs. B, C et D suivent dans cet ordre.
+- **C de la Fondation** (force du haut du corps + course facile) compte comme une **charge moyenne**, comme un C avec des intermittents de course.
+- **Pas de course le dimanche quand c'est évitable :** la semaine suivante commence souvent par A, et ses sprints comptent comme de la course. Les séances de la semaine précédente sont prises en compte, pour ne jamais enchaîner 2 jours chargés ou 2 jours de course entre le dimanche et le lundi.
+- **Un test prévu n'est jamais retiré.** S'il faut retirer une séance la semaine d'un test de Cooper, le test prend la place de la séance la moins prioritaire (B, par exemple, quand il n'en reste que 2). Le moment prévu d'un test (début ou fin de semaine) passe avant la fraîcheur de A.
 
 ### Séries et badges
 

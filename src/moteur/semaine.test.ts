@@ -34,15 +34,13 @@ describe('exemples des Règles', () => {
     expect(p.messages).toContain('Séance C en version sans course (vélo ou rameur) : elle tombe le lendemain du match.');
   });
 
-  it('2 matchs (mercredi et jeudi), 2 séances : A et B le lundi et le samedi, vendredi au repos', () => {
+  it('2 matchs (mercredi et jeudi), 2 séances : lundi A, vendredi repos, samedi B', () => {
     const p = planifierSemaine(cal, 8, {
       nbSeances: 2,
       joursDisponibles: ['2027-01-11', '2027-01-15', '2027-01-16'],
       matchsSupplementaires: ['2027-01-14'],
     });
-    expect(p.seances.map((s) => s.date)).toEqual(['2027-01-11', '2027-01-16']);
-    expect(p.seances.map((s) => s.type).sort()).toEqual(['A', 'B']);
-    // À trancher : l'exemple met A le samedi. Le moteur met A sur le jour le plus frais (lundi).
+    expect(resume(p)).toEqual(['2027-01-11 A', '2027-01-16 B']);
   });
 });
 
