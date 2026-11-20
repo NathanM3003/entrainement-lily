@@ -12,7 +12,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icone.svg', 'icone-180.png', 'icone-192.png', 'icone-512.png'],
       manifest: {
-        name: 'Entraînement de Lily',
+        name: 'Mon entraînement',
         short_name: 'Entraînement',
         description: "Préparation physique pour la saison d'ultimate",
         lang: 'fr',

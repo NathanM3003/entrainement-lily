@@ -11,7 +11,8 @@ const ZONES = { chevilles: 'Chevilles', genoux: 'Genoux', ischios: 'Ischios', ti
 const ETATS = { ok: 'ça va', sensible: 'sensible', reeducation: 'en rééducation' } as const;
 
 export function texteCommentaires(programme: string, donnees: Donnees): string {
-  const lignes: string[] = [`Commentaires de Lily sur son programme « ${programme} »`, ''];
+  const prenom = donnees.preferences.prenom?.trim();
+  const lignes: string[] = [`Commentaires ${prenom ? `de ${prenom} ` : ''}sur son programme « ${programme} »`, ''];
   // Santé déclarée à la création, avec ses précisions (l'app ne s'en sert que pour les dates).
   const sante = Object.entries(donnees.programme?.sante ?? {}).filter(([, v]) => v && (v.etat !== 'ok' || v.note));
   if (sante.length) {

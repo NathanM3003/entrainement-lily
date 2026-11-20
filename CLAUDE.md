@@ -25,7 +25,7 @@ Les étapes 1 à 3 ont été faites et validées dans un projet claude.ai. **Ce 
   - réglages (programmes, sauvegarde, poids disponibles, commentaires à copier pour Claude).
 - **Toutes les décisions** prises pendant le développement sont dans `docs/Règles du programme.md`, section 7 : les « précisions » de chaque étape, les « Réponses de Lily » du 18 novembre 2026, la « Nouvelle version de l'app », les « Séances piste et gym » et les « Ajouts du 18 novembre 2026 ».
 - **Le gym n'a pas de piste** : A se fait sur la piste (sprints, intermittents, agilité, P14), B, C et D au gym. Chaque séance planifiée a un `lieu` (`gym` ou `piste`) ; Lily peut imposer un lieu par jour (`ChoixSemaine.lieux`). Les choix marqués « à faire valider » attendent l'avis de Lily.
-- **Anonymat** : l'app et les documents utilisent le prénom fictif **Lily**. Ne jamais remettre le vrai prénom dans les fichiers du dépôt, ni dans les messages de commit (l'historique a été nettoyé). Le dossier local garde son ancien nom : c'est normal, il n'est pas publié.
+- **Anonymat** : l'app et les documents utilisent le prénom fictif **Lily**. Ne jamais remettre le vrai prénom dans les fichiers du dépôt, ni dans les messages de commit (l'historique a été nettoyé). Le dossier local garde son ancien nom : c'est normal, il n'est pas publié. Pour que l'app appelle la sportive par son vrai prénom, elle le saisit sur son téléphone (bienvenue ou Réglages, `preferences.prenom`) : il n'est jamais écrit dans le code.
 - **Façon de travailler avec Nathan** :
   - il transmet les retours de Lily, souvent collés en vrac ;
   - poser les questions de règles d'entraînement avant de trancher (outil de questions, avec une recommandation) ;

@@ -26,7 +26,12 @@ function useAdresse(): string {
 }
 
 export function App() {
-  const { cal, aujourdhui, erreur, programmes } = useDonnees();
+  const { cal, aujourdhui, erreur, programmes, donnees } = useDonnees();
+  // Titre de l'onglet avec le prénom saisi sur le téléphone.
+  const prenom = donnees.preferences.prenom?.trim();
+  useEffect(() => {
+    document.title = prenom ? `Entraînement de ${prenom}` : 'Mon entraînement';
+  }, [prenom]);
   const adresse = useAdresse();
   const [, ecran, param] = adresse.split('/');
 

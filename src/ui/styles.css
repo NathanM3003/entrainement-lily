@@ -372,3 +372,6 @@ input[type='date']::-webkit-date-and-time-value { text-align: left; }
 .coche-echauffement input { width: 24px; height: 24px; accent-color: var(--ok); }
 .liste-echauffement li.coche .ligne > span:first-child { color: var(--discret); text-decoration: line-through; }
 .liste-echauffement.complet { border-color: var(--ok); }
+
+.champ-prenom { max-width: 320px; }
+.salut { margin: 0 0 2px; font-size: 17px; font-weight: 600; }

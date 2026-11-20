@@ -84,6 +84,8 @@ export interface Preferences {
   crans?: Partial<Record<'barre' | 'halteres' | 'kettlebell' | 'machine', Partial<Record<Unite, number>>>>;
   /** Badges déjà vus sur l'écran Progrès (les autres sont annoncés comme nouveaux). */
   badgesVus?: string[];
+  /** Prénom de la sportive, gardé seulement sur le téléphone (le dépôt public n'a qu'un prénom fictif). */
+  prenom?: string;
   /** Date de la dernière sauvegarde exportée (AAAA-MM-JJ). */
   derniereSauvegarde?: DateISO;
 }

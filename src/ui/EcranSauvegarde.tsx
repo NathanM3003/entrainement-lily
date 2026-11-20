@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { dateCourte } from '../moteur/dates';
 import { CRANS_PAR_DEFAUT, cranConverti, LIBELLES_MATERIEL, type Materiel } from '../moteur/progression';
 import { texteCommentaires } from '../stockage/commentaires';
-import { ChampNombre } from './communs';
+import { ChampNombre, ChampPrenom } from './communs';
 import { creerSauvegarde, lireSauvegarde, rappelSauvegarde } from '../stockage/sauvegarde';
 import type { Unite, UniteAllure } from '../stockage/types';
 import { useDonnees } from './donnees';
@@ -54,6 +54,11 @@ export function EcranSauvegarde() {
     <main className="page">
       <p className="surtitre">Réglages</p>
       <h1>Programmes et sauvegarde</h1>
+
+      <section className="carte">
+        <ChampPrenom />
+        <p className="aide">L'app t'appelle par ce prénom. Il reste sur ce téléphone (et dans tes sauvegardes).</p>
+      </section>
 
       <MesProgrammes />
 

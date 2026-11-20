@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { chargerIllustrations } from '../donnees/banque';
 import { dateCourte, JOURS, jourSemaine, type DateISO } from '../moteur/dates';
+import { useDonnees } from './donnees';
 
 // ---------- Illustrations (chargées une seule fois, à part) ----------
 
@@ -93,5 +94,27 @@ export function Echelle({ valeur, onChange, label, aide }: { valeur: number | un
         ))}
       </div>
     </fieldset>
+  );
+}
+
+// ---------- Prénom ----------
+
+/** Prénom saisi sur le téléphone (Réglages ou bienvenue). Il n'est jamais écrit dans le code publié. */
+export function ChampPrenom() {
+  const { donnees, modifierPreferences } = useDonnees();
+  const [texte, setTexte] = useState(donnees.preferences.prenom ?? '');
+  return (
+    <label className="champ champ-texte champ-prenom">
+      <span className="champ-label">Ton prénom</span>
+      <input
+        type="text"
+        autoComplete="given-name"
+        value={texte}
+        onChange={(e) => {
+          setTexte(e.target.value);
+          modifierPreferences({ prenom: e.target.value.trim() || undefined });
+        }}
+      />
+    </label>
   );
 }

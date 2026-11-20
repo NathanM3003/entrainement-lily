@@ -27,6 +27,7 @@ export function EcranAccueil() {
       <p className="surtitre">
         {cal.config.nom} · semaine {plan.semaine} sur {plan.totalSemaines} · {plan.phase}
       </p>
+      {donnees.preferences.prenom?.trim() && <p className="salut">Salut {donnees.preferences.prenom.trim()} !</p>}
       <h1>{avantDebut ? `Début le ${dateCourte(cal.config.debut)}` : `${majuscule(jourEtDate(aujourdhui))}`}</h1>
       <p className="aide">
         {plan.joursAvantEcheance} jour{plan.joursAvantEcheance > 1 ? 's' : ''} avant : {cal.config.echeanceNom.toLowerCase()} ({dateCourte(cal.config.echeance)}).

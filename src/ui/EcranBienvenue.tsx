@@ -1,16 +1,19 @@
 import { useRef, useState } from 'react';
 import { lireSauvegarde } from '../stockage/sauvegarde';
+import { ChampPrenom } from './communs';
 import { useDonnees } from './donnees';
 
 /** Première ouverture : créer son programme, ou reprendre une sauvegarde. */
 export function EcranBienvenue() {
-  const { importer } = useDonnees();
+  const { importer, donnees } = useDonnees();
+  const prenom = donnees.preferences.prenom?.trim();
   const fichier = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<string>();
   return (
     <main className="page bienvenue">
       <p className="surtitre">Préparation physique · ultimate</p>
-      <h1>Bienvenue, Lily</h1>
+      <h1>{prenom ? `Bienvenue, ${prenom}` : 'Bienvenue'}</h1>
+      <ChampPrenom />
       <p>Cette app prépare tes séances semaine après semaine pour arriver plus rapide et en forme au début de la saison.</p>
       <ol className="etapes-bienvenue">
         <li>Crée ton programme : ta date d'échéance, ton calendrier (frisbee, tournois, jours indisponibles, semaines plus mollo) et tes blessures.</li>
