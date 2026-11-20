@@ -89,6 +89,12 @@ export function EcranSeance({ date }: { date: string }) {
         {majuscule(jourEtDate(date))}
       </p>
       <h1>{seance.libelle}</h1>
+      {resultat?.modifieLe && (
+        // Tout est enregistré sur le téléphone à chaque saisie : l'étiquette le montre (et s'allume à chaque fois).
+        <p key={resultat.modifieLe} className="enregistre" role="status">
+          ✓ Enregistré à {new Date(resultat.modifieLe).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' })}
+        </p>
+      )}
       <p className="aide">
         <strong>{lieuxSeance(seance.contenu, cal.config.disponibilites?.lieux, seance.lieu)}</strong> · environ {seance.contenu.minutes} min ({seance.express ? 'version express' : `${texteDuree(seance.dureeMax)} au plus`})
         {seance.courte && ' · version courte, sans record'}

@@ -375,3 +375,13 @@ input[type='date']::-webkit-date-and-time-value { text-align: left; }
 
 .champ-prenom { max-width: 320px; }
 .salut { margin: 0 0 2px; font-size: 17px; font-weight: 600; }
+
+/* Étiquette « Enregistré » dans une séance : fixe, au-dessus de la barre du bas. */
+.enregistre {
+  position: fixed; right: 12px; bottom: calc(64px + env(safe-area-inset-bottom)); z-index: 11; margin: 0;
+  padding: 4px 12px; border-radius: 999px; font-size: 13px; font-weight: 600;
+  background: color-mix(in srgb, var(--ok) 18%, var(--surface)); color: var(--ok); border: 1px solid var(--ok);
+  animation: allume 1.2s ease-out;
+}
+@keyframes allume { from { background: var(--ok); color: var(--surface); } }
+@media (prefers-reduced-motion: reduce) { .enregistre { animation: none; } }
