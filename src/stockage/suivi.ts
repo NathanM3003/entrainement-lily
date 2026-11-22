@@ -5,7 +5,7 @@
 import { exercice } from '../donnees/banque';
 import { LIBELLES_PHASES } from '../moteur/types';
 import type { DateISO } from '../moteur/dates';
-import { convertir, distanceCooper, estCourseFacile, estimation1RM, reserve, terminees } from '../moteur/progression';
+import { chargeRetenue, convertir, distanceCooper, estCourseFacile, estimation1RM, reserve, terminees } from '../moteur/progression';
 import type { Phase } from '../moteur/types';
 import type { SemaineCalculee } from './saison';
 import type { Donnees, ResultatSeance, Unite } from './types';
@@ -99,13 +99,13 @@ function points1RM(resultats: ResultatSeance[], id: string, phaseDe: (r: Resulta
   for (const r of resultats) {
     const t = r.exercices[`tests:T-${id}`];
     if (t?.mesure && !t.pasFait) {
-      const v = [t.mesure.valeur, t.mesure.gauche, t.mesure.droite].filter((x): x is number => !!x);
+      const v = [t.mesure.valeur, t.mesure.gauche, t.mesure.droite].filter((x): x is number => chargeRetenue(t, x));
       if (v.length) points.push({ date: r.date, valeur: convertir(Math.min(...v), t.unite ?? 'kg', 'kg') * 1.2 });
     }
   }
   for (const { r, p, x } of faits(resultats)) {
     const derniere = x?.series?.at(-1);
-    if (p.id !== id || !p.derniereSeriePlus || !derniere?.reps || !derniere.charge) continue;
+    if (p.id !== id || !p.derniereSeriePlus || !derniere?.reps || !x || !chargeRetenue(x, derniere.charge)) continue;
     points.push({ date: r.date, valeur: estimation1RM(convertir(derniere.charge, x?.unite ?? 'kg', 'kg'), derniere.reps, reserve(phaseDe(r))) });
   }
   return points.sort(parDate);
@@ -400,7 +400,7 @@ export function etatDuPlan(saison: SemaineCalculee[], donnees: Donnees, aujourdh
   for (const { p, x } of faits(resultats)) {
     if (p.role === 'plio') sauts += x?.nombre ?? p.sauts ?? 0;
     if (p.role === 'acceleration' || p.role === 'vitesse-max') sprints += x?.nombre ?? p.reps?.min ?? 0;
-    for (const serie of x?.series ?? []) if (serie.charge && serie.reps) tonnage += convertir(serie.charge, x?.unite ?? 'kg', 'kg') * serie.reps * (p.parCote ? 2 : 1);
+    for (const serie of x?.series ?? []) if (x && chargeRetenue(x, serie.charge) && serie.reps) tonnage += convertir(serie.charge, x?.unite ?? 'kg', 'kg') * serie.reps * (p.parCote ? 2 : 1);
   }
   const debut = saison[0]?.semaine.debut ?? aujourdhui;
   return {

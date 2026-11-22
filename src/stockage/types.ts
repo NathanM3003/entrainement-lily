@@ -42,6 +42,8 @@ export interface ResultatExercice {
   decision?: Decision;
   /** Ce qui était prévu (répétitions visées, charge), pour la progression. */
   prevu?: { reps?: number; charge?: number };
+  /** Charges improbables que Lily a confirmées (« C'est bien ça »), dans l'unité de l'exercice. */
+  chargesVerifiees?: number[];
   /** Sprints : tension derrière la cuisse ou le genou (section 5). */
   tension?: boolean;
   /** Ressenti et commentaire de Lily sur l'exercice (pour adapter le programme plus tard). */

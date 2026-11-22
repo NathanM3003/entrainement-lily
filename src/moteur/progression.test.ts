@@ -5,7 +5,7 @@ import { DONNEES_VIDES, type Donnees, type ResultatExercice, type ResultatSeance
 import { genererCalendrier } from './calendrier';
 import type { Prescription, SeanceDetaillee } from './contenu';
 import { joursEntre } from './dates';
-import { chargePrevue, estimation1RM, maximumEstime, suiviDouleurs } from './progression';
+import { chargePrevue, chargeRetenue, estimation1RM, maximumEstime, suiviDouleurs } from './progression';
 
 const cal = genererCalendrier(SAISON_2026_2027);
 const jours = (n: number) => joursEntre(cal.semaines[n - 1]!.debut, cal.semaines[n - 1]!.fin);
@@ -284,5 +284,33 @@ describe('décisions de Lily (18 novembre 2026)', () => {
     // S2 : seule la séance A est faite, la séance C (avec course) est manquée.
     faire(d, 2, 'A', {}, { douleurs: { tibias: 1 } });
     expect(calculerSaison(cal2, d, '2026-11-20')[2]!.progression.etapeCourse).toBe(3);
+  });
+});
+
+describe('garde-fou contre les fautes de frappe (22 novembre 2026)', () => {
+  it('une charge loin du prévu ne compte que si Lily la confirme', () => {
+    const r: ResultatExercice = { unite: 'kg', prevu: { charge: 40 } };
+    expect(chargeRetenue(r, 45)).toBe(true);
+    expect(chargeRetenue(r, 400)).toBe(false);
+    expect(chargeRetenue(r, 4)).toBe(false);
+    expect(chargeRetenue({ ...r, chargesVerifiees: [400] }, 400)).toBe(true);
+    // Sans charge prévue (tests) : plus de 150 kg est douteux.
+    expect(chargeRetenue({ unite: 'kg' }, 120)).toBe(true);
+    expect(chargeRetenue({ unite: 'kg' }, 500)).toBe(false);
+    expect(chargeRetenue({ unite: 'lb' }, 300)).toBe(true);
+  });
+
+  it('une faute de frappe non confirmée ne fait pas monter la charge suivante', () => {
+    const d = donnees();
+    avecTests(d);
+    faire(d, 1, 'B', { 'force:F1': { series: [{ reps: 8, charge: 40 }, { reps: 8, charge: 40 }, { reps: 8, charge: 400 }], unite: 'kg', prevu: { reps: 8, charge: 40 } } });
+    const b2 = seanceDe(d, 2, 'B');
+    expect(chargePrevue(cal, d, b2.date, 'fondation', prescription(b2, 'F1'))?.charge).toBe(40);
+  });
+
+  it('un test de la journée 1 tapé avec un zéro de trop est ignoré', () => {
+    const d = donnees();
+    faire(d, 1, 'A', { 'tests:T-F1': { mesure: { valeur: 500 }, unite: 'kg' } });
+    expect(maximumEstime(cal, d, 'F1', '2026-12-01')).toBeUndefined();
   });
 });

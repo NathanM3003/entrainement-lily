@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { exercice } from '../donnees/banque';
 import { lieuxSeance, texteDosage, texteDuree, type Bloc, type Prescription } from '../moteur/contenu';
-import { allures, chargePrevue, convertir, maximumEstime } from '../moteur/progression';
+import { allures, chargePrevue, chargeRetenue, convertir, maximumEstime } from '../moteur/progression';
 import type { Phase } from '../moteur/types';
 import {
   avecCharge,
@@ -552,7 +552,9 @@ function Saisie({
     const conv = (v: number | undefined) => (v === undefined ? v : convertirCharge(v, unite, u));
     const m = valeur.mesure;
     const mesure = m && TESTS_CHARGE.has(p.id) ? { valeur: conv(m.valeur), gauche: conv(m.gauche), droite: conv(m.droite) } : m;
-    onChange({ ...valeur, unite: u, series, mesure });
+    const prevu = valeur.prevu && { ...valeur.prevu, charge: conv(valeur.prevu.charge) };
+    const chargesVerifiees = valeur.chargesVerifiees?.map((c) => convertirCharge(c, unite, u));
+    onChange({ ...valeur, unite: u, series, mesure, prevu, chargesVerifiees });
     onUnite(u);
   };
 
@@ -585,6 +587,7 @@ function Saisie({
               </li>
             ))}
           </ol>
+          {charge && <VerifierCharges valeur={valeur} charges={series.map((s) => s.charge)} onChange={onChange} />}
           {charge && series.some((s) => s.charge) && (
             <p className="petit">Dernière série : {texteCharge(series.at(-1)?.charge ?? 0, unite)}</p>
           )}
@@ -709,7 +712,27 @@ function SaisieTest({
           <ChampNombre label={p.mesure === 's' ? 'Meilleur temps' : 'Résultat'} unite={libelleUnite} decimal={decimal} valeur={mesure.valeur} onChange={(v) => setMesure({ valeur: v })} />
         )}
       </div>
+      {charge && <VerifierCharges valeur={valeur} charges={[mesure.valeur, mesure.gauche, mesure.droite]} onChange={(r) => set(r)} />}
       {charge && mesure.valeur !== undefined && <p className="petit">{texteCharge(mesure.valeur, unite)}</p>}
     </>
+  );
+}
+
+/** Garde-fou contre les fautes de frappe : une charge improbable ne compte que si Lily la confirme. */
+function VerifierCharges({ valeur, charges, onChange }: { valeur: ResultatExercice; charges: (number | undefined)[]; onChange: (r: ResultatExercice) => void }) {
+  const unite = valeur.unite ?? 'kg';
+  const douteuses = [...new Set(charges.filter((c): c is number => typeof c === 'number' && c > 0 && !chargeRetenue(valeur, c)))];
+  if (douteuses.length === 0) return null;
+  const prevu = valeur.prevu?.charge;
+  return (
+    <div className="verifier" role="alert">
+      <p>
+        Vérifie : {douteuses.map((c) => texteCharge(c, unite)).join(', ')}
+        {prevu ? `, c'est loin des ${texteCharge(prevu, unite)} prévus.` : ", c'est beaucoup."} Tant que tu ne confirmes pas, ce chiffre ne compte pas pour la suite.
+      </p>
+      <button type="button" className="discret" onClick={() => onChange({ ...valeur, chargesVerifiees: [...(valeur.chargesVerifiees ?? []), ...douteuses] })}>
+        C'est bien ça
+      </button>
+    </div>
   );
 }

@@ -279,6 +279,11 @@ describe('exercices « à essayer » (section 6)', () => {
     expect(essais.slice(0, 4)).toEqual(['1 C F17', '1 D F21', '2 C F23', '2 D M20']);
   });
 
+  it('Fondation C : F17 prend la place de F13, qui le remplace s’il n’est pas gardé', () => {
+    const c = SAISONS.find((x) => x.n === 4)!.seances.find((s) => s.type === 'C' && s.contenu.essais.includes('F17'))!;
+    expect(c.contenu.messages).toContain('À essayer : Rowing à un bras (F17). Sinon : F13.');
+  });
+
   it('avec 3 séances, il n’y a que 3 séances C de S1 à S3 : M20 n’est pas essayé', () => {
     const trois = SAISONS.find((x) => x.n === 3)!.seances;
     const tous = trois.flatMap((s) => s.contenu.essais);

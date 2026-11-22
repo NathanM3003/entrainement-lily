@@ -102,7 +102,21 @@ function performances(cal: Calendrier, donnees: Donnees, id: string, avant: Date
   return liste;
 }
 
-const charges = (r: ResultatExercice) => (r.series ?? []).map((s) => s.charge).filter((c): c is number => typeof c === 'number' && c > 0);
+// ---------- Garde-fou contre les fautes de frappe (ajouté le 22 novembre 2026) ----------
+
+/** Charge loin de ce qui était prévu (plus de 1,5 fois ou moins de la moitié), ou plus de 150 kg sans repère : sans doute une faute de frappe. */
+export function chargeImprobable(charge: number, unite: Unite, reference?: number): boolean {
+  if (reference && reference > 0) return charge > reference * 1.5 || charge < reference / 2;
+  return convertir(charge, unite, 'kg') > 150;
+}
+
+/** Une charge improbable que Lily n'a pas confirmée ne compte pas : ni pour la progression, ni pour les records. */
+export function chargeRetenue(r: ResultatExercice, charge: number | undefined): charge is number {
+  if (typeof charge !== 'number' || !(charge > 0)) return false;
+  return !chargeImprobable(charge, r.unite ?? 'kg', r.prevu?.charge) || (r.chargesVerifiees ?? []).includes(charge);
+}
+
+const charges = (r: ResultatExercice) => (r.series ?? []).map((s) => s.charge).filter((c): c is number => chargeRetenue(r, c));
 
 /** Maximum estimé, en kg : tests de la journée 1 (charge pour 5 répétitions, 1 en réserve) et dernières séries « + ». */
 export function maximumEstime(cal: Calendrier, donnees: Donnees, id: string, avant: DateISO): number | undefined {
@@ -115,14 +129,14 @@ export function maximumEstime(cal: Calendrier, donnees: Donnees, id: string, ava
   for (const res of terminees(donnees, avant)) {
     const test = res.exercices[`tests:T-${id}`];
     if (test?.mesure && !test.pasFait) {
-      const valeurs = [test.mesure.valeur, test.mesure.gauche, test.mesure.droite].filter((v): v is number => typeof v === 'number' && v > 0);
+      const valeurs = [test.mesure.valeur, test.mesure.gauche, test.mesure.droite].filter((v): v is number => chargeRetenue(test, v));
       // Squat bulgare : le côté le plus faible, par prudence.
       if (valeurs.length) dernier = { date: res.date, kg: convertir(Math.min(...valeurs), test.unite ?? 'kg', 'kg') * 1.2 };
     }
   }
   for (const perf of performances(cal, donnees, id, avant)) {
     const derniere = perf.r.series?.at(-1);
-    if (!perf.p.derniereSeriePlus || !derniere?.reps || !derniere.charge) continue;
+    if (!perf.p.derniereSeriePlus || !derniere?.reps || !chargeRetenue(perf.r, derniere.charge)) continue;
     if (!dernier || perf.date >= dernier.date) {
       dernier = { date: perf.date, kg: estimation1RM(convertir(derniere.charge, perf.r.unite ?? 'kg', 'kg'), derniere.reps, reserve(perf.phase)) };
     }

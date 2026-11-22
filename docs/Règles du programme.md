@@ -840,3 +840,8 @@ Le gym n'a pas de piste. Proposition faite à Lily, puis ses réponses :
 
 - Faire confirmer par la physio la reprise des changements de direction au 1er janvier.
 - Ligue du jeudi (5 contre 5) : la déclarer comme match régulier si elle se confirme.
+
+### Ajouts du 22 novembre 2026
+
+- **Fautes de frappe dans les charges :** une charge à plus de 1,5 fois ou à moins de la moitié de la charge prévue (ou à plus de 150 kg quand rien n'était prévu, comme aux tests de la journée 1) est sans doute une faute de frappe. L'app demande de vérifier. Tant que Lily ne confirme pas (« C'est bien ça »), ce chiffre ne compte ni pour la progression, ni pour le maximum estimé, ni pour les records.
+- **Essai de F17 en Fondation C :** F17 y prend la place de « F13 ou F17 ». S'il n'est pas gardé, c'est F13 qui le remplace (F16 est déjà dans la séance).

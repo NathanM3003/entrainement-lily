@@ -458,8 +458,8 @@ const remplacementDe = (id: string): string | undefined => {
 };
 
 /** Marque une prescription comme exercice à essayer. */
-function enEssai(p: Prescription): Prescription {
-  return { ...p, essai: { remplacement: remplacementDe(p.id) } };
+function enEssai(p: Prescription, remplacement = remplacementDe(p.id)): Prescription {
+  return { ...p, essai: { remplacement } };
 }
 
 // ---------- Exercices « à essayer » (section 6) ----------
@@ -794,7 +794,8 @@ function fondation(ctx: Ctx): Item[] {
 
 /** « F13 ou F17 » (Fondation C) : place de l'essai de F17. */
 function tirageOuPompes(ctx: Ctx, reps: Fourchette): Item[] {
-  if (ctx.essai === 'F17') return item('force', enEssai(accessoire('F17', 'force-haut', 3, reps, { parCote: true, retrait: 4 })));
+  // Ici, F17 prend la place de F13 (F16 est déjà dans la séance) : refusé, il est remplacé par F13.
+  if (ctx.essai === 'F17') return item('force', enEssai(accessoire('F17', 'force-haut', 3, reps, { parCote: true, retrait: 4 }), 'F13'));
   const id = choisir(['F13', 'F17'], r2(ctx), ctx);
   return id ? item('force', accessoire(id, 'force-haut', 3, reps, { parCote: id === 'F17', retrait: 4 })) : [];
 }
@@ -1354,8 +1355,8 @@ function composerSeance(ctx: Ctx): ContenuSeance {
   }
 
   const essais = items.filter((it) => it.p.essai).map((it) => it.p.id);
-  for (const id of essais) {
-    messages.push(`À essayer : ${exercice(id).nom} (${id}). Sinon : ${remplacementDe(id) ?? '—'}.`);
+  for (const { p } of items.filter((it) => it.p.essai)) {
+    messages.push(`À essayer : ${p.nom} (${p.id}). Sinon : ${p.essai?.remplacement ?? '—'}.`);
   }
 
   const blocs: Bloc[] = [];
